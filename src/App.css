@@ -1,0 +1,68 @@
+
+body{
+  margin: 0;
+  padding: 0;
+}
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    background-color: white;
+}
+
+.imgViva {
+    height: 30vh;
+    margin-top: 20px;
+    margin-right: 50px;
+    margin-bottom: 20px;
+}
+.vrVestImagem {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    width: 100vw;
+    height: 35vh;
+    background-color:rgb(47, 174, 212);
+
+}
+
+.imgVR {
+    width: 30%;
+}
+
+/* button {
+    padding: 10px 20px;
+    border-radius: 25px;
+    background-color: #2196F3;
+    color: white;
+    border: none;
+    cursor: pointer;
+    margin-top: 20px;
+    margin-bottom: 20px;
+} */
+
+/* button:hover {
+    background-color: #1976D2;
+} */
+
+.camposQrCode {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 80px;
+    border-color: black;
+    border-radius: 15px;
+    border-style: solid;
+    border-width: 2px;
+    padding: 50px;
+}
+
+#qrCodeNum {
+    padding: 10px 10px;
+    border-radius: 25px;
+    width: 300px;
+    margin-top: 15px;
+    font-size: 20px;
+}
