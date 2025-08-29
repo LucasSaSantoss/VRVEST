@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// Carregar todos os usuários
+
 export async function carregarUsuarios() {
   try {
     const res = await axios.get("http://localhost:3000/usuarios");
@@ -10,7 +10,6 @@ export async function carregarUsuarios() {
   }
 }
 
-// Criar um novo usuário
 export async function criarUsuario({name, email, password}) {
   try {
     const res = await axios.post("http://localhost:3000/usuarios", {
@@ -27,19 +26,18 @@ export async function criarUsuario({name, email, password}) {
   }
 }
 
-export async function loginUsuario() {
+export async function loginUsuario({email,password}) {
   try {
-    const res = await axios.post("http://localhost:3000/usuarios/login", {
-      email: "alisson@email.com",
-      password: "123456"
+    const res = await axios.post("http://localhost:3000/api/login", {
+      email: email,
+      password: password
     });
-
     if (res.data.success) {
-      console.log("Login realizado:", res.data.user);
-      // aqui você pode salvar no estado global ou localStorage
        localStorage.setItem("usuario", JSON.stringify(res.data.user));
+       return res.data
     } else {
       console.log("Email ou senha inválidos");
+      return {message: 'Usuário não autorizado'}
     }
   } catch (err) {
     console.error("Erro no login:", err.response?.data || err.message);
