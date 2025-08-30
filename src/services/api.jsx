@@ -36,8 +36,7 @@ export async function loginUsuario({email,password}) {
        localStorage.setItem("usuario", JSON.stringify(res.data.user));
        return res.data
     } else {
-      console.log("Email ou senha inválidos");
-      return {message: 'Usuário não autorizado'}
+      return {message: 'Email ou usuário inválido', success: false}
     }
   } catch (err) {
     console.error("Erro no login:", err.response?.data || err.message);

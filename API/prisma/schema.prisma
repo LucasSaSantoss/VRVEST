@@ -28,7 +28,7 @@ model User {
 model Employee {
   id      Int      @id @default(autoincrement())
   name    String @db.VarChar(100) 
-  cpf     String @db.VarChar(11)  
+  cpf     String @unique @db.VarChar(11)  
   email   String @unique @db.VarChar(100)   
   password  String @db.VarChar(25) 
   sector  String @db.VarChar(100) 

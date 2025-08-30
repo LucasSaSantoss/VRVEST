@@ -14,7 +14,6 @@ app.post('/api/users', async (req, res) => {
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Verificar se o email já existe
     const existingUser = await prisma.user.findUnique({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: 'Email já registrado' });
@@ -40,16 +39,16 @@ app.post('/api/users', async (req, res) => {
 // Rota para login do usuário
 
 app.post('/api/login', async (req, res) => {
-       console.log('teste123')
     const { email, password } = req.body;
-    console.log(email)
+
 
 //   try {
     const user = await prisma.user.findUnique({ where: { email } });
     
-    if (!user) {
+    if (email !== user.email || password !== user.password) {
       return res.status(200).json({ message: 'Email ou senha inválidos!!!', success: false });
     }else{
+      console.log(user,email, password)
        return res.status(200).json({message: 'Usuário encontrado', success: true, user: user})
     }
 
