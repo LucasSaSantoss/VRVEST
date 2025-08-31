@@ -13,7 +13,7 @@ export default function FormularioVRVest() {
 
   return (
     <div>
-      <section className="flex flex-row bg-[#2faed4] items-center place-content-between">
+      <section className="flex flex-row bg-[#2faed4] h-[35vh] items-center place-content-between">
         <div className="flex flex-col">
           <div className="flex items-center ml-8">
             <span className="flex justify-center items-center border-2 rounded-2xl text-4xl px-1 py-0.5 font-bold h-18 w-20">

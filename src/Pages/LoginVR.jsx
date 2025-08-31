@@ -15,12 +15,10 @@ export default function LoginVR() {
     try {
       const response = await loginUsuario({ email, password });
 
-      // 🔎 Normaliza a resposta (caso venha como response.data)
       const data = response.data || response;
 
       if (data.success) {
         localStorage.setItem("usuario", JSON.stringify(data.user));
-        // 🔎 Redireciona conforme o Level do usuário
         navigate("/dashboard");
       } else {
         setError("Email ou senha inválidos.");

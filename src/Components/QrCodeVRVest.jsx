@@ -4,17 +4,17 @@ import LeitorQrCode from "../Components/LeitorQrCode";
 export default function QRCode() {
   return (
     <>
-      <div className="flex flex-col flex-wrap items-center h-screen bg-white">
-        <section className="flex justify-end items-center w-full h-[35vh] bg-[#2faed4]">
+      {/* <div className="flex flex-col flex-wrap items-center h-screen bg-white"> */}
+        <section className="flex flex-row bg-[#2faed4] h-[35vh] items-center place-content-between">
           <HeaderQRCode />
           <img
-            className="w-[30vw] mr-12"
+            className="w-[23vw] h-[20vh] mr-10"
             src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png"
             alt="VR Vest Image"
           />
         </section>
         <LeitorQrCode />
-      </div>
+      {/* </div> */}
     </>
   );
 }
