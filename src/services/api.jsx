@@ -11,28 +11,35 @@ export async function carregarUsuarios() {
 
 export async function criarUsuario({ name, email, password }) {
   try {
-    const res = await axios.post("http://localhost:3000/usuarios", {
-      name: name,
-      email: email,
-      password: password,
+    const res = await axios.post("http://localhost:3000/api/usuarios", {
+      name,
+      email,
+      password,
       sector: "TI",
       position: "Dev",
-      Level: 1,
+      level: 1, // cuidado: no backend você usou "level" (minúsculo), não "Level"
     });
-    console.log(res.data);
+
+    console.log("Usuário criado:", res.data);
+    return {
+      success: true,
+      data: res.data,
+    };
   } catch (err) {
     console.error("Erro ao criar usuário:", err.response?.data || err.message);
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro no servidor",
+    };
   }
 }
+
 
 export async function loginUsuario({ email, password }) {
   try {
     const res = await axios.post("http://localhost:3000/login", {
       email,
       password,
-    const res = await axios.post("http://localhost:3000/login", {
-      email: email,
-      password: password,
     });
 
     return {
@@ -49,6 +56,7 @@ export async function loginUsuario({ email, password }) {
   }
 }
 
+
 export async function verificaCpf({ cpf }) {
   console.log('teste3')
   try {
@@ -61,7 +69,7 @@ export async function verificaCpf({ cpf }) {
       return { message: "Cpf não cadastrado", success: false };
     }
   } catch (err) {
-    console.error("Erro na verificação do Cpf:", err.response?.data || err.message);
+    console.error("Erro na verificação do Cpf:", err.response?.data  err.message);
     return {success :false}
   }
 }
