@@ -30,6 +30,9 @@ export async function loginUsuario({ email, password }) {
     const res = await axios.post("http://localhost:3000/login", {
       email,
       password,
+    const res = await axios.post("http://localhost:3000/login", {
+      email: email,
+      password: password,
     });
 
     return {

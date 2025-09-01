@@ -7,6 +7,7 @@ import userRoutes from "./routes/userRoutes.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
+// Suas rotas
 app.use("/", userRoutes);
 // app.use("/employees", employeeRoutes);
 // app.use("/pendencies", pendencyRoutes);
