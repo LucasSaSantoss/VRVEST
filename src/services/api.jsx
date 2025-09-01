@@ -27,7 +27,7 @@ export async function criarUsuario({ name, email, password }) {
 
 export async function loginUsuario({ email, password }) {
   try {
-    const res = await axios.post("http://localhost:3000/api/login", {
+    const res = await axios.post("http://localhost:3000/login", {
       email: email,
       password: password,
     });

@@ -7,13 +7,10 @@ import userRoutes from "./routes/userRoutes.js";
 // import pendencyRoutes from "./routes/pendencyRoutes.js";
 
 const app = express();
-
 app.use(cors());
-
 app.use(express.json());
-
 // Suas rotas
-app.use("/api", userRoutes);
+app.use("/", userRoutes);
 // app.use("/employees", employeeRoutes);
 // app.use("/pendencies", pendencyRoutes);
 
