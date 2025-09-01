@@ -1,7 +1,5 @@
 import express from "express";
 import cors from "cors";
-
-// Importar rotas
 import userRoutes from "./routes/userRoutes.js";
 // import employeeRoutes from "./routes/employeeRoutes.js";
 // import pendencyRoutes from "./routes/pendencyRoutes.js";

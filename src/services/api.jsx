@@ -28,15 +28,18 @@ export async function criarUsuario({ name, email, password }) {
 export async function loginUsuario({ email, password }) {
   try {
     const res = await axios.post("http://localhost:3000/login", {
+      email,
+      password,
+    const res = await axios.post("http://localhost:3000/login", {
       email: email,
       password: password,
     });
-    if (res.data.success) {
-      localStorage.setItem("usuario", JSON.stringify(res.data.user));
-      return res.data;
-    } else {
-      return { message: "Email ou usuário inválido", success: false };
-    }
+
+    return {
+      success: true,
+      token: res.data.token,
+      message: res.data.message,
+    };
   } catch (err) {
     console.error("Erro no login:", err.response?.data || err.message);
     return {
