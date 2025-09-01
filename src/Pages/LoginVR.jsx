@@ -8,26 +8,25 @@ export default function LoginVR() {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError("");
+  e.preventDefault();
+  setError("");
 
-    try {
-      const response = await loginUsuario({ email, password });
+  try {
+    const data = await loginUsuario({ email, password }); 
 
-      const data = response.data || response;
-
-      if (data.success) {
-        localStorage.setItem("usuario", JSON.stringify(data.user));
-        navigate("/dashboard");
-      } else {
-        setError("Email ou senha inválidos.");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("Erro ao conectar ao servidor.");
+    if (data.success) {
+      localStorage.setItem("usuario", JSON.stringify(data.user));
+      navigate("/dashboard");
+    } else {
+      setError(data.message || "Email ou senha inválidos.");
     }
-  };
+  } catch (err) {
+    console.error(err);
+    setError("Erro ao conectar ao servidor.");
+  }
+};
 
   return (
     <div className="h-screen w-screen font-sans overflow-hidden flex">

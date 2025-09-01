@@ -8,14 +8,12 @@ import userRoutes from "./routes/userRoutes.js";
 
 const app = express();
 
-// Permitir todas as origens (desenvolvimento)
 app.use(cors());
 
-// Permitir JSON no corpo das requisições
 app.use(express.json());
 
 // Suas rotas
-app.use("/usuarios", userRoutes);
+app.use("/api", userRoutes);
 // app.use("/employees", employeeRoutes);
 // app.use("/pendencies", pendencyRoutes);
 

@@ -67,7 +67,6 @@ function LeitorQrCode() {
     setError("");
 
     try {
-      console.log('teste')
       const response = await verificaCpf({ cpf });
       console.log('teste2')
 

@@ -39,6 +39,10 @@ export async function loginUsuario({ email, password }) {
     }
   } catch (err) {
     console.error("Erro no login:", err.response?.data || err.message);
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro no servidor",
+    };
   }
 }
 
@@ -51,10 +55,10 @@ export async function verificaCpf({ cpf }) {
     if (res.data.success) {
       return res.data;
     } else {
-      return { message: "Email ou usuário inválido", success: false };
+      return { message: "Cpf não cadastrado", success: false };
     }
   } catch (err) {
-    console.error("Erro no login:", err.response?.data || err.message);
+    console.error("Erro na verificação do Cpf:", err.response?.data || err.message);
     return {success :false}
   }
 }
