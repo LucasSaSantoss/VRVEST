@@ -5,6 +5,7 @@ import HomeVRVest from "../Components/homeVRVest";
 import RelatoriosVRVest from "../Components/RelatoriosVRVest";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import FormVRVest from "../Components/FormVRVest";
+import UserForm from "../Components/userForm";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -37,6 +38,7 @@ export default function Dashboard() {
     relatorios: <RelatoriosVRVest />,
     qrcode: <QrCodeVRVest />,
     formulario: <FormVRVest />,
+    usuario: <UserForm />,
   };
 
   return (
@@ -105,11 +107,23 @@ export default function Dashboard() {
               Cadastro de Funcionários
             </span>
           </li>
+
+          <li
+            className="flex items-center cursor-pointer hover:text-blue-500"
+            onClick={() => setSelected("usuario")}
+          >
+            <span className="text-xl">📝</span>
+            <span
+              className={`ml-3 ${hovered ? "opacity-100" : "opacity-0 w-0"}`}
+            >
+              Cadastro de usuários
+            </span>
+          </li>
         </ul>
 
         {/* Logoff */}
         <div
-          className="p-4 mt-[55vh] border-t flex items-center cursor-pointer hover:text-red-500"
+          className="p-4 mt-[40vh] border-t flex items-center cursor-pointer hover:text-red-500"
           onClick={handleLogoff}
         >
           <span className="text-xl">🚪</span>

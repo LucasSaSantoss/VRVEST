@@ -1,65 +1,86 @@
-import React from "react";
-import axios from "axios";
+import React, { useState, useEffect } from "react";
+import { cadastrarFuncionario } from "../services/api";
+import { useNavigate } from "react-router-dom";
 
 export default function FormularioVRVest() {
-  async function buscaDados() {
-    try {
-      const response = await axios.get("/usuario");
-      console.log(response);
-    } catch (error) {
-      console.error(error);
+  const navigate = useNavigate();
+
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [cpf, setCpf] = useState("");
+  const [position, setPosition] = useState("");
+  const [sector, setSector] = useState("");
+  const [modality, setModality] = useState("");
+
+  const [mensagem, setMensagem] = useState("");
+
+  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  // useEffect(() => {
+  //   const usuarioString = localStorage.getItem("usuario");
+  //   if (!usuarioString) {
+  //     navigate("/");
+  //     return;
+  //   }
+  //   try {
+  //     const usuario = JSON.parse(usuarioString);
+  //     setUsuarioLogado(usuario);
+  //   } catch (err) {
+  //     console.error("Erro ao ler usuário do localStorage:", err);
+  //     navigate("/");
+  //   }
+  // }, [navigate]);
+
+  const handleCadastro = async (e) => {
+    e.preventDefault();
+    if (!usuarioLogado) {
+      setMensagem("Usuário não logado.");
+      return;
     }
-  }
+
+    const data = await cadastrarFuncionario({
+      name,
+      cpf,
+      email,
+      sector,
+      position,
+      cadUserID: usuarioLogado.id,
+      cadUserName: usuarioLogado.name,
+      modality,
+    });
+
+    setMensagem(data.message);
+
+    if (data.success) {
+      setName("");
+      setEmail("");
+      setCpf("");
+      setPosition("");
+      setSector("");
+      setModality("");
+    }
+  };
+
+  if (!usuarioLogado) return <p>Carregando usuário...</p>;
 
   return (
     <div>
-      <section className="flex flex-row bg-[#2faed4] h-[35vh] items-center place-content-between">
-        <div className="flex flex-col">
-          <div className="flex items-center ml-8">
-            <span className="flex justify-center items-center border-2 rounded-2xl text-4xl px-1 py-0.5 font-bold h-18 w-20">
-              VR
-            </span>
-            <p className="flex text-7xl pl-2">VEST</p>
-            <img
-              className="imgViva h-[15vh] "
-              src="https://vrdocs.hmas.com.br/images/Logo_Viva-Rio.png"
-              alt="Logo Viva-Rio"
-            />
-          </div>
-          <div className="text-left mt-5 ml-8">
-            <h1 className="text-4xl font-bold text-gray-800">
-              Sistema de Gestão de Vestes
-            </h1>
-            <p className="text-lg text-gray-600 mt-2">VERSÃO DE LANÇAMENTO</p>
-          </div>
-        </div>
-
-        <img
-          className="w-[23vw] h-[20vh] mr-10"
-          src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png"
-          alt="Logo Hmas"
-        />
-      </section>
       <h2 className="text-2xl font-bold text-center mt-6 mb-6">
-        Formulário de Cadastro
+        Cadastro de Funcionários
       </h2>
       <div className="bg-white border-2 border-cyan-600 rounded-xl p-6 flex items-center mb-20">
         <div className="w-full">
-          {/* Título do formulário */}
-
-          <form onSubmit={buscaDados} className="flex flex-wrap gap-4">
+          <form onSubmit={handleCadastro} className="flex flex-wrap gap-4">
             <div className="flex flex-wrap w-full gap-4">
               <div className="flex-1 min-w-[425px]">
-                <label
-                  htmlFor="nome"
-                  className="block text-sm font-semibold mb-1"
-                >
+                <label htmlFor="nome" className="block text-sm font-semibold mb-1">
                   Nome:
                 </label>
                 <input
                   type="text"
                   id="nome"
-                  name="nome"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
                   maxLength={80}
                   placeholder="Digite o nome completo"
                   required
@@ -68,16 +89,14 @@ export default function FormularioVRVest() {
               </div>
 
               <div className="flex-1 min-w-[450px]">
-                <label
-                  htmlFor="email"
-                  className="block text-sm font-semibold mb-1 "
-                >
+                <label htmlFor="email" className="block text-sm font-semibold mb-1">
                   E-mail:
                 </label>
                 <input
                   type="email"
                   id="email"
-                  name="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   maxLength={80}
                   placeholder="email@email.com.br"
                   required
@@ -94,7 +113,8 @@ export default function FormularioVRVest() {
               <input
                 type="text"
                 id="cpf"
-                name="numeroCpf"
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value)}
                 maxLength={11}
                 placeholder="Digite o CPF"
                 required
@@ -104,16 +124,14 @@ export default function FormularioVRVest() {
 
             {/* Cargo */}
             <div className="flex-1 min-w-[200px] w-full">
-              <label
-                htmlFor="cargo"
-                className="block text-sm font-semibold mb-1"
-              >
+              <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
                 Cargo:
               </label>
               <input
                 type="text"
                 id="cargo"
-                name="cargo"
+                value={position}
+                onChange={(e) => setPosition(e.target.value)}
                 maxLength={50}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
@@ -122,27 +140,22 @@ export default function FormularioVRVest() {
 
             {/* Setor */}
             <div className="flex-1 min-w-[200px] w-full">
-              <label
-                htmlFor="setor"
-                className="block text-sm font-semibold mb-1"
-              >
+              <label htmlFor="setor" className="block text-sm font-semibold mb-1">
                 Setor:
               </label>
               <select
                 id="setor"
-                name="setor"
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               >
+                <option value="">Selecione o setor</option>
                 <option value="SALA AMARELA">SALA AMARELA</option>
                 <option value="SALA VERMELHA">SALA VERMELHA</option>
                 <option value="TRAUMA">TRAUMA</option>
-                <option value="EMERGÊNCIA PEDIÁTRICA">
-                  EMERGÊNCIA PEDIÁTRICA
-                </option>
-                <option value="OBSERVAÇÃO PEDIÁTRICA">
-                  OBSERVAÇÃO PEDIÁTRICA
-                </option>
+                <option value="EMERGÊNCIA PEDIÁTRICA">EMERGÊNCIA PEDIÁTRICA</option>
+                <option value="OBSERVAÇÃO PEDIÁTRICA">OBSERVAÇÃO PEDIÁTRICA</option>
                 <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
                 <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
                 <option value="UI ADULTO">UI ADULTO</option>
@@ -158,38 +171,20 @@ export default function FormularioVRVest() {
 
             {/* Modalidade */}
             <div className="flex-1 min-w-[200px] w-full">
-              <label
-                htmlFor="modalidade"
-                className="block text-sm font-semibold mb-1"
-              >
+              <label htmlFor="modalidade" className="block text-sm font-semibold mb-1">
                 Modalidade:
               </label>
               <select
                 id="modalidade"
-                name="modalidade"
+                value={modality}
+                onChange={(e) => setModality(e.target.value)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               >
+                <option value="">Selecione a modalidade</option>
                 <option value="PJ">PJ</option>
                 <option value="CLT">CLT</option>
                 <option value="RPA">RPA</option>
-              </select>
-            </div>
-            <div className="flex-1 min-w-[200px] w-full">
-              <label
-                htmlFor="nivel"
-                className="block text-sm font-semibold mb-1"
-              >
-                Nível:
-              </label>
-              <select
-                id="nivel"
-                name="nivel"
-                required
-                className="w-[10] p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-              >
-                <option value="1">1</option>
-                <option value="2">2</option>
               </select>
             </div>
 
@@ -203,6 +198,10 @@ export default function FormularioVRVest() {
               </button>
             </div>
           </form>
+
+          {mensagem && (
+            <p className="mt-4 text-center text-red-600 font-semibold">{mensagem}</p>
+          )}
         </div>
       </div>
     </div>

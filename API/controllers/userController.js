@@ -22,13 +22,17 @@ export const createUser = async (req, res) => {
         password: hashedPassword,
         sector,
         position,
-        level,
+        level: parseInt(level, 10),
       },
     });
 
     res.status(201).json({ message: "Usuário criado", id: newUser.id });
   } catch (err) {
-    res.status(500).json({ message: "Erro ao criar o usuário" });
+    console.error("Erro ao criar usuário:", err);
+    return res
+      .status(500)
+
+      .json({ success: false, message: "Erro no servidor" });
   }
 };
 
@@ -45,6 +49,7 @@ export const loginUser = async (req, res) => {
     }
 
     const validPassword = await bcrypt.compare(password, user.password);
+    console.log("teste");
     if (!validPassword) {
       return res
         .status(401)
@@ -60,10 +65,11 @@ export const loginUser = async (req, res) => {
         email: user.email,
         sector: user.sector,
         position: user.position,
-        level: user.level,
+        Level: user.Level,
       },
     });
   } catch (err) {
+    console.log("Tentando login com:", email, password);
     console.error("Erro no login:", err);
     return res
       .status(500)

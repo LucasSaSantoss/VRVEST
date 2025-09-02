@@ -21,7 +21,7 @@ model User {
   password String @db.VarChar(100)  
   sector  String @db.VarChar(100) 
   position String @db.VarChar(100) 
-  Level Int @default(1)
+  level Int @default(1)
 }
 
 
@@ -30,10 +30,9 @@ model Employee {
   name    String @db.VarChar(100) 
   cpf     String @unique @db.VarChar(11)  
   email   String @unique @db.VarChar(100)   
-  password  String @db.VarChar(25) 
   sector  String @db.VarChar(100) 
   position String @db.VarChar(100) 
-  numPend  Int     @default(0)
+  numPend  Int     @default(1)
   cadUserID Int 
   cadUserName String @db.VarChar(100) 
   modality Int @default(1)

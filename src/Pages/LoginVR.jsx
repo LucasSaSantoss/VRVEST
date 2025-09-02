@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginUsuario } from "../services/api"; // <- importa do seu arquivo axios.js (ajuste o caminho certo!)
+import { loginUsuario } from "../services/api"; 
 
 export default function LoginVR() {
   const [email, setEmail] = useState("");
@@ -11,10 +11,10 @@ export default function LoginVR() {
     setError("");
 
     const res = await loginUsuario({ email, password });
+   
 
     if (res.success) {
       localStorage.setItem("usuario", JSON.stringify(res.user));
-
       window.location.href = "/dashboard";
     } else {
       setError(res.message);
@@ -23,16 +23,29 @@ export default function LoginVR() {
 
   return (
     <div className="h-screen w-screen font-sans overflow-hidden flex">
-      {/* lado esquerdo */}
       <div className="w-[65%] bg-white flex flex-col justify-between p-6">
-        {/* ... o resto do seu layout ... */}
+        <div className="flex justify-between items-start">
+          <div className="h-32 w-90 flex flex-col items-start mt-10">
+            <div className="flex items-center">
+              <span className="flex justify-center items-center border-2 rounded-2xl text-4xl px-1 py-0.5 font-bold h-14 w-20">VR</span>
+              <p className="text-7xl pl-2">VEST</p>
+            </div>
+            <div className="mt-6">
+              <h1 className="text-2xl font-bold text-gray-800">Sistema de Gestão de Vestes</h1>
+              <p className="text-gray-600 mt-2 uppercase">Versão de Lançamento</p>
+            </div>
+          </div>
+          <div className="h-50 w-50 flex items-center justify-center">
+            <img className="imgViva w-[100%] mt-10" src="https://vrdocs.hmas.com.br/images/Logo_Viva-Rio.png" alt="Logo Viva-Rio" />
+          </div>
+        </div>
       </div>
 
-      {/* lado direito */}
       <div className="w-[35%] bg-[#2faed4] flex flex-col items-center text-white p-8">
-        {/* ... imagem ... */}
-
-        <form className="w-full max-w-md mt-16 flex flex-col gap-4" onSubmit={handleLogin}>
+        <div className="w-[70%] mt-10 flex items-center justify-center">
+          <img className="w-[30vw] mr-12" src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png" alt="VR Vest Image" />
+        </div>
+<form className="w-full max-w-md mt-16 flex flex-col gap-4" onSubmit={handleLogin}>
           <div className="flex flex-col gap-2">
             <label htmlFor="email" className="text-sm">Email</label>
             <input
