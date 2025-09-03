@@ -4,7 +4,7 @@ import LeitorQrCode from "../Components/LeitorQrCode";
 export default function QRCode() {
   return (
     <>
-        <section className="flex flex-row bg-[#2faed4] h-[35vh] items-center place-content-between">
+        <section className="flex flex-row bg-[#2faed4] h-[30vh] items-center place-content-between">
           <HeaderQRCode />
           <img
             className="w-[23vw] h-[20vh] mr-10"

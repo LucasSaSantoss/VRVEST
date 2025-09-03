@@ -32,10 +32,10 @@ model Employee {
   email   String @unique @db.VarChar(100)   
   sector  String @db.VarChar(100) 
   position String @db.VarChar(100) 
-  numPend  Int     @default(1)
+  numPend  Int     @default(0)
   cadUserID Int 
   cadUserName String @db.VarChar(100) 
-  modality Int @default(1)
+  modality String @db.VarChar(5)
 }
 
 model Pendency {
@@ -46,5 +46,5 @@ model Pendency {
   userName String @db.VarChar(100) 
   date DateTime 
   status Int @default(1)
-  kitSize Int @default(1)
+  kitSize String @db.VarChar(5)
 }

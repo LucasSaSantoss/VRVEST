@@ -24,14 +24,14 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const usuario = localStorage.getItem("usuario");
-    if (!usuario) navigate("/");
-  }, [navigate]);
+  const token = localStorage.getItem("token");
+  if (!token) navigate("/");
+}, [navigate]);
 
-  const handleLogoff = () => {
-    localStorage.removeItem("usuario");
-    navigate("/");
-  };
+const handleLogoff = () => {
+  localStorage.removeItem("token");
+  navigate("/");
+};
 
   const pages = {
     home: <HomeVRVest />,

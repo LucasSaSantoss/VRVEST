@@ -1,85 +1,115 @@
-import React, { useState } from "react";
-import { verificaCpf } from "../services/api";
+import React, { useState, useEffect } from "react";
+import { registrarKit, getOpenPendencies } from "../services/api";
 
 function LeitorQrCode() {
   const [cpf, setCpf] = useState("");
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [modalKit, setModalKit] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [pendPopupMessage, setPendPopupMessage] = useState("");
+  const [showPendPopup, setShowPendPopup] = useState(false);
 
-  function capturarTecla(event) {
-    const teclaEscolhida = event.key;
+  // const token = localStorage.getItem("token");
 
-    if (["1", "2", "3"].includes(teclaEscolhida)) {
-      return teclaEscolhida;
-    } else {
-      return null;
-    }
-  }
-
-  document.addEventListener("keydown", (event) => {
-    const resultado = capturarTecla(event);
-    if (resultado) {
-      return "1";
-    }
-  });
-
-  const tamanhoKit = (valor) => {
-    setModalKit(valor);
-    setShowModal(false);
-    setCpf("");
-    console.log(valor);
-  };
-
-  const validateDigits = () => {
+  // Valida CPF antes de abrir o modal
+  const validateCpf = () => {
     const regex = /^\d{11}$/;
     if (!regex.test(cpf)) {
       setError("Digite um CPF válido com exatamente 11 números.");
-      setShowModal(false);
-      setCpf("");
-    } else {
-      setError("");
-      setShowModal(true);
+      return false;
+    }
+    setError("");
+    return true;
+  };
+
+  useEffect(() => {
+    const handleKeyPress = (e) => {
+      if (!showModal) return;
+      switch (e.key) {
+        case "1":
+          handleKitSelection("P");
+          break;
+        case "2":
+          handleKitSelection("M");
+          break;
+        case "3":
+          handleKitSelection("G");
+          break;
+        default:
+          setShowModal(false);
+          break;
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => {
+      window.removeEventListener("keydown", handleKeyPress);
+    };
+  }, [showModal, cpf]);
+
+  // Abre modal se o CPF estiver válido
+  const handleCpfEnter = async (e) => {
+    if (e.key === "Enter" && validateCpf() && !showModal) {
+      try {
+        // Consulta pendências abertas
+        const pendData = await getOpenPendencies({ cpf });
+        const valorKit = 50;
+        const valorTotalKits = pendData.total * valorKit;
+
+        if (pendData.success && pendData.total > 0) {
+          const infoPend = pendData.list.map((p) => (
+            <div key={p.id}>
+              {" "}
+              {new Date(p.date).toLocaleDateString()} - Tamanho do Kit:{" "}
+              {p.kitSize} - {" "} Valor:{" "} {valorKit}
+            </div>
+          ));
+
+          setPendPopupMessage(
+            <div>
+              <div>
+                Este funcionário possui {pendData.total} pendência(s) em aberto:
+              </div>
+              {infoPend}
+              <div>---------------------------------------------------------------</div>
+              <div>Total das pendências: {valorTotalKits}</div>
+            </div>
+          );
+          setShowPendPopup(true);
+
+          // Oculta popup após 5 segundos e abre modal
+          setTimeout(() => {
+            setShowPendPopup(false);
+            setShowModal(true);
+          }, 3000);
+        } else {
+          setShowModal(true);
+        }
+      } catch (err) {
+        console.error(err);
+        setError("Erro ao verificar pendências.");
+      }
     }
   };
 
-  const handleKeyDown = (e) => {
-  if (e.key === "Enter") {
-    if (showModal) {
-      setShowModal(false);
-    } else {
-      const regex = /^\d{11}$/;
-      if (regex.test(cpf)) {
-        setError("");
-        setShowModal(true);
-        handleCpfValidation(e);
-      } else {
-        setError("Digite um CPF válido com exatamente 11 números.");
-        setShowModal(false);
-        setCpf("");
-      }
-    }
-  }
-};
-
-  const handleCpfValidation = async (e) => {
-    e.preventDefault();
-    setError("");
-
+  const handleKitSelection = async (kitSize) => {
     try {
-      const response = await verificaCpf({ cpf });
-      console.log('teste2')
+      const response = await registrarKit({ cpf, kitSize });
+      if (response.success) {
+        setPopupMessage(`Saída de kit registrada! Tamanho: ${kitSize}`);
+        setShowPopup(true);
+        setCpf("");
+        setShowModal(false);
 
-      const data = response.data || response;
-
-      if (data.success) {
-        console.log('Deu certo')
+        // Oculta popup após 3 segundos
+        setTimeout(() => setShowPopup(false), 3000);
       } else {
-        setError("Deu errado.");
+        setError(response.message || "Erro ao registrar o kit.");
       }
     } catch (err) {
       console.error(err);
-      setError("Erro ao conectar ao servidor.");
+      setError(err.message || "Erro no servidor.");
     }
   };
 
@@ -97,57 +127,76 @@ function LeitorQrCode() {
         maxLength={11}
         value={cpf}
         onChange={(e) => setCpf(e.target.value)}
-        onBlur={validateDigits}
-        onKeyDown={handleKeyDown}
+        onKeyDown={handleCpfEnter}
         className="mt-4 p-3 border-2 border-[#2faed4] rounded-[25px] w-[300px] text-lg"
       />
       {error && <p className="text-red-500 mt-2">{error}</p>}
+
+      {/* Popup de pendências */}
+      {showPendPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+            {pendPopupMessage}
+          </div>
+        </div>
+      )}
+
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-transparent bg-opacity-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg ">
-            <h2 className="text-xl font-bold mb-8">
-              Selecione o KIT que será retirado.
+        <div className="fixed inset-0 flex items-center justify-center  bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
+            <h2 className="text-xl font-bold mb-4 text-center">
+              Selecione o KIT que será retirado
             </h2>
-            <div className="flex flex-row justify-center mb-4 gap-6">
-              <div className="flex flex-col items-center">
+            <div className="flex justify-center gap-6 mb-4">
+              {["P", "M", "G"].map((kit) => (
                 <button
-                  className="border-2 w-15 h-15 rounded-md whitesmoke shadow-xl/10 "
-                  onClick={() => tamanhoKit("P")}
-                  onKeyDown={(e) => setModalKit(e.target.value)}
+                  key={kit}
+                  onClick={() => handleKitSelection(kit)}
+                  className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
                 >
-                  P
+                  {kit}
                 </button>
-                <label className="">1</label>
-              </div>
-              <div className="flex flex-col items-center ">
-                <button
-                  className="border-2 w-15 h-15 rounded-md whitesmoke shadow-xl/10 "
-                  onClick={() => tamanhoKit("M")}
-                >
-                  M
-                </button>
-                <label className="">2</label>
-              </div>
-              <div className="flex flex-col items-center">
-                <button
-                  className="border-2 w-15 h-15 rounded-md whitesmoke shadow-xl/10 "
-                  onClick={() => tamanhoKit("G")}
-                  onKeyDown={() => tamanhoKit("G")}
-                >
-                  G
-                </button>
-                <label className="">3</label>
-              </div>
+              ))}
             </div>
             <button
               onClick={() => setShowModal(false)}
-              className="bg-blue-500 text-white px-4 py-2 rounded mt-3"
+              className="bg-blue-500 text-white px-4 py-2 rounded w-full"
             >
               Fechar
             </button>
           </div>
         </div>
       )}
+      {showPopup && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+            {popupMessage}
+          </div>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes fadeInOut {
+          0% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          90% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+        }
+        .animate-fadeInOut {
+          animation: fadeInOut 3s forwards;
+        }
+      `}</style>
     </div>
   );
 }

@@ -14,6 +14,12 @@ export default function UserForm() {
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info",
+  });
+
   const handleCadastro = async (e) => {
     e.preventDefault();
 
@@ -27,6 +33,15 @@ export default function UserForm() {
     });
     setMensagem(data.message);
 
+    setPopup({
+      mostrar: true,
+      mensagem: data.message,
+      tipo: data.success ? "success" : "error",
+    });
+
+    // Fecha o popup automaticamente depois de 3 segundos
+    setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
+
     if (data.success) {
       setName("");
       setEmail("");
@@ -39,7 +54,7 @@ export default function UserForm() {
 
   return (
     <div>
-      <section className="flex flex-row bg-[#2faed4] h-[35vh] items-center place-content-between">
+      <section className="flex flex-row bg-[#2faed4] h-[30vh] items-center place-content-between">
         <div className="flex flex-col">
           <div className="flex items-center ml-8">
             <span className="flex justify-center items-center border-2 rounded-2xl text-4xl px-1 py-0.5 font-bold h-18 w-20">
@@ -112,9 +127,7 @@ export default function UserForm() {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-                  
                 />
-                
               </div>
 
               <div className="flex-1 min-w-[450px]">
@@ -222,11 +235,18 @@ export default function UserForm() {
               >
                 Cadastrar
               </button>
-             <alert>
-              {mensagem && <p className="mt-3 text-center">{mensagem}</p>}
-              </alert>
             </div>
+            {/* Popup de mensagem */}
           </form>
+          {/* Popup de mensagem */}
+          {popup.mostrar && (
+            <div
+              className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+            >
+              {popup.mensagem}
+            </div>
+          )}
         </div>
       </div>
     </div>
