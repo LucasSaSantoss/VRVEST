@@ -114,7 +114,7 @@ function LeitorQrCode() {
   };
 
   return (
-    <div className="flex flex-col ml-[30vw] w-100 items-center justify-center mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20">
+    <div className="flex flex-col w-[400px] mx-auto w-100 items-center justify-center mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20">
       <label htmlFor="qrCode" className="text-2x1 font-large ">
         QR Code:
       </label>

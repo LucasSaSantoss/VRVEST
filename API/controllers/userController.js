@@ -20,7 +20,7 @@ export const loginUser = async (req, res) => {
     if (!validPassword) {
       return res.status(401).json({ success: false, message: "Email ou senha inválidos" });
     }
-
+    
     // Gerar JWT
     const token = jwt.sign(
       {

@@ -8,7 +8,7 @@ import { authMiddleware } from "./middlewares/authMiddleware.js";
 const app = express();
 app.use(cors());
 app.use(express.json());
-app.use("/", userRoutes);
+app.use("/", authMiddleware, userRoutes);
 app.use("/empl", authMiddleware, employeeRoutes);
 
 // app.use("/pend", pendencyRoutes);
