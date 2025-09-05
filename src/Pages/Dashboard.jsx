@@ -1,9 +1,13 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import lockIcon from "../assets/lock.png";
-import unlockIcon from "../assets/unlock.png";
-import qrcodeIcon from "../assets/qrcodeFind.svg";
+import lockIcon from "../assets/lockIcon2.png";
+import unlockIcon from "../assets/unlock2.png";
+import binocularsIcon from "../assets/binoc.png";
+import home2Icon from "../assets/home2.png";
 import { jwtDecode } from "jwt-decode";
+import funcIcon from "../assets/funcIcon.png";
+import usersIcon from "../assets/usersIcon.png";
+import listIcon from "../assets/listIcon.png";
 
 import HomeVRVest from "../Components/homeVRVest";
 import RelatoriosVRVest from "../Components/RelatoriosVRVest";
@@ -11,7 +15,7 @@ import QrCodeVRVest from "../Components/QrCodeVRVest";
 import FormVRVest from "../Components/FormFuncionarios/FormFuncionariosPage";
 import UserForm from "../Components/FormUsuarios/UserFormPage";
 import GeraQRCode from "../Components/GeradorQRCode/GeraQRCode";
-import TabelaUsuarios from "../Components/FormFuncionarios/FormFuncionariosTeste";
+import TabelaUsuarios from "../Components/FormUsuarios/FormUsuariosTeste";
 import HeaderQRCode from "../Components/HeaderQRCode";
 
 export default function Dashboard() {
@@ -79,14 +83,13 @@ export default function Dashboard() {
               ${hovered ? "opacity-100" : "opacity-0 absolute"}`}
             ></span>
             <button
-              className="text-sm bg-gray-200 rounded hover:bg-gray-300"
+              className="text-sm hover:opacity-70"
               onClick={() => setLocked(!locked)}
             >
               <img
                 src={locked ? lockIcon : unlockIcon}
                 alt={locked ? "Travado" : "Destravado"}
-                className={` ${hovered ? "h-6" : "h-6 justify-center items-center ml-0"}`}
-                style={{ backgroundColor: "rgb(23, 110, 150)" }}
+                className={` ${hovered ? "h-10 bg-white p-1 rounded-full" : "h-8 justify-center items-center ml-0 bg-white p-1 rounded-full"} `}
               />
             </button>
           </div>
@@ -94,11 +97,13 @@ export default function Dashboard() {
           {/* Menu */}
           <ul className="p-3 space-y-3 h-[60vh] ">
             <li
-              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+              className={`flex items-center cursor-pointer px-3 py-3 rounded transition-colors duration-200
               ${selected === "home" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("home")}
             >
-              <span className="text-xl">🏠</span>
+              <span className="text-xl bg-white rounded-full">
+                <img src={home2Icon} alt="Home" />
+              </span>
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                 Home
               </span>
@@ -119,7 +124,7 @@ export default function Dashboard() {
 
             <li
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}  
+              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("qrcode")}
             >
               <span className="text-xl">⚙️</span>
@@ -134,7 +139,9 @@ export default function Dashboard() {
                 ${selected === "formulario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("formulario")}
               >
-                <span className="text-xl">📝</span>
+                <span className="text-xl bg-white p-1.5 rounded-full">
+                  <img src={funcIcon} alt="Funcionários" />
+                </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Cadastro de Funcionários
                 </span>
@@ -143,12 +150,14 @@ export default function Dashboard() {
 
             {levelUser >= 2 && (
               <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200 p-1
                 ${selected === "usuario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("usuario")}
               >
-                <span className="text-xl">📝</span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                <span className="text-xl bg-white p-1 rounded-full ">
+                  <img src={usersIcon} alt="Usuários" />
+                </span>
+                <span className={`ml-1 ${hovered ? "opacity-100 p-2 " : "hidden  "}`}>
                   Cadastro de usuários
                 </span>
               </li>
@@ -160,8 +169,10 @@ export default function Dashboard() {
                 ${selected === "tabela" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("tabela")}
               >
-                <span className="text-xl">📝</span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                <span className="text-xl bg-white p-0.5 rounded-full">
+                  <img src={listIcon} alt="Tabela" />
+                </span>
+                <span className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}>
                   Tabela de usuários
                 </span>
               </li>
@@ -183,13 +194,13 @@ export default function Dashboard() {
 
           {/* Logoff */}
           <div
-            className="p-4 mt-[15vh] border-t flex items-center cursor-pointer hover:text-red-500"
+            className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"
             onClick={handleLogoff}
           >
             <span className="text-xl">🚪</span>
             <span
               className={`ml-3 transition-all duration-300
-              ${hovered ? "opacity-100" : "hidden"}`}
+              ${hovered ? "opacity-100" : "hidden "}`}
             >
               Log Off
             </span>

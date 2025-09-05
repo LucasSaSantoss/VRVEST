@@ -10,8 +10,6 @@ function LeitorQrCode() {
   const [pendPopupMessage, setPendPopupMessage] = useState("");
   const [showPendPopup, setShowPendPopup] = useState(false);
 
-  // const token = localStorage.getItem("token");
-
   // Valida CPF antes de abrir o modal
   const validateCpf = () => {
     const regex = /^\d{11}$/;

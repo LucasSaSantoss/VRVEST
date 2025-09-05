@@ -1,18 +1,20 @@
 import { useEffect, useState } from "react";
 import editIcon from "../../assets/editar1.png";
 import removIcon from "../../assets/remover1.png";
-import HeaderQRCode from "../HeaderQRCode";
+import FormUsu from "./FormUsu";
 
 export default function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
+  const [showModal, setShowModal] = useState(false);
+
   const registrosPorPagina = 10; // Registros por página
   const indiceUltimoRegistro = paginaAtual * registrosPorPagina;
   const indicePrimeiroRegistro = indiceUltimoRegistro - registrosPorPagina;
 
-  if(indiceUltimoRegistro === 0) {
-    setPaginaAtual(1)
+  if (indiceUltimoRegistro === 0) {
+    setPaginaAtual(1);
   }
 
   useEffect(() => {
@@ -50,9 +52,35 @@ export default function TabelaUsuarios() {
         <div className="flex flex-col items-start mb-4">
           <h1 className="text-4xl font-bold">Usuários Cadastrados</h1>
           <div className="justify-between w-full flex mt-4">
-            <button className="bg-green-700 text-white px-4 py-2 rounded">
+            <button
+              className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
+              onClick={() => setShowModal(true)}
+            >
               Novo Usuário
             </button>
+            {showModal && (
+              <div
+                className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50
+                     transition-opacity duration-300 ease-out"
+              >
+                <div
+                  className={`bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto transform 
+                        transition-all duration-300 ease-out 
+                        ${showModal ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+                >
+                  <div className="flex justify-between items-center mb-4">
+                    <h2 className="text-2xl font-bold">Cadastro de Usuário</h2>
+                    <button
+                      className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
+                      onClick={() => setShowModal(false)}
+                    >
+                      ✖
+                    </button>
+                  </div>
+                  <FormUsu />
+                </div>
+              </div>
+            )}
             <input
               type="text"
               placeholder="Buscar usuário..."
