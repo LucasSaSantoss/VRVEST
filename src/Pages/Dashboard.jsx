@@ -12,6 +12,7 @@ import FormVRVest from "../Components/FormFuncionarios/FormFuncionariosPage";
 import UserForm from "../Components/FormUsuarios/UserFormPage";
 import GeraQRCode from "../Components/GeradorQRCode/GeraQRCode";
 import TabelaUsuarios from "../Components/FormFuncionarios/FormFuncionariosTeste";
+import HeaderQRCode from "../Components/HeaderQRCode";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -56,152 +57,150 @@ export default function Dashboard() {
     formulario: <FormVRVest />,
     usuario: <UserForm />,
     gerarqrcode: <GeraQRCode />,
-    tabela:<TabelaUsuarios/>
+    tabela: <TabelaUsuarios />,
   };
 
   return (
-    <div className="flex w-full h-screen bg-gray-100">
-      <aside
-        className={`bg-[#2faed4] shadow-lg transition-all duration-300 text-white
-          ${hovered || locked ? "w-64" : "w-16"}`}
-        onMouseEnter={handleMouseEnter}
-        onMouseLeave={handleMouseLeave}
-      >
-        <div className="p-4 flex justify-between items-center border-b">
-          <span
-            className={`font-bold text-xl transition-opacity duration-300 
-              ${hovered ? "opacity-100" : "opacity-0 absolute"}`}
-          >
-            Dashboard
-          </span>
-          <button
-            className="text-sm bg-gray-200 rounded hover:bg-gray-300"
-            onClick={() => setLocked(!locked)}
-          >
-            <img
-              src={locked ? lockIcon : unlockIcon}
-              alt={locked ? "Travado" : "Destravado"}
-              className={`bg-[#2faed4] ${hovered ? "h-6" : "h-6 justify-center items-center ml-0"}`}
-            />
-          </button>
-        </div>
-
-        {/* Menu */}
-        <ul className="p-3 space-y-3">
-          <li
-            className="flex items-center cursor-pointer hover:text-blue-500"
-            onClick={() => setSelected("home")}
-          >
-            <span className="text-xl">🏠</span>
-            <span
-              className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-            >
-              Home
-            </span>
-          </li>
-
-          {levelUser >= 2 && (
-            <li
-              className="flex items-center cursor-pointer hover:text-blue-500"
-              onClick={() => setSelected("relatorios")}
-            >
-              <span className="text-xl">📊</span>
-              <span
-                className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-              >
-                Relatórios
-              </span>
-            </li>
-          )}
-
-          <li
-            className="flex items-center cursor-pointer hover:text-blue-500"
-            onClick={() => setSelected("qrcode")}
-          >
-            <span className="text-xl">⚙️</span>
-            <span
-              className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-            >
-              QR Code
-            </span>
-          </li>
-
-          {levelUser >= 2 && (
-            <li
-              className="flex items-center cursor-pointer hover:text-blue-500"
-              onClick={() => setSelected("formulario")}
-            >
-              <span className="text-xl">📝</span>
-              <span
-                className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-              >
-                Cadastro de Funcionários
-              </span>
-            </li>
-          )}
-
-          {levelUser >= 2 && (
-            <li
-              className="flex items-center cursor-pointer hover:text-blue-500"
-              onClick={() => setSelected("usuario")}
-            >
-              <span className="text-xl">📝</span>
-              <span
-                className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-              >
-                Cadastro de usuários
-              </span>
-            </li>
-          )}
-
-           {levelUser >= 2 && (
-            <li
-              className="flex items-center cursor-pointer hover:text-blue-500"
-              onClick={() => setSelected("tabela")}
-            >
-              <span className="text-xl">📝</span>
-              <span
-                className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-              >
-                Tabela de usuários
-              </span>
-            </li>
-          )}
-
-          {levelUser >= 2 && (
-            <li
-              className="flex items-center cursor-pointer hover:text-blue-500"
-              onClick={() => setSelected("gerarqrcode")}
-            >
-              <span className="text-xl">📝</span>
-              <span
-                className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-              >
-                Gerador de QRCode
-              </span>
-            </li>
-          )}
-        </ul>
-
-        {/* Logoff */}
-        <div
-          className="p-4 mt-[50vh] border-t flex items-center cursor-pointer hover:text-red-500"
-          onClick={handleLogoff}
+    <>
+      <div>
+        <HeaderQRCode />
+      </div>
+      <div className="flex w-full h-screen bg-gray-100">
+        <aside
+          className={`shadow-lg transition-all duration-300  text-white hover:shadow-xl flex flex-col justify-between items-center
+          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[240px]`}
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          style={{ backgroundColor: "rgb(23, 110, 150)" }}
         >
-          <span className="text-xl">🚪</span>
-          <span
-            className={`ml-3 transition-all duration-300
-              ${hovered ? "opacity-100" : "hidden"}`}
-          >
-            Log Off
-          </span>
-        </div>
-      </aside>
+          <div className="p-4 flex justify-between items-center border-b">
+            <span
+              className={`font-bold text-xl transition-opacity duration-300 
+              ${hovered ? "opacity-100" : "opacity-0 absolute"}`}
+            ></span>
+            <button
+              className="text-sm bg-gray-200 rounded hover:bg-gray-300"
+              onClick={() => setLocked(!locked)}
+            >
+              <img
+                src={locked ? lockIcon : unlockIcon}
+                alt={locked ? "Travado" : "Destravado"}
+                className={` ${hovered ? "h-6" : "h-6 justify-center items-center ml-0"}`}
+                style={{ backgroundColor: "rgb(23, 110, 150)" }}
+              />
+            </button>
+          </div>
 
-      {/* Main */}
-      <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto">
-        {pages[selected]}
-      </main>
-    </div>
+          {/* Menu */}
+          <ul className="p-3 space-y-3 h-[60vh] ">
+            <li
+              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+              ${selected === "home" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+              onClick={() => setSelected("home")}
+            >
+              <span className="text-xl">🏠</span>
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                Home
+              </span>
+            </li>
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("relatorios")}
+              >
+                <span className="text-xl">📊</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Relatórios
+                </span>
+              </li>
+            )}
+
+            <li
+              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}  
+              onClick={() => setSelected("qrcode")}
+            >
+              <span className="text-xl">⚙️</span>
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                QR Code
+              </span>
+            </li>
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "formulario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("formulario")}
+              >
+                <span className="text-xl">📝</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Cadastro de Funcionários
+                </span>
+              </li>
+            )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "usuario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("usuario")}
+              >
+                <span className="text-xl">📝</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Cadastro de usuários
+                </span>
+              </li>
+            )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "tabela" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("tabela")}
+              >
+                <span className="text-xl">📝</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Tabela de usuários
+                </span>
+              </li>
+            )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "gerarqrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("gerarqrcode")}
+              >
+                <span className="text-xl">📝</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Gerador de QRCode
+                </span>
+              </li>
+            )}
+          </ul>
+
+          {/* Logoff */}
+          <div
+            className="p-4 mt-[15vh] border-t flex items-center cursor-pointer hover:text-red-500"
+            onClick={handleLogoff}
+          >
+            <span className="text-xl">🚪</span>
+            <span
+              className={`ml-3 transition-all duration-300
+              ${hovered ? "opacity-100" : "hidden"}`}
+            >
+              Log Off
+            </span>
+          </div>
+        </aside>
+
+        {/* Main */}
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[220px]">
+          {pages[selected]}
+        </main>
+      </div>
+    </>
   );
 }

@@ -16,8 +16,8 @@ export default function LoginVR() {
     localStorage.setItem("token", res.token);
     window.location.href = "/dashboard";
   } else {
+    console.log(res.message);
     setError(res.message);
-    console.log(email,password,res.token)
   }
 };
   return (

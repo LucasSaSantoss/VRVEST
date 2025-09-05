@@ -146,6 +146,7 @@ export default function FormUsu() {
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
+              <option value="">Selecione o setor</option>
               <option value="ROUPARIA">ROUPARIA</option>
             </select>
           </div>
@@ -162,12 +163,13 @@ export default function FormUsu() {
               required
               className="w-[20] p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
+              <option value="">Selecione uma opção</option>
               <option value="1">OPERADOR</option>
               <option value="2">SUPERVISOR</option>
             </select>
           </div>
 
-          {/* Botão */}
+        
           <div className="w-full flex justify-center">
             <button
               type="submit"
@@ -176,9 +178,9 @@ export default function FormUsu() {
               Cadastrar
             </button>
           </div>
-          {/* Popup de mensagem */}
+         
         </form>
-        {/* Popup de mensagem */}
+       
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
