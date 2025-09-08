@@ -2,12 +2,14 @@ import { useEffect, useState } from "react";
 import editIcon from "../../assets/editar1.png";
 import removIcon from "../../assets/remover1.png";
 import FormUsu from "./FormUsu";
+import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
 
 export default function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [showModal, setShowModal] = useState(false);
+  const [showModalCracha, setShowModalCracha] = useState(false);
 
   const registrosPorPagina = 10; // Registros por página
   const indiceUltimoRegistro = paginaAtual * registrosPorPagina;
@@ -92,28 +94,34 @@ export default function TabelaUsuarios() {
           </div>
         </div>
         <table className=" min-w-full border-collapse items-center justify-center border-b border-gray-300">
-          <thead class>
+          <thead className="">
             <tr className="text-center odd:bg-gray-100 border-t border-gray-300 text-xl font-bold">
-              <th className="py-2 px-4">Ações</th>
               <th className="py-2 px-4">Nome</th>
               <th className="py-2 px-4">Email</th>
               <th className="py-2 px-4">Setor</th>
               <th className="py-2 px-4">Cargo</th>
               <th className="py-2 px-4">Ativo</th>
+              <th className="py-2 px-4">Ações</th>
             </tr>
           </thead>
           <tbody>
             {usuariosFiltrados.map((user) => (
               <tr
                 key={user.id}
-                className="text-center hover:bg-blue-300 transition odd:bg-white even:bg-gray-100 "
+                className="text-center text-md hover:bg-blue-100 transition odd:bg-white even:bg-gray-100 "
               >
+                {/* Outras colunas */}
+                <td className="py-2 px-4">{user.name}</td>
+                <td className="py-2 px-4">{user.email}</td>
+                <td className="py-2 px-4">{user.sector}</td>
+                <td className="py-2 px-4">{user.position}</td>
+                <td className="py-2 px-4">{user.active ? "Sim" : "Não"}</td>
                 <td className="py-2 px-4">
                   <div className="flex justify-center items-center gap-3">
                     {/* Botão Editar */}
                     <button
                       onClick={() => handleEditar(user.id)}
-                      className="cursor-pointer p-3 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center"
                     >
                       <img
                         src={editIcon}
@@ -126,7 +134,7 @@ export default function TabelaUsuarios() {
                     {/* Botão Remover */}
                     <button
                       onClick={() => handleExcluir(user.id)}
-                      className="cursor-pointer p-3 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center"
                     >
                       <img
                         src={removIcon}
@@ -135,15 +143,45 @@ export default function TabelaUsuarios() {
                         className="h-6 pointer-events-none"
                       />
                     </button>
+
+                    <button
+                      onClick={() => setShowModalCracha(true)}
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-green-600 hover:bg-green-300 "
+                    >
+                      <img
+                        src={removIcon}
+                        tooltip="Remover usuário"
+                        alt="Remover"
+                        className="h-6 pointer-events-none"
+                      />
+                    </button>
+                    {showModalCracha && (
+                      <div className="fixed inset-0 flex items-center justify-center  z-50 transition-opacity duration-300 ease-out ">
+                        <div
+                          className={`bg-white p-6 rounded-lg shadow-lg w-[40vw] max-h-[90vh] overflow-y-auto transform 
+                        transition-all duration-300 ease-out 
+                        ${showModalCracha ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+                        >
+                          <div className="flex justify-end items-center ">
+                            <button
+                              className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
+                              onClick={() => setShowModalCracha(false)}
+                            >
+                              ✖
+                            </button>
+                          </div>
+                          <ImpressaoCracha cpf={user.cpf} nome={user.name} />
+                          <button
+                            className="mt-5 bg-green-500 text-white rounded-xl w-40 h-13 border-2 rounded font-bold text-md hover:text-green-700 hover:scale-110 transition duration-200"
+                            onClick={() => setShowModalCracha(false)}
+                          >
+                            Imprimir
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </td>
-
-                {/* Outras colunas */}
-                <td className="py-2 px-4">{user.name}</td>
-                <td className="py-2 px-4">{user.email}</td>
-                <td className="py-2 px-4">{user.sector}</td>
-                <td className="py-2 px-4">{user.position}</td>
-                <td className="py-2 px-4">{user.active ? "Sim" : "Não"}</td>
               </tr>
             ))}
           </tbody>

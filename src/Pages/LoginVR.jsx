@@ -7,33 +7,32 @@ export default function LoginVR() {
   const [error, setError] = useState("");
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError("");
+    e.preventDefault();
+    setError("");
 
-  const res = await loginUsuario({ email, password });
-  
-  if (res.success) {
-    localStorage.setItem("token", res.token);
-    window.location.href = "/dashboard";
-  } else {
-    console.log(res.message);
-    setError(res.message);
-  }
-};
+    const res = await loginUsuario({ email, password });
+
+    if (res.success) {
+      localStorage.setItem("token", res.token);
+      window.location.href = "/dashboard";
+    } else {
+      console.log(res.message);
+      setError(res.message);
+    }
+  };
   return (
     <div className="h-screen w-screen font-sans overflow-hidden flex">
       <div className="w-[65%] bg-white flex flex-col justify-between p-6">
         <div className="flex justify-between items-start">
-          <div className="h-32 w-90 flex flex-col items-start mt-10">
+          <div className="h-32 w-90 flex-1 flex-col items-start mt-10">
             <div className="flex items-center">
-              <span className="flex justify-center items-center border-2 rounded-2xl text-4xl px-1 py-0.5 font-bold h-14 w-20">
-                VR
+              <span className="text-6xl px-1 py-0.5 font-bold whitespace-nowrap">
+                e - VESTURÁRIO
               </span>
-              <p className="text-7xl pl-2">VEST</p>
             </div>
-            <div className="mt-6">
+            <div className="mt-6 ">
               <h1 className="text-2xl font-bold text-gray-800">
-                Sistema de Gestão de Vestes
+                Sistema de Gerenciamento de Vestuário
               </h1>
               <p className="text-gray-600 mt-2 uppercase">
                 Versão de Lançamento

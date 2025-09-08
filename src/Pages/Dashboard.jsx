@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import lockIcon from "../assets/lockIcon2.png";
 import unlockIcon from "../assets/unlock2.png";
-import binocularsIcon from "../assets/binoc.png";
 import home2Icon from "../assets/home2.png";
 import { jwtDecode } from "jwt-decode";
 import funcIcon from "../assets/funcIcon.png";
 import usersIcon from "../assets/usersIcon.png";
 import listIcon from "../assets/listIcon.png";
+import {
+  LuLayoutGrid,
+  LuClipboardList,
+  LuQrCode,
+  LuUserCog,
+} from "react-icons/lu";
+import { FaHospitalUser, FaArrowRight, FaArrowLeft } from "react-icons/fa";
+import { CgLogOff } from "react-icons/cg";
 
 import HomeVRVest from "../Components/homeVRVest";
 import RelatoriosVRVest from "../Components/RelatoriosVRVest";
@@ -15,8 +22,10 @@ import QrCodeVRVest from "../Components/QrCodeVRVest";
 import FormVRVest from "../Components/FormFuncionarios/FormFuncionariosPage";
 import UserForm from "../Components/FormUsuarios/UserFormPage";
 import GeraQRCode from "../Components/GeradorQRCode/GeraQRCode";
-import TabelaUsuarios from "../Components/FormUsuarios/FormUsuariosTeste";
+import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
+// import ImpressaoCracha from "../Components/ImpCracha/ImpressaoCracha";
+import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionariosTeste";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -62,6 +71,7 @@ export default function Dashboard() {
     usuario: <UserForm />,
     gerarqrcode: <GeraQRCode />,
     tabela: <TabelaUsuarios />,
+    funcionarios: <TabelaFuncionarios />,
   };
 
   return (
@@ -83,26 +93,25 @@ export default function Dashboard() {
               ${hovered ? "opacity-100" : "opacity-0 absolute"}`}
             ></span>
             <button
-              className="text-sm hover:opacity-70"
+              className=" hover:opacity-70"
               onClick={() => setLocked(!locked)}
             >
-              <img
-                src={locked ? lockIcon : unlockIcon}
-                alt={locked ? "Travado" : "Destravado"}
-                className={` ${hovered ? "h-10 bg-white p-1 rounded-full" : "h-8 justify-center items-center ml-0 bg-white p-1 rounded-full"} `}
-              />
+              {locked ? <FaArrowLeft /> : <FaArrowRight />}
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                {locked ? "Ocultar menu lateral" : "Apresentar aba lateral"}
+              </span>
             </button>
           </div>
 
           {/* Menu */}
           <ul className="p-3 space-y-3 h-[60vh] ">
             <li
-              className={`flex items-center cursor-pointer px-3 py-3 rounded transition-colors duration-200
-              ${selected === "home" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+              ${selected === "home" ? "bg-white text-gray-800 rounded" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("home")}
             >
-              <span className="text-xl bg-white rounded-full">
-                <img src={home2Icon} alt="Home" />
+              <span className="text-xl  rounded-full">
+                <LuLayoutGrid />
               </span>
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                 Home
@@ -115,7 +124,9 @@ export default function Dashboard() {
                 ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("relatorios")}
               >
-                <span className="text-xl">📊</span>
+                <span className="text-xl">
+                  <LuClipboardList />
+                </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Relatórios
                 </span>
@@ -127,7 +138,9 @@ export default function Dashboard() {
               ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("qrcode")}
             >
-              <span className="text-xl">⚙️</span>
+              <span className="text-xl">
+                <LuQrCode />
+              </span>
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                 QR Code
               </span>
@@ -135,29 +148,14 @@ export default function Dashboard() {
 
             {levelUser >= 2 && (
               <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "formulario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("formulario")}
-              >
-                <span className="text-xl bg-white p-1.5 rounded-full">
-                  <img src={funcIcon} alt="Funcionários" />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Cadastro de Funcionários
-                </span>
-              </li>
-            )}
-
-            {levelUser >= 2 && (
-              <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200 p-1
+                className={`flex items-center cursor-pointer transition-colors duration-200 px-3 py-2 rounded
                 ${selected === "usuario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("usuario")}
               >
-                <span className="text-xl bg-white p-1 rounded-full ">
-                  <img src={usersIcon} alt="Usuários" />
+                <span className="text-xl  ">
+                  <LuUserCog />
                 </span>
-                <span className={`ml-1 ${hovered ? "opacity-100 p-2 " : "hidden  "}`}>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Cadastro de usuários
                 </span>
               </li>
@@ -169,16 +167,48 @@ export default function Dashboard() {
                 ${selected === "tabela" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("tabela")}
               >
-                <span className="text-xl bg-white p-0.5 rounded-full">
-                  <img src={listIcon} alt="Tabela" />
+                <span className="text-xl ">
+                  <LuUserCog />
                 </span>
-                <span className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}>
+                <span
+                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+                >
                   Tabela de usuários
                 </span>
               </li>
             )}
 
             {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "formulario" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("formulario")}
+              >
+                <span className="text-xl ">
+                  <FaHospitalUser />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Cadastro de Funcionários
+                </span>
+              </li>
+            )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("funcionarios")}
+              >
+                <span className="text-xl ">
+                  <FaHospitalUser />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Tabela Funcionarios
+                </span>
+              </li>
+            )}
+
+            {/* {levelUser >= 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "gerarqrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
@@ -189,7 +219,19 @@ export default function Dashboard() {
                   Gerador de QRCode
                 </span>
               </li>
-            )}
+            )} */}
+            {/* {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "cracha" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("cracha")}
+              >
+                <span className="text-xl">📝</span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Cracha
+                </span>
+              </li>
+            )} */}
           </ul>
 
           {/* Logoff */}
@@ -197,7 +239,7 @@ export default function Dashboard() {
             className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"
             onClick={handleLogoff}
           >
-            <span className="text-xl">🚪</span>
+            <span className="text-xl"><CgLogOff /></span>
             <span
               className={`ml-3 transition-all duration-300
               ${hovered ? "opacity-100" : "hidden "}`}
