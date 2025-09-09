@@ -3,6 +3,7 @@ import editIcon from "../../assets/editar1.png";
 import removIcon from "../../assets/remover1.png";
 import FormUsu from "./FormUsu";
 import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
+import { FaRegTrashAlt,FaRegEdit  } from "react-icons/fa";
 
 export default function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -121,40 +122,21 @@ export default function TabelaUsuarios() {
                     {/* Botão Editar */}
                     <button
                       onClick={() => handleEditar(user.id)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center hover:scale-110 transition duration-200"
                     >
-                      <img
-                        src={editIcon}
-                        tooltip="Editar usuário"
-                        alt="Editar"
-                        className="h-6 pointer-events-none"
-                      />
+                      <FaRegEdit className="h-6 w-6 text-gray-700 cursor-pointer "
+                       title="Editar usuário" />
                     </button>
 
                     {/* Botão Remover */}
                     <button
                       onClick={() => handleExcluir(user.id)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center hover:scale-110 transition duration-200"
                     >
-                      <img
-                        src={removIcon}
-                        tooltip="Remover usuário"
-                        alt="Remover"
-                        className="h-6 pointer-events-none"
-                      />
+                      <FaRegTrashAlt className="h-6 w-6 text-gray-700 cursor-pointer"
+                       title="Remover usuário" />
                     </button>
 
-                    <button
-                      onClick={() => setShowModalCracha(true)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-green-600 hover:bg-green-300 "
-                    >
-                      <img
-                        src={removIcon}
-                        tooltip="Remover usuário"
-                        alt="Remover"
-                        className="h-6 pointer-events-none"
-                      />
-                    </button>
                     {showModalCracha && (
                       <div className="fixed inset-0 flex items-center justify-center  z-50 transition-opacity duration-300 ease-out ">
                         <div

@@ -32,7 +32,7 @@ export const loginUser = async (req, res) => {
         level: user.level,
       },
       process.env.JWT_SECRET || "segredo_supersecreto", 
-      { expiresIn: "2h" } // expira em 2 horas
+      { expiresIn: "4h" } // expira em 4 horas
     );
 
     return res.status(200).json({

@@ -1,14 +1,13 @@
-import React from "react";
 import logoRio from "../../assets/LogoRio.png";
 import QrCodeGenerator from "../GeradorQRCode/GeradorQrCodes";
 
 export default function ImpressaoCracha({ cpf, nome }) {
   return (
     <div className="p-4">
-      <h2 className="text-2xl font-bold mb-4 text-center">
+      <h2 className="text-2xl font-bold mb-5 text-center text-white">
         Impressão de Crachá
       </h2>
-      <div className="flex justify-center h-[60vh]">
+      <div className="flex justify-center h-[65vh]">
         <section
           className="flex border-4 border-gray-300 rounded-lg p-1 w-100 h-150 flex flex-col 
           bg-white shadow-lg"
@@ -38,17 +37,18 @@ export default function ImpressaoCracha({ cpf, nome }) {
             </div>
           </div>
 
-          <section className="flex  justify-center items-center h-full">
-            <QrCodeGenerator />
+          <section className="flex  justify-center items-center h-[60%]">
+            <QrCodeGenerator cpf={cpf} />
           </section>
 
           <div className="flex  justify-center ">
             <img
-              className="w-[12vw] h-[20vh]"
+              className="w-[11vw] h-[20vh]"
               src={logoRio}
               alt="Logo Rio"
             />
           </div>
+          
         </section>
       </div>
     </div>

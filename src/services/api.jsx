@@ -39,6 +39,7 @@ export async function cadastrarFuncionario({
       message: "Funcionário cadastrado com sucesso!",
     };
   } catch (err) {
+    console.log("Erro ao criar funcionário:", err.response?.data || err.message);
     return {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",

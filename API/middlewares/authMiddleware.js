@@ -8,7 +8,7 @@
     const token = authHeader.split(" ")[1];
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "segredo_supersecreto", { expiresIn: "1h" });
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || "segredo_supersecreto", { expiresIn: "4h" });
       req.user = decoded; // dados do usuário logado disponíveis em req.user
       
       next();

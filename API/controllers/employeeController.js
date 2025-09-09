@@ -8,12 +8,16 @@ export const createEmpl = async (req, res) => {
     const { name, cpf, email, sector, position, modality } = req.body;
 
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
-    if (existingEmpl) return res.status(400).json({ message: "Email já registrado" });
-    // pega dados do usuário logado do token
-  
+    if (existingEmpl)
+      return res.status(400).json({ message: "Email já registrado" });
+
+    const validCpf = await prisma.employee.findUnique({ where: { cpf } });
+    if (validCpf) return res.status(400).json({ message: "CPF já registrado" });
+
+    // Dados do usuário logado
     const cadUserID = req.user.id;
     const cadUserName = req.user.name;
-  
+
     const newEmpl = await prisma.employee.create({
       data: {
         name,
@@ -27,13 +31,19 @@ export const createEmpl = async (req, res) => {
       },
     });
 
-    res.status(201).json({ success: true, message: "Funcionário criado", id: newEmpl.id });
+    res
+      .status(201)
+      .json({ success: true, message: "Funcionário criado", id: newEmpl.id });
   } catch (err) {
+    if (err.code === "P2002") {
+      return res
+        .status(400)
+        .json({ success: false, message: "CPF ou Email já cadastrado" });
+    }
     console.error("Erro ao criar Funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
 };
-
 
 export const getEmpl = async (req, res) => {
   try {
@@ -41,7 +51,9 @@ export const getEmpl = async (req, res) => {
     res.status(200).json(empl);
   } catch (err) {
     console.error("Erro ao buscar funcionários:", err);
-    res.status(500).json({ success: false, message: "Erro ao listar funcionários" });
+    res
+      .status(500)
+      .json({ success: false, message: "Erro ao listar funcionários" });
   }
 };
 
@@ -52,7 +64,9 @@ export const registrarKit = async (req, res) => {
     // Verifica se o funcionário existe
     const funcionario = await prisma.employee.findUnique({ where: { cpf } });
     if (!funcionario) {
-      return res.status(404).json({ success: false, message: "CPF não encontrado" });
+      return res
+        .status(404)
+        .json({ success: false, message: "CPF não encontrado" });
     }
 
     // Dados do usuário logado
@@ -71,14 +85,14 @@ export const registrarKit = async (req, res) => {
       },
     });
 
-    res.status(201).json({ success: true, message: "Saída de kit registrada", pendencia });
+    res
+      .status(201)
+      .json({ success: true, message: "Saída de kit registrada", pendencia });
   } catch (err) {
     console.error("Erro ao registrar kit:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
 };
-
-
 
 // Consulta pendências abertas de um funcionário pelo CPF
 export const getOpenPendencies = async (req, res) => {
@@ -88,7 +102,9 @@ export const getOpenPendencies = async (req, res) => {
     // Verifica se o funcionário existe
     const funcionario = await prisma.employee.findUnique({ where: { cpf } });
     if (!funcionario) {
-      return res.status(404).json({ success: false, message: "CPF não encontrado" });
+      return res
+        .status(404)
+        .json({ success: false, message: "CPF não encontrado" });
     }
 
     // Busca pendências com status 1
@@ -100,15 +116,16 @@ export const getOpenPendencies = async (req, res) => {
     return res.status(200).json({
       success: true,
       total: pendencias.length,
-      list: pendencias.map(p => ({
+      list: pendencias.map((p) => ({
         id: p.id,
         kitSize: p.kitSize,
         date: p.date,
       })),
     });
-
   } catch (err) {
     console.error("Erro ao buscar pendências:", err);
-    return res.status(500).json({ success: false, message: "Erro no servidor" });
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro no servidor" });
   }
 };
