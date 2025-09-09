@@ -1,8 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import carregarFuncionarios from "../../services/api";
 import editIcon from "../../assets/editar1.png";
 import FormFunc from "./FormFunc";
 import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
+import { useReactToPrint } from "react-to-print";
+import AlterForm from "./AlterFuncionarios";
+
 import {
   LuLayoutGrid,
   LuClipboardList,
@@ -19,6 +22,11 @@ export default function ListaFuncionarios() {
   const [showModalCracha, setShowModalCracha] = useState(false);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
 
+  //Controles de Impressão ------------------
+  const contentRef = useRef(null);
+  const ReactToPrintFn = useReactToPrint({ contentRef });
+
+  //Carerega funcionários -------------------
   useEffect(() => {
     async function fetchData() {
       const dados = await carregarFuncionarios();
@@ -32,15 +40,16 @@ export default function ListaFuncionarios() {
       u.name.toLowerCase().includes(filtroNome.toLowerCase()) ||
       u.email.toLowerCase().includes(filtroNome.toLowerCase()) ||
       u.sector.toLowerCase().includes(filtroNome.toLowerCase()) ||
-      u.position.toLowerCase().includes(filtroNome.toLowerCase())
+      u.position.toLowerCase().includes(filtroNome.toLowerCase()) ||
+      u.cpf.toLowerCase().includes(filtroNome.toLowerCase())
   );
-  const handleEditar = (id) => {
-    alert(`Editar usuário com ID ${id}`);
+  const handleEditar = (funcionario) => {
+    setFuncSelecionado(funcionario);
+    setShowModal(true);
   };
   return (
     <>
       <div className="p-4">
-        {/* Título + Campo de busca */}
         <div className="flex flex-col items-start mb-4">
           <h1 className="text-4xl font-bold">Funcionários Cadastrados</h1>
           <div className="justify-between w-full flex mt-4">
@@ -71,7 +80,7 @@ export default function ListaFuncionarios() {
                       ✖
                     </button>
                   </div>
-                  <FormFunc />
+                  <FormFunc employee={""} />
                 </div>
               </div>
             )}
@@ -122,6 +131,31 @@ export default function ListaFuncionarios() {
                         title="Editar usuário"
                       />
                     </button>
+                    {showModal && (
+                      <div
+                        className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50
+                       transition-opacity duration-300 ease-out"
+                      >
+                        <div
+                          className={`bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto transform 
+                          transition-all duration-300 ease-out 
+                          ${showModal ? "opacity-100 scale-100" : "opacity-0 scale-95"}`}
+                        >
+                          <div className="flex justify-between items-center mb-4">
+                            <h2 className="text-2xl font-bold">
+                              Cadastro de Funcionário
+                            </h2>
+                            <button
+                              className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
+                              onClick={() => setShowModal(false)}
+                            >
+                              ✖
+                            </button>
+                          </div>
+                          <AlterForm employee={employee} />
+                        </div>
+                      </div>
+                    )}
 
                     {/* Botão Remover */}
                     <button
@@ -161,13 +195,19 @@ export default function ListaFuncionarios() {
                               ✖
                             </button>
                           </div>
-                          <ImpressaoCracha
-                            cpf={funcSelecionado.cpf}
-                            nome={funcSelecionado.name}
-                          />
+                          <div ref={contentRef}>
+                            <ImpressaoCracha
+                              cpf={funcSelecionado.cpf}
+                              nome={funcSelecionado.name}
+                            />
+                          </div>
+
                           <button
                             className="mt-5 bg-green-500 text-white rounded-xl w-40 h-13 border-2 rounded font-bold text-md hover:text-green-700 hover:scale-110 transition duration-200"
-                            onClick={() => setShowModalCracha(false)}
+                            onClick={() => {
+                              ReactToPrintFn();
+                              setShowModalCracha(false);
+                            }}
                           >
                             Imprimir
                           </button>

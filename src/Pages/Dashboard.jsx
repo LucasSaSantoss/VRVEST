@@ -1,16 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
-import {LuLayoutGrid,LuClipboardList,LuQrCode, LuUserCog,} from "react-icons/lu";
+import {
+  LuLayoutGrid,
+  LuClipboardList,
+  LuQrCode,
+  LuUserCog,
+} from "react-icons/lu";
 import { FaHospitalUser, FaArrowRight, FaArrowLeft } from "react-icons/fa";
 import { CgLogOff } from "react-icons/cg";
 
 import HomeVRVest from "../Components/homeVRVest";
-import RelatoriosVRVest from "../Components/RelatoriosVRVest";
+// import RelatoriosVRVest from "../Components/RelatoriosVRVest";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
-import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionariosTeste";
+import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -50,7 +56,7 @@ export default function Dashboard() {
 
   const pages = {
     home: <HomeVRVest />,
-    relatorios: <RelatoriosVRVest />,
+    // relatorios: <RelatoriosVRVest />,
     qrcode: <QrCodeVRVest />,
     tabela: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
@@ -145,7 +151,6 @@ export default function Dashboard() {
               </li>
             )}
 
-
             {levelUser >= 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -167,7 +172,9 @@ export default function Dashboard() {
             className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"
             onClick={handleLogoff}
           >
-            <span className="text-xl"><CgLogOff /></span>
+            <span className="text-xl">
+              <CgLogOff />
+            </span>
             <span
               className={`ml-3 transition-all duration-300
               ${hovered ? "opacity-100" : "hidden "}`}

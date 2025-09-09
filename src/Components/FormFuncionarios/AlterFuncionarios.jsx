@@ -1,0 +1,224 @@
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import alterarFuncionario from "../../services/api";
+
+export default function AlterForm({ employee }) {
+  const navigate = useNavigate();
+
+  const [name, setName] = useState(employee ? employee.name : "");
+  const [email, setEmail] = useState(employee ? employee.email : "");
+  const [cpf, setCpf] = useState(employee ? employee.cpf : "");
+  const [position, setPosition] = useState(employee ? employee.position : "");
+  const [sector, setSector] = useState(employee ? employee.sector : "");
+  const [modality, setModality] = useState(employee ? employee.modality : "");
+  const [active, setActive] = useState(employee ? employee.active : true);
+
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info",
+  });
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    const payload = {
+      name: name,
+      email,
+      cpf,
+      sector: sector,
+      position: position,
+      active: active,
+    };
+
+    if (employee?.id) {
+      // edição
+      const res = await alterarFuncionario(employee.id, payload);
+      console.log(res.data);
+      if (res.success !== false) {
+        alert("Funcionário atualizado com sucesso!");
+      } else {
+        alert("Erro ao atualizar funcionário!");
+      }
+    } else {
+      setShowModal(false);
+    }
+  }
+
+  // Fecha o popup automaticamente depois de 3 segundos
+  //   setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
+
+  return (
+    <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
+      <div className="w-full">
+        <form onSubmit={handleSubmit} className="flex flex-wrap gap-4">
+          <div className="flex flex-wrap w-full gap-2">
+            <div className="flex-1 min-w-[425px]">
+              <label
+                htmlFor="nome"
+                className="block text-sm font-semibold mb-1"
+              >
+                Nome:
+              </label>
+              <input
+                type="text"
+                id="nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                maxLength={80}
+                placeholder="Digite o nome completo"
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+
+            <div className="flex-1 min-w-[450px]">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold mb-1"
+              >
+                E-mail:
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                maxLength={80}
+                placeholder="email@email.com.br"
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
+          </div>
+
+          {/* CPF */}
+          <div className="flex-1 min-w-[200px] w-full">
+            <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
+              CPF:
+            </label>
+            <input
+              type="text"
+              id="cpf"
+              value={cpf}
+              onChange={(e) => setCpf(e.target.value)}
+              maxLength={11}
+              placeholder="Digite o CPF"
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+
+          {/* Cargo */}
+          <div className="flex-1 min-w-[200px] w-full">
+            <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
+              Cargo:
+            </label>
+            <input
+              type="text"
+              id="cargo"
+              value={position}
+              onChange={(e) => setPosition(e.target.value)}
+              maxLength={50}
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
+
+          {/* Setor */}
+          <div className="flex-1 min-w-[200px] w-full">
+            <label htmlFor="setor" className="block text-sm font-semibold mb-1">
+              Setor:
+            </label>
+            <select
+              id="setor"
+              value={sector}
+              onChange={(e) => setSector(e.target.value)}
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Selecione o setor</option>
+              <option value="SALA AMARELA">SALA AMARELA</option>
+              <option value="SALA VERMELHA">SALA VERMELHA</option>
+              <option value="TRAUMA">TRAUMA</option>
+              <option value="EMERGÊNCIA PEDIÁTRICA">
+                EMERGÊNCIA PEDIÁTRICA
+              </option>
+              <option value="OBSERVAÇÃO PEDIÁTRICA">
+                OBSERVAÇÃO PEDIÁTRICA
+              </option>
+              <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
+              <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
+              <option value="UI ADULTO">UI ADULTO</option>
+              <option value="UTI ADULTO">UTI ADULTO</option>
+              <option value="ORTOPEDIA">ORTOPEDIA</option>
+              <option value="CIRURGIA GERAL">CIRURGIA GERAL</option>
+              <option value="CETIPE">CETIPE</option>
+              <option value="UTI NEONATAL">UTI NEONATAL</option>
+              <option value="PEDIATRIA">PEDIATRIA</option>
+              <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
+            </select>
+          </div>
+
+          {/* Modalidade */}
+          <div className="flex-1 min-w-[200px] w-full">
+            <label
+              htmlFor="modalidade"
+              className="block text-sm font-semibold mb-1"
+            >
+              Modalidade:
+            </label>
+            <select
+              id="modalidade"
+              value={modality}
+              onChange={(e) => setModality(e.target.value)}
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Selecione a modalidade</option>
+              <option value="PJ">PJ</option>
+              <option value="CLT">CLT</option>
+              <option value="RPA">RPA</option>
+            </select>
+          </div>
+
+          {/* Ativo */}
+          <div className="flex-1 min-w-[200px] w-full">
+            <label htmlFor="ativo" className="block text-sm font-semibold mb-1">
+              Ativo:
+            </label>
+            <select
+              id="ativo"
+              value={active}
+              onChange={(e) => setActive(e.target.value)}
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="true">Ativo</option>
+              <option value="false">Inativo</option>
+            </select>
+          </div>
+
+          {/* Botão */}
+          <div className="w-full flex justify-center">
+            <button
+              type="submit"
+              className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+            >
+              Alterar
+            </button>
+          </div>
+        </form>
+
+        {popup.mostrar && (
+          <div
+            className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+          >
+            {popup.mensagem}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

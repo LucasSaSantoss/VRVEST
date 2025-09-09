@@ -9,6 +9,7 @@ export default async function carregarFuncionarios() {
     const res = await axios.get(`${API_URL}/empl`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    console.log("Funcionários carregados:", res.data);
     return res.data;
   } catch (err) {
     console.error("Erro ao carregar funcionários:", err);
@@ -46,6 +47,20 @@ export async function cadastrarFuncionario({
     };
   }
 }
+
+export async function alterarFuncionario(id, dados) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.put(`${API_URL}/empl/${id}`, dados, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data; // retorna os dados atualizados
+  } catch (err) {
+    console.error("Erro ao alterar funcionário:", err);
+    return { success: false, message: "Erro ao alterar funcionário" };
+  }
+}
+
 
 // 🔹 Cadastro de usuário
 export async function cadastrarUsuario({

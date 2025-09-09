@@ -43,7 +43,7 @@ export default function ImpressaoCracha({ cpf, nome }) {
 
           <div className="flex  justify-center ">
             <img
-              className="w-[11vw] h-[20vh]"
+              className="w-[200px] h-[20vh] object-contain"
               src={logoRio}
               alt="Logo Rio"
             />
