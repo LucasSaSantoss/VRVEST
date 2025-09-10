@@ -21,12 +21,19 @@ export default function ListaFuncionarios() {
   const [showModal, setShowModal] = useState(false);
   const [showModalCracha, setShowModalCracha] = useState(false);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
+  const [funcionarioSelecionado, setFuncionarioSelecionado] = useState(null);
 
   //Controles de Impressão ------------------
   const contentRef = useRef(null);
   const ReactToPrintFn = useReactToPrint({ contentRef });
 
   //Carerega funcionários -------------------
+
+  const listarFuncionarios = async () => {
+    const dados = await carregarFuncionarios(); // sua função que busca dados do backend
+    setFuncionarios(dados);
+  };
+
   useEffect(() => {
     async function fetchData() {
       const dados = await carregarFuncionarios();
@@ -118,12 +125,18 @@ export default function ListaFuncionarios() {
                 <td className="py-2 px-4">{employee.cpf}</td>
                 <td className="py-2 px-4">{employee.sector}</td>
                 <td className="py-2 px-4">{employee.position}</td>
-                <td className="py-2 px-4">{employee.active ? "Sim" : "Não"}</td>
+                <td className="py-2 px-4">
+                  {" "}
+                  {employee.active === 1 ? "Sim" : "Não"}
+                </td>
                 <td className="py-2 px-4">
                   <div className="flex justify-center items-center gap-3">
                     {/* Botão Editar */}
                     <button
-                      onClick={() => handleEditar(employee.id)}
+                      onClick={() => {
+                        handleEditar(employee.id);
+                        setFuncSelecionado(employee);
+                      }}
                       className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center hover:scale-110 transition duration-200"
                     >
                       <FaRegEdit
@@ -147,12 +160,18 @@ export default function ListaFuncionarios() {
                             </h2>
                             <button
                               className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
-                              onClick={() => setShowModal(false)}
+                              onClick={() => {setShowModal(false); listarFuncionarios(); }}
                             >
                               ✖
                             </button>
                           </div>
-                          <AlterForm employee={employee} />
+                          <AlterForm
+                            employee={funcSelecionado}
+                            onClose={() => {
+                              setFuncSelecionado(null);
+                              listarFuncionarios();
+                            }}
+                          />
                         </div>
                       </div>
                     )}
