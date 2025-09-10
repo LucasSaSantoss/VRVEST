@@ -88,7 +88,7 @@ export const registrarKit = async (req, res) => {
     res
       .status(201)
       .json({ success: true, message: "Saída de kit registrada", pendencia });
-  } catch (err) {
+  } catch (err) {S
     console.error("Erro ao registrar kit:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
