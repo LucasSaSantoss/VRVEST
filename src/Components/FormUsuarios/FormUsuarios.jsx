@@ -101,6 +101,7 @@ export default function TabelaUsuarios() {
               <th className="py-2 px-4">Email</th>
               <th className="py-2 px-4">Setor</th>
               <th className="py-2 px-4">Cargo</th>
+              <th className="py-2 px-4">Nível de Acesso</th>
               <th className="py-2 px-4">Ativo</th>
               <th className="py-2 px-4">Ações</th>
             </tr>
@@ -116,6 +117,7 @@ export default function TabelaUsuarios() {
                 <td className="py-2 px-4">{user.email}</td>
                 <td className="py-2 px-4">{user.sector}</td>
                 <td className="py-2 px-4">{user.position}</td>
+                <td className="py-2 px-4">{user.level}</td>
                 <td className="py-2 px-4">{user.active ? "Sim" : "Não"}</td>
                 <td className="py-2 px-4">
                   <div className="flex justify-center items-center gap-3">

@@ -7,48 +7,51 @@ export default function ImpressaoCracha({ cpf, nome }) {
       <h2 className="text-2xl font-bold mb-5 text-center text-white">
         Impressão de Crachá
       </h2>
-      <div className="flex justify-center h-[65vh]">
+
+      <div className="flex justify-center h-[50vh]">
         <section
-          className="flex border-4 border-gray-300 rounded-lg p-1 w-100 h-150 flex flex-col 
-          bg-white shadow-lg"
+          className="flex flex-col border-4 border-gray-300 rounded-lg p-0 
+          w-[189px] h-[302px] bg-white shadow-lg gap-1"
         >
-          <div className=" flex ">
-            <div className="flex-col w-1/2 h-1/2 flex items-start justify-start p-2 gap-2 break-normal">
-              <label htmlFor="cpfFuncionario" className="w-full h-10">
-                CPF
-              </label>
-              <input
-                type="text"
-                className="flex border border-gray-300 rounded-md p-2 w-full"
-                value={cpf}
-                readOnly
-              />
-            </div>
-            <div className="flex-col w-1/2 h-1/2 flex items-start justify-start p-2 gap-2 break-normal">
-              <label htmlFor="nomeFuncionario" className="w-full h-10">
-                Nome do Funcionário
-              </label>
-              <input
-                type="text"
-                className="flex border border-gray-300 rounded-md p-2 w-full break-normal"
-                value={nome}
-                readOnly
-              />
-            </div>
+          {/* CPF */}
+          <div className="flex flex-col ">
+            <label htmlFor="cpfFuncionario" className="text-sm font-semibold">
+              CPF
+            </label>
+            <input
+              type="text"
+              className="border border-gray-300 rounded-md text-sm w-full text-center"
+              value={cpf}
+              readOnly
+            />
           </div>
 
-          <section className="flex  justify-center items-center h-[60%]">
-            <QrCodeGenerator cpf={cpf} />
-          </section>
+          {/* Nome */}
+          <div className="flex flex-col">
+            <label htmlFor="nomeFuncionario" className="text-sm font-semibold">
+              Nome do Funcionário
+            </label>
+            <input
+              type="text"
+              className="border border-gray-300 rounded-md text-sm w-full text-center"
+              value={nome}
+              readOnly
+            />
+          </div>
 
-          <div className="flex  justify-center ">
+          {/* QR Code */}
+          <div className="flex justify-center items-center">
+            <QrCodeGenerator cpf={cpf} />
+          </div>
+
+          {/* Logo */}
+          <div className="flex justify-center bg-transparent">
             <img
-              className="w-[200px] h-[20vh] object-contain"
+              className="w-[6vw] h-[8vh] object-contain"
               src={logoRio}
               alt="Logo Rio"
             />
           </div>
-          
         </section>
       </div>
     </div>

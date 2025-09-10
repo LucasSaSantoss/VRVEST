@@ -9,7 +9,6 @@ export default async function carregarFuncionarios() {
     const res = await axios.get(`${API_URL}/empl`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("Funcionários carregados:", res.data);
     return res.data;
   } catch (err) {
     console.error("Erro ao carregar funcionários:", err);
@@ -40,7 +39,10 @@ export async function cadastrarFuncionario({
       message: "Funcionário cadastrado com sucesso!",
     };
   } catch (err) {
-    console.log("Erro ao criar funcionário:", err.response?.data || err.message);
+    console.log(
+      "Erro ao criar funcionário:",
+      err.response?.data || err.message
+    );
     return {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
@@ -58,10 +60,9 @@ export async function alterarFuncionario(id, dados) {
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
-    return { success: false, message: "Erro ao alterar funcionário" };
+    return { success: false, message: "Não foi possível alterar o registro." };
   }
 }
-
 
 // 🔹 Cadastro de usuário
 export async function cadastrarUsuario({
@@ -93,6 +94,19 @@ export async function cadastrarUsuario({
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
     };
+  }
+}
+
+export async function alterarUsuario(id, dados) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.put(`${API_URL}/users/${id}`, dados, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data; // retorna os dados atualizados
+  } catch (err) {
+    console.error("Erro ao alterar funcionário:", err);
+    return { success: false, message: "Erro ao alterar funcionário" };
   }
 }
 

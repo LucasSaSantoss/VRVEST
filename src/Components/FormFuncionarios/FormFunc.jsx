@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { cadastrarFuncionario } from "../../services/api";
 import { useNavigate } from "react-router-dom";
+import ModalSimNao from "../ModalSimNao";
 
 export default function FormFunc() {
   const navigate = useNavigate();
@@ -11,18 +12,49 @@ export default function FormFunc() {
   const [position, setPosition] = useState("");
   const [sector, setSector] = useState("");
   const [modality, setModality] = useState("");
-
+  const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
-  const [usuarioLogado, setUsuarioLogado] = useState(null);
+
+  const cancelarOperacao = () => {
+    console.log("Operação Cancelada");
+    setMostarModalSimNao(false);
+  };
+
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
     tipo: "info",
   });
 
+  const payload = {
+    name,
+    email,
+    cpf,
+    sector,
+    position,
+    modality,
+  };
+
   const handleCadastro = async (e) => {
     e.preventDefault();
 
+    if (
+      !payload.name ||
+      !payload.email ||
+      !payload.cpf ||
+      !payload.sector ||
+      !payload.position ||
+      !payload.modality
+    ) {
+      setMostarModalSimNao(false);
+      setMensagem("Existem dados em branco, favor preencher.");
+      setPopup({
+        mostrar: true,
+        mensagem:"Existem dados em branco, favor preencher.",
+        tipo: "error",
+      });
+      return; 
+    }
     const data = await cadastrarFuncionario({
       name,
       cpf,
@@ -49,13 +81,15 @@ export default function FormFunc() {
       setCpf("");
       setPosition("");
       setSector("");
+      setMostarModalSimNao(false);
     }
+    setMostarModalSimNao(false);
   };
 
   return (
     <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
       <div className="w-full">
-        <form onSubmit={handleCadastro} className="flex flex-wrap gap-4">
+        <form className="flex flex-wrap gap-4">
           <div className="flex flex-wrap w-full gap-2">
             <div className="flex-1 min-w-[425px]">
               <label
@@ -191,9 +225,15 @@ export default function FormFunc() {
             <button
               type="submit"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              onClick={() => setMostarModalSimNao(true)}
             >
               Cadastrar
             </button>
+            <ModalSimNao
+              mostrar={MostrarModalSimNao}
+              onConfirmar={handleCadastro}
+              onCancelar={cancelarOperacao}
+            />
           </div>
         </form>
 

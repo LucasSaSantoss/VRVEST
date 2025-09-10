@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { alterarFuncionario } from "../../services/api";
+import ModalSimNao from "../ModalSimNao";
 
 export default function AlterForm({ employee }) {
   const navigate = useNavigate();
@@ -12,9 +13,13 @@ export default function AlterForm({ employee }) {
   const [sector, setSector] = useState(employee?.sector || "");
   const [modality, setModality] = useState(employee?.modality || "");
   const [active, setActive] = useState(employee?.active || 1);
+  const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
 
+  const cancelarOperacao = () => {
+    console.log("Operação Cancelada");
+    setMostarModalSimNao(false);
+  };
 
-  
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -39,6 +44,18 @@ export default function AlterForm({ employee }) {
       active: Number(active),
     };
 
+    if (
+      !name ||
+      !email ||
+      !cpf ||
+      !sector ||
+      !position ||
+      !modality ||
+      !active
+    ) {
+      console.log("Existem dados em branco.");
+    }
+
     try {
       const res = await alterarFuncionario(employee.id, payload);
 
@@ -52,7 +69,14 @@ export default function AlterForm({ employee }) {
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
 
       if (res.success) {
-        navigate("/dashboard", { state: { abaSelecionada: "funcionarios" } });
+        setName("");
+        setEmail("");
+        setCpf("");
+        setPosition("");
+        setSector("");
+        setModality("");
+        setActive("");
+        setMostarModalSimNao(false);
       }
     } catch (err) {
       setPopup({
@@ -63,12 +87,13 @@ export default function AlterForm({ employee }) {
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
       console.error("Erro no handleSubmit:", err);
     }
+     setMostarModalSimNao(false);
   }
 
   return (
     <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
       <div className="w-full">
-        <form onSubmit={handleSubmit} className="flex flex-wrap gap-4">
+        <form className="flex flex-wrap gap-4">
           <div className="flex flex-wrap w-full gap-2">
             <div className="flex-1 min-w-[425px]">
               <label
@@ -219,11 +244,17 @@ export default function AlterForm({ employee }) {
           {/* Botão */}
           <div className="w-full flex justify-center">
             <button
-              type="submit"
+              type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              onClick={() => setMostarModalSimNao(true)}
             >
               Alterar
             </button>
+            <ModalSimNao
+              mostrar={MostrarModalSimNao}
+              onConfirmar={handleSubmit}
+              onCancelar={cancelarOperacao}
+            />
           </div>
         </form>
 

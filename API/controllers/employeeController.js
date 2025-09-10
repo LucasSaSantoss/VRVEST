@@ -7,6 +7,10 @@ export const createEmpl = async (req, res) => {
   try {
     const { name, cpf, email, sector, position, modality } = req.body;
 
+    if (!name || !cpf || !email || !sector || !position || !modality) {
+      return res.status(400).json({ message: "Existem dados em branco, favor preencher." });
+    }
+
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
     if (existingEmpl)
       return res.status(400).json({ message: "Email já registrado" });
@@ -47,7 +51,7 @@ export const createEmpl = async (req, res) => {
 
 export const getEmpl = async (req, res) => {
   try {
-    const empl = await prisma.employee.findMany();
+    const empl = await prisma.employee.findMany({ where: { active: 1 } });
     res.status(200).json(empl);
   } catch (err) {
     console.error("Erro ao buscar funcionários:", err);
@@ -88,7 +92,8 @@ export const registrarKit = async (req, res) => {
     res
       .status(201)
       .json({ success: true, message: "Saída de kit registrada", pendencia });
-  } catch (err) {S
+  } catch (err) {
+    S;
     console.error("Erro ao registrar kit:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
@@ -135,7 +140,7 @@ export const updateEmpl = async (req, res) => {
     const { id } = req.params;
     const { name, cpf, email, sector, position, modality, active } = req.body;
 
-    // Verifica se o funcionário existe
+    // Busca o funcionário existente
     const funcionario = await prisma.employee.findUnique({
       where: { id: Number(id) },
     });
@@ -146,8 +151,42 @@ export const updateEmpl = async (req, res) => {
         .json({ success: false, message: "Funcionário não encontrado" });
     }
 
-    // Verifica se o email já está em uso por outro funcionário
-    if (email) {
+    const camposAlterados = {};
+    if (name && name !== funcionario.name) camposAlterados.name = name;
+    if (cpf && cpf !== funcionario.cpf) camposAlterados.cpf = cpf;
+    if (email && email !== funcionario.email) camposAlterados.email = email;
+    if (sector && sector !== funcionario.sector)
+      camposAlterados.sector = sector;
+    if (position && position !== funcionario.position)
+      camposAlterados.position = position;
+    if (modality && modality !== funcionario.modality)
+      camposAlterados.modality = modality;
+    if (active != null && Number(active) !== funcionario.active)
+      camposAlterados.active = Number(active);
+
+    if (Object.keys(camposAlterados).length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nenhum campo foi alterado",
+      });
+    }
+
+    if (
+      !name ||
+      !cpf ||
+      !email ||
+      !sector ||
+      !position ||
+      !modality ||
+      !active
+    ) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Existem dados em branco, favor verificar." });
+    }
+
+    // Verifica email e CPF apenas se forem alterados
+    if (camposAlterados.email) {
       const emailExistente = await prisma.employee.findUnique({
         where: { email },
       });
@@ -158,8 +197,7 @@ export const updateEmpl = async (req, res) => {
       }
     }
 
-    // Verifica se o CPF já está em uso por outro funcionário
-    if (cpf) {
+    if (camposAlterados.cpf) {
       const cpfExistente = await prisma.employee.findUnique({ where: { cpf } });
       if (cpfExistente && cpfExistente.id !== Number(id)) {
         return res
@@ -168,19 +206,12 @@ export const updateEmpl = async (req, res) => {
       }
     }
 
-    // Atualiza
+    // Atualiza apenas os campos alterados
     const updatedEmpl = await prisma.employee.update({
       where: { id: Number(id) },
-      data: {
-        name,
-        cpf,
-        email,
-        sector,
-        position,
-        modality,
-        active: Number(active),
-      },
+      data: camposAlterados,
     });
+
     res.json({
       success: true,
       message: "Funcionário atualizado com sucesso",

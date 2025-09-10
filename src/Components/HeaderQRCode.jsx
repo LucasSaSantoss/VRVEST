@@ -6,7 +6,7 @@ function HeaderQRCode() {
         src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png"
         alt="VR Vest Image"
       />
-      <section>
+      <section className="">
         <div className="flex items-center ml-[6vw]">
           <p className="flex text-white text-6xl pl-2">e-Vestuário</p>
         </div>
