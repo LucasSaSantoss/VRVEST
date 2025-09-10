@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import alterarFuncionario from "../../services/api";
+import { alterarFuncionario } from "../../services/api";
 
 export default function AlterForm({ employee }) {
   const navigate = useNavigate();
 
-  const [name, setName] = useState(employee ? employee.name : "");
-  const [email, setEmail] = useState(employee ? employee.email : "");
-  const [cpf, setCpf] = useState(employee ? employee.cpf : "");
-  const [position, setPosition] = useState(employee ? employee.position : "");
-  const [sector, setSector] = useState(employee ? employee.sector : "");
-  const [modality, setModality] = useState(employee ? employee.modality : "");
-  const [active, setActive] = useState(employee ? employee.active : true);
+  const [name, setName] = useState(employee?.name || "");
+  const [email, setEmail] = useState(employee?.email || "");
+  const [cpf, setCpf] = useState(employee?.cpf || "");
+  const [position, setPosition] = useState(employee?.position || "");
+  const [sector, setSector] = useState(employee?.sector || "");
+  const [modality, setModality] = useState(employee?.modality || "");
+  const [active, setActive] = useState(employee?.active || 1);
 
+
+  
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -22,31 +24,46 @@ export default function AlterForm({ employee }) {
   async function handleSubmit(e) {
     e.preventDefault();
 
+    if (!employee?.id) {
+      alert("Funcionário não informado");
+      return;
+    }
+
     const payload = {
-      name: name,
+      name,
       email,
       cpf,
-      sector: sector,
-      position: position,
-      active: active,
+      sector,
+      position,
+      modality,
+      active: Number(active),
     };
 
-    if (employee?.id) {
-      // edição
+    try {
       const res = await alterarFuncionario(employee.id, payload);
-      console.log(res.data);
-      if (res.success !== false) {
-        alert("Funcionário atualizado com sucesso!");
-      } else {
-        alert("Erro ao atualizar funcionário!");
+
+      setPopup({
+        mostrar: true,
+        mensagem: res.message || "Alteração realizada",
+        tipo: res.success ? "success" : "error",
+      });
+
+      // Fecha automaticamente após 3 segundos
+      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+
+      if (res.success) {
+        navigate("/dashboard", { state: { abaSelecionada: "funcionarios" } });
       }
-    } else {
-      setShowModal(false);
+    } catch (err) {
+      setPopup({
+        mostrar: true,
+        mensagem: "Erro ao atualizar funcionário",
+        tipo: "error",
+      });
+      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      console.error("Erro no handleSubmit:", err);
     }
   }
-
-  // Fecha o popup automaticamente depois de 3 segundos
-  //   setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
 
   return (
     <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
@@ -194,8 +211,8 @@ export default function AlterForm({ employee }) {
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
-              <option value="true">Ativo</option>
-              <option value="false">Inativo</option>
+              <option value="1">Ativo</option>
+              <option value="2">Inativo</option>
             </select>
           </div>
 
@@ -210,6 +227,7 @@ export default function AlterForm({ employee }) {
           </div>
         </form>
 
+        {/* Popup */}
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity

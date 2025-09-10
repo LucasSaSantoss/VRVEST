@@ -17,7 +17,6 @@ import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
 import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
 
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);

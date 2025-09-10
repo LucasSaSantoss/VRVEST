@@ -133,7 +133,7 @@ export const getOpenPendencies = async (req, res) => {
 export const updateEmpl = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, cpf, email, sector, position, modality } = req.body;
+    const { name, cpf, email, sector, position, modality, active } = req.body;
 
     // Verifica se o funcionário existe
     const funcionario = await prisma.employee.findUnique({
@@ -171,9 +171,16 @@ export const updateEmpl = async (req, res) => {
     // Atualiza
     const updatedEmpl = await prisma.employee.update({
       where: { id: Number(id) },
-      data: { name, cpf, email, sector, position, modality },
+      data: {
+        name,
+        cpf,
+        email,
+        sector,
+        position,
+        modality,
+        active: Number(active),
+      },
     });
-
     res.json({
       success: true,
       message: "Funcionário atualizado com sucesso",

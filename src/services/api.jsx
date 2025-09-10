@@ -54,6 +54,7 @@ export async function alterarFuncionario(id, dados) {
     const res = await axios.put(`${API_URL}/empl/${id}`, dados, {
       headers: { Authorization: `Bearer ${token}` },
     });
+    console.log("Funcionário alterado:", res.data);
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
