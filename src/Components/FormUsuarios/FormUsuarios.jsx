@@ -130,15 +130,7 @@ export default function TabelaUsuarios() {
                        title="Editar usuário" />
                     </button>
 
-                    {/* Botão Remover */}
-                    <button
-                      onClick={() => handleExcluir(user.id)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center hover:scale-110 transition duration-200"
-                    >
-                      <FaRegTrashAlt className="h-6 w-6 text-gray-700 cursor-pointer"
-                       title="Remover usuário" />
-                    </button>
-
+                   
                     {showModalCracha && (
                       <div className="fixed inset-0 flex items-center justify-center  z-50 transition-opacity duration-300 ease-out ">
                         <div

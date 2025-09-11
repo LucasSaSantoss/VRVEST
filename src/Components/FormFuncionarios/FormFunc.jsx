@@ -37,7 +37,7 @@ export default function FormFunc() {
 
   const handleCadastro = async (e) => {
     e.preventDefault();
-
+    console.log('teste1')
     if (
       !payload.name ||
       !payload.email ||
@@ -46,14 +46,16 @@ export default function FormFunc() {
       !payload.position ||
       !payload.modality
     ) {
-      setMostarModalSimNao(false);
+      console.log('teste2')
       setMensagem("Existem dados em branco, favor preencher.");
       setPopup({
         mostrar: true,
-        mensagem:"Existem dados em branco, favor preencher.",
+        mensagem: "Existem dados em branco, favor preencher.",
         tipo: "error",
       });
-      return; 
+      console.log('teste3')
+      setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
+      return;
     }
     const data = await cadastrarFuncionario({
       name,
@@ -63,6 +65,7 @@ export default function FormFunc() {
       position,
       modality,
     });
+    console.log('teste4')
 
     setMensagem(data.message);
 
@@ -71,6 +74,7 @@ export default function FormFunc() {
       mensagem: data.message,
       tipo: data.success ? "success" : "error",
     });
+    console.log('teste5')
 
     // Fecha o popup automaticamente depois de 3 segundos
     setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
@@ -83,6 +87,7 @@ export default function FormFunc() {
       setSector("");
       setMostarModalSimNao(false);
     }
+    console.log('teste6')
     setMostarModalSimNao(false);
   };
 
@@ -223,9 +228,9 @@ export default function FormFunc() {
           {/* Botão */}
           <div className="w-full flex justify-center">
             <button
-              type="submit"
+              type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
-              onClick={() => setMostarModalSimNao(true)}
+              onClick={() => {setMostarModalSimNao(true);console.log(MostrarModalSimNao)}}
             >
               Cadastrar
             </button>
