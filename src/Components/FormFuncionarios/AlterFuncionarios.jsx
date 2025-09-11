@@ -225,7 +225,7 @@ export default function AlterForm({ employee }) {
           </div>
 
           {/* Ativo */}
-          <div className="flex-1 min-w-[200px] w-full">
+          <div className="flex-1 max-w-[200px] w-full">
             <label htmlFor="ativo" className="block text-sm font-semibold mb-1">
               Ativo:
             </label>

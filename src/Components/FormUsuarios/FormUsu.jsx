@@ -77,26 +77,6 @@ export default function FormUsu() {
               />
             </div>
 
-            <div className="flex-1 max-w-[150px]">
-              <label
-                htmlFor="senha"
-                className="flex flex-row text-sm font-semibold mb-1"
-              >
-                Senha:
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                maxLength={80}
-                placeholder="Digite a sua senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-              />
-            </div>
-
             <div className="flex-1 min-w-[450px]">
               <label
                 htmlFor="email"
@@ -116,6 +96,26 @@ export default function FormUsu() {
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
             </div>
+          </div>
+
+          <div className="flex-1 max-w-[150px]">
+            <label
+              htmlFor="senha"
+              className="flex flex-row text-sm font-semibold mb-1"
+            >
+              Senha:
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              maxLength={80}
+              placeholder="Digite a sua senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            />
           </div>
 
           <div className="flex-1 min-w-[200px] w-full">
@@ -169,7 +169,6 @@ export default function FormUsu() {
             </select>
           </div>
 
-        
           <div className="w-full flex justify-center">
             <button
               type="submit"
@@ -178,9 +177,8 @@ export default function FormUsu() {
               Cadastrar
             </button>
           </div>
-         
         </form>
-       
+
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity

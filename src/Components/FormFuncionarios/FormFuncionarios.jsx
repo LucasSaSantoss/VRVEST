@@ -114,17 +114,6 @@ export default function ListaFuncionarios() {
                       />
                     </button>
 
-                    {/* Remover */}
-                    <button
-                      onClick={() => handleExcluir(employee.id)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300 flex items-center justify-center hover:scale-110 transition duration-200"
-                    >
-                      <FaRegTrashAlt
-                        className="h-6 w-6 text-gray-700"
-                        title="Remover usuário"
-                      />
-                    </button>
-
                     {/* QR Code */}
                     <button
                       onClick={() => {

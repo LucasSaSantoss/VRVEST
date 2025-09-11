@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import editIcon from "../../assets/editar1.png";
-import removIcon from "../../assets/remover1.png";
 import FormUsu from "./FormUsu";
-import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
-import { FaRegTrashAlt,FaRegEdit  } from "react-icons/fa";
+import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
 
 export default function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
@@ -117,7 +114,13 @@ export default function TabelaUsuarios() {
                 <td className="py-2 px-4">{user.email}</td>
                 <td className="py-2 px-4">{user.sector}</td>
                 <td className="py-2 px-4">{user.position}</td>
-                <td className="py-2 px-4">{user.level}</td>
+                <td className="py-2 px-4">
+                  {user.level === 1
+                    ? "OPERADOR"
+                    : user.level === 2
+                      ? "SUPERVISOR"
+                      : ""}
+                </td>
                 <td className="py-2 px-4">{user.active ? "Sim" : "Não"}</td>
                 <td className="py-2 px-4">
                   <div className="flex justify-center items-center gap-3">
@@ -126,17 +129,10 @@ export default function TabelaUsuarios() {
                       onClick={() => handleEditar(user.id)}
                       className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center hover:scale-110 transition duration-200"
                     >
-                      <FaRegEdit className="h-6 w-6 text-gray-700 cursor-pointer "
-                       title="Editar usuário" />
-                    </button>
-
-                    {/* Botão Remover */}
-                    <button
-                      onClick={() => handleExcluir(user.id)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-red-600 hover:bg-red-300  flex items-center justify-center hover:scale-110 transition duration-200"
-                    >
-                      <FaRegTrashAlt className="h-6 w-6 text-gray-700 cursor-pointer"
-                       title="Remover usuário" />
+                      <FaRegEdit
+                        className="h-6 w-6 text-gray-700 cursor-pointer "
+                        title="Editar usuário"
+                      />
                     </button>
 
                     {showModalCracha && (
@@ -154,7 +150,7 @@ export default function TabelaUsuarios() {
                               ✖
                             </button>
                           </div>
-                          <ImpressaoCracha cpf={user.cpf} nome={user.name} />
+
                           <button
                             className="mt-5 bg-green-500 text-white rounded-xl w-40 h-13 border-2 rounded font-bold text-md hover:text-green-700 hover:scale-110 transition duration-200"
                             onClick={() => setShowModalCracha(false)}

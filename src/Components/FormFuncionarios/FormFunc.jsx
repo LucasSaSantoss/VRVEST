@@ -19,6 +19,7 @@ export default function FormFunc() {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
   };
+  
 
   const [popup, setPopup] = useState({
     mostrar: false,
@@ -223,7 +224,7 @@ export default function FormFunc() {
           {/* Botão */}
           <div className="w-full flex justify-center">
             <button
-              type="submit"
+              type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
               onClick={() => setMostarModalSimNao(true)}
             >
