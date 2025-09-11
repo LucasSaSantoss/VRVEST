@@ -16,6 +16,19 @@ export default async function carregarFuncionarios() {
   }
 }
 
+export async function verificarCpf(cpf) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.get(`${API_URL}/empl/verificar-cpf/${cpf}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao verificar CPF:", err);
+    return { error: "Erro na verificação" };
+  }
+}
+
 // 🔹 Cadastrar funcionário (inclui ID e nome do usuário logado)
 export async function cadastrarFuncionario({
   name,
@@ -64,6 +77,24 @@ export async function alterarFuncionario(id, dados) {
   }
 }
 
+export async function alterarUsuario(id, dados) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.put(`${API_URL}/user/${id}`, dados, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao atualizar usuário:", err);
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro ao atualizar usuário",
+    };
+  }
+}
+
 // 🔹 Cadastro de usuário
 export async function cadastrarUsuario({
   name,
@@ -94,19 +125,6 @@ export async function cadastrarUsuario({
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
     };
-  }
-}
-
-export async function alterarUsuario(id, dados) {
-  const token = localStorage.getItem("token");
-  try {
-    const res = await axios.put(`${API_URL}/users/${id}`, dados, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data; // retorna os dados atualizados
-  } catch (err) {
-    console.error("Erro ao alterar funcionário:", err);
-    return { success: false, message: "Erro ao alterar funcionário" };
   }
 }
 

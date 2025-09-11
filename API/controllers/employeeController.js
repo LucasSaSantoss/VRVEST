@@ -8,7 +8,9 @@ export const createEmpl = async (req, res) => {
     const { name, cpf, email, sector, position, modality } = req.body;
 
     if (!name || !cpf || !email || !sector || !position || !modality) {
-      return res.status(400).json({ message: "Existem dados em branco, favor preencher." });
+      return res
+        .status(400)
+        .json({ message: "Existem dados em branco, favor preencher." });
     }
 
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
@@ -58,6 +60,35 @@ export const getEmpl = async (req, res) => {
     res
       .status(500)
       .json({ success: false, message: "Erro ao listar funcionários" });
+  }
+};
+
+export const getCpf = async (req, res) => {
+  try {
+    const { cpf } = req.params; // vem da URL
+
+    const empl = await prisma.employee.findUnique({
+      where: { cpf },
+    });
+
+    if (!empl) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Funcionário não encontrado." });
+    }
+
+    if (empl.active !== 1) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Funcionário inativo." });
+    }
+
+    return res.status(200).json({ success: true, data: empl });
+  } catch (err) {
+    console.error("Erro ao buscar funcionário:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro interno no servidor." });
   }
 };
 
@@ -180,9 +211,10 @@ export const updateEmpl = async (req, res) => {
       !modality ||
       !active
     ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Existem dados em branco, favor verificar." });
+      return res.status(400).json({
+        success: false,
+        message: "Existem dados em branco, favor verificar.",
+      });
     }
 
     // Verifica email e CPF apenas se forem alterados

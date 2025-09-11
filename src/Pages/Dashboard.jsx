@@ -59,6 +59,7 @@ export default function Dashboard() {
     qrcode: <QrCodeVRVest />,
     tabela: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
+    // baixa: < />,
   };
 
   return (
@@ -85,7 +86,7 @@ export default function Dashboard() {
             >
               {locked ? <FaArrowLeft /> : <FaArrowRight />}
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                {locked ? "Ocultar menu lateral" : "Apresentar aba lateral"}
+                {locked ? "Ocultar menu lateral" : "Manter aba lateral"}
               </span>
             </button>
           </div>
@@ -104,21 +105,6 @@ export default function Dashboard() {
                 Home
               </span>
             </li>
-
-            {levelUser >= 2 && (
-              <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("relatorios")}
-              >
-                <span className="text-xl">
-                  <LuClipboardList />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Relatórios
-                </span>
-              </li>
-            )}
 
             <li
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -145,7 +131,7 @@ export default function Dashboard() {
                 <span
                   className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
                 >
-                  Tabela de usuários
+                  Cadastro de usuários
                 </span>
               </li>
             )}
@@ -160,7 +146,35 @@ export default function Dashboard() {
                   <FaHospitalUser />
                 </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Tabela Funcionarios
+                  Cadastro de Funcionários
+                </span>
+              </li>
+            )}
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("baixa")}
+              >
+                <span className="text-xl">
+                  <LuClipboardList />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Baixa Financeira
+                </span>
+              </li>
+            )}
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("relatorios")}
+              >
+                <span className="text-xl">
+                  <LuClipboardList />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Relatórios
                 </span>
               </li>
             )}
