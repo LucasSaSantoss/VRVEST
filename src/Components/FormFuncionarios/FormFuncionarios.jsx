@@ -20,7 +20,10 @@ export default function ListaFuncionarios() {
 
   // Impressão
   const contentRef = useRef(null);
-  const ReactToPrintFn = useReactToPrint({ content: () => contentRef.current });
+  const ReactToPrintFn = useReactToPrint({
+    contentRef, // passa o ref direto
+    documentTitle: "Crachá Funcionário",
+  });
 
   // Listar funcionários
   const listarFuncionarios = async () => {
@@ -148,7 +151,12 @@ export default function ListaFuncionarios() {
                 ✖
               </button>
             </div>
-            <FormFunc onClose={listarFuncionarios()} />
+            <FormFunc
+              onClose={() => {
+                listarFuncionarios();
+                setShowFormFunc(false);
+              }}
+            />
           </div>
         </div>
       )}
@@ -169,9 +177,9 @@ export default function ListaFuncionarios() {
             <AlterForm
               employee={funcSelecionado}
               onClose={() => {
-                listarFuncionarios();
                 setFuncSelecionado(null);
                 setMostarAlterFunc(false);
+                listarFuncionarios();
               }}
             />
           </div>
@@ -195,16 +203,17 @@ export default function ListaFuncionarios() {
                 cpf={funcSelecionado.cpf}
                 nome={funcSelecionado.name}
               />
-              <button
-                className="bg-green-500 text-white rounded-xl w-40 h-13 font-bold hover:text-green-700 hover:scale-110 transition duration-200"
-                onClick={() => {
-                  ReactToPrintFn();
-                  setShowModalCracha(false);
-                }}
-              >
-                Imprimir
-              </button>
             </div>
+
+            <button
+              className="bg-green-500 text-white rounded-xl w-40 h-13 font-bold hover:text-green-700 hover:scale-110 transition duration-200 mt-4"
+              onClick={() => {
+                ReactToPrintFn();
+                setShowModalCracha(false);
+              }}
+            >
+              Imprimir
+            </button>
           </div>
         </div>
       )}

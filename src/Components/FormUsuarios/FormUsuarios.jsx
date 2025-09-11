@@ -129,12 +129,11 @@ export default function TabelaUsuarios() {
                       onClick={() => handleEditar(user.id)}
                       className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center hover:scale-110 transition duration-200"
                     >
-                      <FaRegEdit
-                        className="h-6 w-6 text-gray-700 cursor-pointer "
-                        title="Editar usuário"
-                      />
+                      <FaRegEdit className="h-6 w-6 text-gray-700 cursor-pointer "
+                       title="Editar usuário" />
                     </button>
 
+                   
                     {showModalCracha && (
                       <div className="fixed inset-0 flex items-center justify-center  z-50 transition-opacity duration-300 ease-out ">
                         <div
