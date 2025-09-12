@@ -3,7 +3,7 @@ import { cadastrarFuncionario } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 
-export default function FormFunc() {
+export default function CreateFunc({ onClose }) {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -19,13 +19,23 @@ export default function FormFunc() {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
   };
-  
 
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
     tipo: "info",
   });
+
+  const temCamposAlterados = () => {
+    return (
+      name.trim() !== "" ||
+      email.trim() !== "" ||
+      cpf.trim() !== "" ||
+      position.trim() !== "" ||
+      sector.trim() !== "" ||
+      modality.trim() !== ""
+    );
+  };
 
   const payload = {
     name,
@@ -38,7 +48,6 @@ export default function FormFunc() {
 
   const handleCadastro = async (e) => {
     e.preventDefault();
-    console.log('teste1')
     if (
       !payload.name ||
       !payload.email ||
@@ -47,15 +56,14 @@ export default function FormFunc() {
       !payload.position ||
       !payload.modality
     ) {
-      console.log('teste2')
       setMensagem("Existem dados em branco, favor preencher.");
       setPopup({
         mostrar: true,
         mensagem: "Existem dados em branco, favor preencher.",
         tipo: "error",
       });
-      console.log('teste3')
       setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
+      setMostarModalSimNao(false);
       return;
     }
     const data = await cadastrarFuncionario({
@@ -66,7 +74,6 @@ export default function FormFunc() {
       position,
       modality,
     });
-    console.log('teste4')
 
     setMensagem(data.message);
 
@@ -75,20 +82,13 @@ export default function FormFunc() {
       mensagem: data.message,
       tipo: data.success ? "success" : "error",
     });
-    console.log('teste5')
 
     // Fecha o popup automaticamente depois de 3 segundos
     setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
 
     if (data.success) {
-      setName("");
-      setEmail("");
-      setCpf("");
-      setPosition("");
-      setSector("");
-      setMostarModalSimNao(false);
+      if (onClose) onClose();
     }
-    console.log('teste6')
     setMostarModalSimNao(false);
   };
 
@@ -226,12 +226,25 @@ export default function FormFunc() {
             </select>
           </div>
 
-          {/* Botão */}
           <div className="w-full flex justify-center">
             <button
               type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
-              onClick={() => {setMostarModalSimNao(true);console.log(MostrarModalSimNao)}}
+              onClick={() => {
+                if (temCamposAlterados()) {
+                  setMostarModalSimNao(true);
+                } else {
+                  setPopup({
+                    mostrar: true,
+                    mensagem: "Nenhum campo foi preenchido para cadastro",
+                    tipo: "error",
+                  });
+                  setTimeout(
+                    () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                    3000
+                  );
+                }
+              }}
             >
               Cadastrar
             </button>

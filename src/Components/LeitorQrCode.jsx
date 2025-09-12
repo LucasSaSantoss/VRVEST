@@ -8,6 +8,7 @@ function LeitorQrCode() {
   const [showPopup, setShowPopup] = useState(false);
   const [pendPopupMessage, setPendPopupMessage] = useState("");
   const [showPendPopup, setShowPendPopup] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
   const cpfInputRef = useRef(null);
 
@@ -18,7 +19,11 @@ function LeitorQrCode() {
     if (!regex.test(cpf)) {
       setCpf("");
       cpfInputRef.current?.focus();
-      return { success: false, message: "Digite um CPF válido com exatamente 11 números." };
+      setIsSuccess(false);
+      return {
+        success: false,
+        message: "Digite um CPF válido com exatamente 11 números.",
+      };
     }
 
     try {
@@ -27,7 +32,12 @@ function LeitorQrCode() {
       if (!resposta.success) {
         setCpf("");
         cpfInputRef.current?.focus();
-        return { success: false, message: resposta.message || "Erro ao verificar CPF, tente novamente." };
+        setIsSuccess(false);
+        return {
+          success: false,
+          message:
+            resposta.message || "Erro ao verificar CPF, tente novamente.",
+        };
       }
 
       if (resposta.data) {
@@ -36,15 +46,16 @@ function LeitorQrCode() {
 
       setCpf("");
       cpfInputRef.current?.focus();
+      setIsSuccess(false);
       return { success: false, message: "CPF não encontrado." };
     } catch (err) {
       console.error(err);
       setCpf("");
       cpfInputRef.current?.focus();
+      setIsSuccess(false);
       return { success: false, message: "Erro ao verificar CPF." };
     }
   };
-
 
   const handleCpfEnter = async (e) => {
     if (e.key !== "Enter" || showModal) return;
@@ -64,13 +75,16 @@ function LeitorQrCode() {
       if (pendData.success && pendData.total > 0) {
         const infoPend = pendData.list.map((p) => (
           <div key={p.id}>
-            {new Date(p.date).toLocaleDateString()} - Tamanho do Kit: {p.kitSize} - Valor: {valorKit}
+            {new Date(p.date).toLocaleDateString()} - Tamanho do Kit:{" "}
+            {p.kitSize} - Valor: {valorKit}
           </div>
         ));
 
         setPendPopupMessage(
           <div>
-            <div>Este funcionário possui {pendData.total} pendência(s) em aberto:</div>
+            <div>
+              Este funcionário possui {pendData.total} pendência(s) em aberto:
+            </div>
             {infoPend}
             <div>-------------------------------------------</div>
             <div>Total das pendências: {pendData.total * valorKit}</div>
@@ -87,6 +101,7 @@ function LeitorQrCode() {
       }
     } catch (err) {
       console.error(err);
+      setIsSuccess(false);
       showTemporaryPopup("Erro ao verificar pendências.");
     }
   };
@@ -99,12 +114,15 @@ function LeitorQrCode() {
       if (response.success) {
         showTemporaryPopup(`Saída de kit registrada! Tamanho: ${kitSize}`);
         setCpf("");
+        setIsSuccess(true);
         setShowModal(false);
       } else {
+        setIsSuccess(false);
         showTemporaryPopup(response.message || "Erro ao registrar o kit.");
       }
     } catch (err) {
       console.error(err);
+      setIsSuccess(false);
       showTemporaryPopup(err.message || "Erro no servidor.");
     } finally {
       cpfInputRef.current?.focus();
@@ -165,7 +183,13 @@ function LeitorQrCode() {
       {/* Popup de mensagens gerais */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+          <div
+            className={
+              isSuccess
+                ? "bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
+                : "bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
+            }
+          >
             {popupMessage}
           </div>
         </div>
@@ -210,10 +234,22 @@ function LeitorQrCode() {
 
       <style jsx>{`
         @keyframes fadeInOut {
-          0% { opacity: 0; transform: translateY(-10px); }
-          10% { opacity: 1; transform: translateY(0); }
-          90% { opacity: 1; transform: translateY(0); }
-          100% { opacity: 0; transform: translateY(-10px); }
+          0% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          90% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
         }
         .animate-fadeInOut {
           animation: fadeInOut 3s forwards;

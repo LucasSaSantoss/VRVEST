@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import FormUsu from "./FormUsu";
+import CreateUser from "./CreateUsuario";
 import AlterUser from "./AlterUsuarios";
 import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
 
@@ -8,7 +8,7 @@ export default function TabelaUsuarios() {
   const [filtroNome, setFiltroNome] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
 
-  const [showModal, setShowModal] = useState(false); // modal de cadastro
+  const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
@@ -56,25 +56,29 @@ export default function TabelaUsuarios() {
         <div className="justify-between w-full flex mt-4">
           <button
             className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
-            onClick={() => setShowModal(true)}
+            onClick={() => setShowModalCreate(true)}
           >
             Novo Usuário
           </button>
 
           {/* MODAL CADASTRO */}
-          {showModal && (
+          {showModalCreate && (
             <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 transition-opacity duration-300 ease-out">
               <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-2xl font-bold">Cadastro de Usuário</h2>
                   <button
                     className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
-                    onClick={() => setShowModal(false)}
+                    onClick={() => setShowModalCreate(false)}
                   >
                     ✖
                   </button>
                 </div>
-                <FormUsu />
+                <CreateUser
+                  onClose={() => {
+                    setShowModalCreate(false);
+                  }}
+                />
               </div>
             </div>
           )}

@@ -8,6 +8,7 @@ import {
   LuUserCog,
 } from "react-icons/lu";
 import { FaHospitalUser, FaArrowRight, FaArrowLeft } from "react-icons/fa";
+import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
 import HomeVRVest from "../Components/homeVRVest";
@@ -16,6 +17,7 @@ import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
 import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
+import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -59,7 +61,7 @@ export default function Dashboard() {
     qrcode: <QrCodeVRVest />,
     tabela: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
-    // baixa: < />,
+    baixa: <ListaPendencias />,
   };
 
   return (
@@ -157,7 +159,7 @@ export default function Dashboard() {
                 onClick={() => setSelected("baixa")}
               >
                 <span className="text-xl">
-                  <LuClipboardList />
+                  <HiOutlineReceiptTax />
                 </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Baixa Financeira
@@ -180,6 +182,7 @@ export default function Dashboard() {
             )}
           </ul>
 
+            
           {/* Logoff */}
           <div
             className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"

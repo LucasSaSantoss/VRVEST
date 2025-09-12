@@ -1,14 +1,15 @@
 import { cadastrarUsuario } from "../../services/api";
 import { useState } from "react";
+import ModalSimNao from "../ModalSimNao";
 
-export default function FormUsu() {
+export default function CreateUser({ onClose }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [sector, setSector] = useState("");
   const [position, setPosition] = useState("");
   const [level, setLevel] = useState("");
-
+  const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
@@ -18,35 +19,56 @@ export default function FormUsu() {
     tipo: "info",
   });
 
+  const cancelarOperacao = () => {
+    console.log("Operação Cancelada");
+    setMostarModalSimNao(false);
+  };
+
+  const temCamposAlterados = () => {
+    return (
+      name.trim() !== "" ||
+      email.trim() !== "" ||
+      password.trim() !== "" ||
+      position.trim() !== "" ||
+      sector.trim() !== "" ||
+      level !== ""
+    );
+  };
+
   const handleCadastro = async (e) => {
     e.preventDefault();
+    if (name && email && sector && position && password && level) {
+      const data = await cadastrarUsuario({
+        name,
+        email,
+        password,
+        sector,
+        position,
+        level: Number(level),
+      });
+      setMensagem(data.message);
 
-    const data = await cadastrarUsuario({
-      name,
-      email,
-      password,
-      sector,
-      position,
-      level: parseInt(level),
-    });
-    setMensagem(data.message);
+      setPopup({
+        mostrar: true,
+        mensagem: data.message,
+        tipo: data.success ? "success" : "error",
+      });
 
-    setPopup({
-      mostrar: true,
-      mensagem: data.message,
-      tipo: data.success ? "success" : "error",
-    });
+      // Fecha o popup automaticamente depois de 3 segundos
+      setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
 
-    // Fecha o popup automaticamente depois de 3 segundos
-    setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
-
-    if (data.success) {
-      setName("");
-      setEmail("");
-      setPassword("");
-      setLevel("");
-      setPosition("");
-      setSector("");
+      if (data.success) {
+        if (onClose) onClose();
+      }
+      setMostarModalSimNao(false);
+    } else {
+      setPopup({
+        mostrar: true,
+        mensagem: "Favor preencher todos os campos obrigatórios.",
+        tipo: "error",
+      });
+      setMostarModalSimNao(false);
+      setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
     }
   };
 
@@ -171,17 +193,38 @@ export default function FormUsu() {
 
           <div className="w-full flex justify-center">
             <button
-              type="submit"
+              type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              onClick={() => {
+                if (temCamposAlterados()) {
+                  setMostarModalSimNao(true);
+                } else {
+                  setPopup({
+                    mostrar: true,
+                    mensagem: "Nenhum campo foi preenchido para cadastro",
+                    tipo: "error",
+                  });
+                  setTimeout(
+                    () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                    3000
+                  );
+                }
+              }}
             >
               Cadastrar
             </button>
+            <ModalSimNao
+              mostrar={MostrarModalSimNao}
+              onConfirmar={handleCadastro}
+              onCancelar={cancelarOperacao}
+            />
           </div>
         </form>
 
         {popup.mostrar && (
           <div
-            className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+            className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity duration-700 ease-in-out
+
             ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
           >
             {popup.mensagem}

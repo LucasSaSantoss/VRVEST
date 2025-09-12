@@ -1,18 +1,22 @@
-  import jwt from "jsonwebtoken";
+import jwt from "jsonwebtoken";
 
-  export const authMiddleware = (req, res, next) => {
-    const authHeader = req.headers.authorization;
+export const authMiddleware = (req, res, next) => {
+  const authHeader = req.headers.authorization;
 
-    if (!authHeader) return res.status(401).json({ message: "Token não fornecido" });
+  if (!authHeader)
+    return res.status(401).json({ message: "Token não fornecido" });
 
-    const token = authHeader.split(" ")[1];
+  const token = authHeader.split(" ")[1];
 
-    try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || "segredo_supersecreto", { expiresIn: "4h" });
-      req.user = decoded; // dados do usuário logado disponíveis em req.user
-      
-      next();
-    } catch (err) {
-      return res.status(401).json({ message: "Token inválido" });
-    }
-  };
+  try {
+    const decoded = jwt.verify(
+      token,
+      process.env.JWT_SECRET || "segredo_supersecreto"
+    );
+    req.user = decoded; // dados do usuário logado disponíveis em req.user
+    next();
+  } catch (err) {
+    console.error("Erro no authMiddleware:", err);
+    return res.status(401).json({ message: "Token inválido" });
+  }
+};

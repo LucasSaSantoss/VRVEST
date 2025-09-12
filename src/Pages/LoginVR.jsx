@@ -27,7 +27,7 @@ export default function LoginVR() {
           <div className="h-32 w-90 flex-1 flex-col items-start mt-10">
             <div className="flex items-center">
               <span className="text-6xl px-1 py-0.5 font-bold whitespace-nowrap">
-                e - VESTURÁRIO
+                e - Vestuário
               </span>
             </div>
             <div className="mt-6 ">

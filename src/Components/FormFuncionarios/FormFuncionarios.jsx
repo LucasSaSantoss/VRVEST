@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import carregarFuncionarios from "../../services/api";
-import FormFunc from "./FormFunc";
+import CreateFunc from "./CreateFunc";
 import AlterForm from "./AlterFuncionarios";
 import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
 import { useReactToPrint } from "react-to-print";
@@ -12,7 +12,7 @@ export default function ListaFuncionarios() {
   const [filtroNome, setFiltroNome] = useState("");
 
   // Modais
-  const [showFormFunc, setShowFormFunc] = useState(false); // Criação
+  const [showCreateFunc, setshowCreateFunc] = useState(false); // Criação
   const [MostrarAlterFunc, setMostarAlterFunc] = useState(false); // Edição
   const [showModalCracha, setShowModalCracha] = useState(false); // QR Code
 
@@ -61,7 +61,7 @@ export default function ListaFuncionarios() {
             {/* Novo funcionário */}
             <button
               className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
-              onClick={() => setShowFormFunc(true)}
+              onClick={() => setshowCreateFunc(true)}
             >
               Novo Funcionário
             </button>
@@ -139,22 +139,22 @@ export default function ListaFuncionarios() {
       </div>
 
       {/* Modal de Criação */}
-      {showFormFunc && (
+      {showCreateFunc && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Cadastro de Funcionário</h2>
               <button
-                onClick={() => setShowFormFunc(false)}
+                onClick={() => setshowCreateFunc(false)}
                 className="text-red-500 font-bold text-xl hover:scale-110 transition duration-300 ease-in-out "
               >
                 ✖
               </button>
             </div>
-            <FormFunc
+            <CreateFunc
               onClose={() => {
                 listarFuncionarios();
-                setShowFormFunc(false);
+                setshowCreateFunc(false);
               }}
             />
           </div>
@@ -176,10 +176,11 @@ export default function ListaFuncionarios() {
             </div>
             <AlterForm
               employee={funcSelecionado}
+              onUpdate={listarFuncionarios} // recarrega lista
               onClose={() => {
-                setFuncSelecionado(null);
+                // fecha modal
                 setMostarAlterFunc(false);
-                listarFuncionarios();
+                setFuncSelecionado(null);
               }}
             />
           </div>

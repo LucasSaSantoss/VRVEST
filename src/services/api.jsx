@@ -69,7 +69,7 @@ export async function alterarFuncionario(id, dados) {
     const res = await axios.put(`${API_URL}/empl/${id}`, dados, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log("Funcionário alterado:", res.data);
+    console.log("Funcionário alterado:", res);
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
@@ -80,17 +80,15 @@ export async function alterarFuncionario(id, dados) {
 export async function alterarUsuario(id, dados) {
   const token = localStorage.getItem("token");
   try {
-    const res = await axios.put(`${API_URL}/user/${id}`, dados, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+    const res = await axios.put(`${API_URL}/users/${id}`, dados, {
+      headers: { Authorization: `Bearer ${token}` },
     });
     return res.data;
   } catch (err) {
     console.error("Erro ao atualizar usuário:", err);
     return {
       success: false,
-      message: err.response?.data?.message || "Erro ao atualizar usuário",
+      message: "Erro ao atualizar usuário.",
     };
   }
 }
@@ -181,5 +179,31 @@ export async function registrarKit({ cpf, kitSize }) {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
     };
+  }
+}
+
+export async function carregarPendencias() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.get(`${API_URL}/pend`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao carregar pendências:", err);
+    return { success: false, message: "Erro ao buscar pendências" };
+  }
+}
+
+export async function atualizarPendencia(id, dados) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.put(`${API_URL}/pend/${id}`, dados, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao atualizar pendência:", err);
+    return { success: false, message: "Erro ao atualizar pendência." };
   }
 }

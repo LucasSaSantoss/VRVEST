@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { alterarFuncionario } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
 
-export default function AlterForm({ employee }) {
+export default function AlterForm({ employee, onClose, onUpdate }) {
   const navigate = useNavigate();
 
   const [name, setName] = useState(employee?.name || "");
@@ -69,14 +69,8 @@ export default function AlterForm({ employee }) {
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
 
       if (res.success) {
-        setName("");
-        setEmail("");
-        setCpf("");
-        setPosition("");
-        setSector("");
-        setModality("");
-        setActive("");
-        setMostarModalSimNao(false);
+        if (onUpdate) await onUpdate();
+        if (onClose) onClose();
       }
     } catch (err) {
       setPopup({
@@ -87,7 +81,7 @@ export default function AlterForm({ employee }) {
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
       console.error("Erro no handleSubmit:", err);
     }
-     setMostarModalSimNao(false);
+    setMostarModalSimNao(false);
   }
 
   return (
@@ -248,7 +242,7 @@ export default function AlterForm({ employee }) {
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
               onClick={() => setMostarModalSimNao(true)}
             >
-              Alterar
+              Salvar Alterações
             </button>
             <ModalSimNao
               mostrar={MostrarModalSimNao}

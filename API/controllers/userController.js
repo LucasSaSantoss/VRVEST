@@ -97,7 +97,7 @@ export const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { name, email, password, sector, position, level, active } = req.body;
-    
+
     // Busca usuário existente
     const usuario = await prisma.user.findUnique({ where: { id: Number(id) } });
     if (!usuario) {
@@ -117,15 +117,29 @@ export const updateUser = async (req, res) => {
       camposAlterados.sector = sector;
     if (position !== undefined && position !== usuario.position)
       camposAlterados.position = position;
-    if (level !== undefined && level !== usuario.level)
-      camposAlterados.level = level;
-    if (active !== undefined && Number(active) !== usuario.active) {
+    if (
+      level !== undefined &&
+      level !== null &&
+      level !== "" &&
+      Number(level) !== usuario.level
+    ) {
+      camposAlterados.level = Number(level);
+    }
+
+    if (
+      active !== undefined &&
+      active !== null &&
+      active !== "" &&
+      Number(active) !== usuario.active
+    ) {
       camposAlterados.active = Number(active);
     }
 
     // Senha só se enviada e diferente
     if (password && password !== usuario.password) {
-      camposAlterados.password = password;
+      const saltRounds = 10;
+      const hashedPassword = await bcrypt.hash(password, saltRounds);
+      camposAlterados.password = hashedPassword;
     }
 
     // Se email mudou, verificar duplicidade

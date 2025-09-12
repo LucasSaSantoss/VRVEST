@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { alterarUsuario } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
 
-export default function AlterUser({ user }) {
+export default function AlterUser({ user, onClose, onUpdate }) {
   const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || "");
@@ -41,6 +41,7 @@ export default function AlterUser({ user }) {
       position,
       level,
       active: Number(active),
+      password: password || undefined,
     };
 
     // Só adiciona senha se preenchida
@@ -72,13 +73,13 @@ export default function AlterUser({ user }) {
 
       if (res.success) {
         setMostarModalSimNao(false);
-        // aqui você pode navegar de volta ou atualizar lista
-        // navigate("/usuarios");
+        if (onUpdate) await onUpdate();
+        if (onClose) onClose();
       }
     } catch (err) {
       setPopup({
         mostrar: true,
-        mensagem: "Erro ao atualizar usuário",
+        mensagem: "Não foi possível atualizar o usuário",
         tipo: "error",
       });
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
@@ -92,7 +93,10 @@ export default function AlterUser({ user }) {
         <form className="flex flex-wrap gap-5" onSubmit={handleSubmit}>
           <div className="flex flex-wrap w-full gap-4">
             <div className="flex-1 min-w-[425px]">
-              <label htmlFor="nome" className="block text-sm font-semibold mb-1">
+              <label
+                htmlFor="nome"
+                className="block text-sm font-semibold mb-1"
+              >
                 Nome:
               </label>
               <input
@@ -108,7 +112,10 @@ export default function AlterUser({ user }) {
             </div>
 
             <div className="flex-1 min-w-[450px]">
-              <label htmlFor="email" className="block text-sm font-semibold mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold mb-1"
+              >
                 E-mail:
               </label>
               <input
@@ -124,15 +131,19 @@ export default function AlterUser({ user }) {
             </div>
           </div>
 
-          <div className="flex-1 max-w-[150px]">
-            <label htmlFor="senha" className="flex flex-row text-sm font-semibold mb-1">
+          <div className="flex-1 max-w-[250px]">
+            <label
+              htmlFor="senha"
+              className="flex flex-row text-sm font-semibold mb-1"
+            >
               Senha:
             </label>
             <input
               type="password"
               id="password"
+              minLength={6}
               maxLength={80}
-              placeholder=""
+              placeholder="Preencha para alterar a senha."
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
