@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { registrarKit, getOpenPendencies, verificarCpf } from "../services/api";
+import ModalSimNao from "./ModalSimNao";
 
 function LeitorQrCode() {
   const [cpf, setCpf] = useState("");
@@ -9,8 +10,17 @@ function LeitorQrCode() {
   const [pendPopupMessage, setPendPopupMessage] = useState("");
   const [showPendPopup, setShowPendPopup] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [MostrarModalSimNao, setMostarModalSimNao] = useState(true);
+  const [kitSelecionado, setKitSelecionado] = useState(null);
 
   const cpfInputRef = useRef(null);
+
+  const cancelarOperacao = () => {
+    console.log("Operação Cancelada");
+    setKitSelecionado(null);
+    setMostarModalSimNao(false);
+    cpfInputRef.current?.focus();
+  };
 
   // Valida CPF e retorna resultado
   const validateCpf = async () => {
@@ -38,6 +48,8 @@ function LeitorQrCode() {
           message:
             resposta.message || "Erro ao verificar CPF, tente novamente.",
         };
+      } else {
+        cpfInputRef.current?.blur();
       }
 
       if (resposta.data) {
@@ -91,11 +103,6 @@ function LeitorQrCode() {
           </div>
         );
         setShowPendPopup(true);
-
-        setTimeout(() => {
-          setShowPendPopup(false);
-          setShowModal(true); // abre modal após mostrar pendências
-        }, 3000);
       } else {
         setShowModal(true); // abre modal direto se não houver pendências
       }
@@ -116,16 +123,20 @@ function LeitorQrCode() {
         setCpf("");
         setIsSuccess(true);
         setShowModal(false);
+        setMostarModalSimNao(false);
       } else {
         setIsSuccess(false);
+        setMostarModalSimNao(false);
         showTemporaryPopup(response.message || "Erro ao registrar o kit.");
       }
     } catch (err) {
       console.error(err);
       setIsSuccess(false);
+      setMostarModalSimNao(false);
       showTemporaryPopup(err.message || "Erro no servidor.");
     } finally {
       cpfInputRef.current?.focus();
+      setMostarModalSimNao(false);
     }
   };
 
@@ -139,6 +150,12 @@ function LeitorQrCode() {
   //Validação Teclado
   useEffect(() => {
     const handleKeyPress = (e) => {
+      if (showPendPopup) {
+        setShowPendPopup(false);
+        setShowModal(true); // só abre modal depois que o usuário fechar manualmente
+        return;
+      }
+
       if (!showModal) return;
 
       switch (e.key) {
@@ -151,16 +168,19 @@ function LeitorQrCode() {
         case "3":
           handleKitSelection("G");
           break;
+        case "4":
+          handleKitSelection("GG");
+          break;
         default:
           setShowModal(false);
+          cpfInputRef.current?.focus();
           break;
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [showModal, cpf]);
-
+  }, [showModal, showPendPopup, cpf]);
   return (
     <div className="flex flex-col w-[400px] mx-auto mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
       <label htmlFor="qrCode" className="text-2x1 font-large">
@@ -212,18 +232,28 @@ function LeitorQrCode() {
               Selecione o KIT que será retirado
             </h2>
             <div className="flex justify-center gap-6 mb-4">
-              {["P", "M", "G"].map((kit) => (
+              {["P", "M", "G", "GG"].map((kit) => (
                 <button
                   key={kit}
-                  onClick={() => handleKitSelection(kit)}
+                  onClick={() => {
+                    (setMostarModalSimNao(true), setKitSelecionado(kit));
+                  }}
                   className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
                 >
                   {kit}
                 </button>
               ))}
             </div>
+            <ModalSimNao
+              mostrar={MostrarModalSimNao}
+              onConfirmar={() => handleKitSelection(kitSelecionado)}
+              onCancelar={cancelarOperacao}
+            />
             <button
-              onClick={() => setShowModal(false)}
+              onClick={() => {
+                setShowModal(false);
+                cpfInputRef.current?.focus();
+              }}
               className="bg-blue-500 text-white px-4 py-2 rounded w-full"
             >
               Fechar
@@ -251,10 +281,10 @@ function LeitorQrCode() {
             transform: translateY(-10px);
           }
         }
-        .animate-fadeInOut {
-          animation: fadeInOut 3s forwards;
-        }
       `}</style>
+      {/* .animate-fadeInOut {
+          animation: fadeInOut 3s forwards;
+        } */}
     </div>
   );
 }
