@@ -1,5 +1,10 @@
 import React, { useState, useRef, useEffect } from "react";
-import { registrarKit, getOpenPendencies, verificarCpf } from "../services/api";
+import {
+  registrarKit,
+  getOpenPendencies,
+  verificarCpf,
+  devolucaoKit,
+} from "../services/api";
 import ModalSimNao from "./ModalSimNao";
 
 function LeitorQrCode() {
@@ -10,22 +15,24 @@ function LeitorQrCode() {
   const [pendPopupMessage, setPendPopupMessage] = useState("");
   const [showPendPopup, setShowPendPopup] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const [MostrarModalSimNao, setMostarModalSimNao] = useState(true);
+  const [mostrarModalSimNao, setMostrarModalSimNao] = useState(false);
   const [kitSelecionado, setKitSelecionado] = useState(null);
+  const [tipoOperacao, setTipoOperacao] = useState("retirada");
 
   const cpfInputRef = useRef(null);
+  const btnSimRef = useRef(null);
+  const btnNaoRef = useRef(null);
 
+  // Cancela operação ----------------------------------------------------------
   const cancelarOperacao = () => {
-    console.log("Operação Cancelada");
     setKitSelecionado(null);
-    setMostarModalSimNao(false);
+    setMostrarModalSimNao(false);
     cpfInputRef.current?.focus();
   };
 
-  // Valida CPF e retorna resultado
+  // Valida CPF ----------------------------------------------------------------
   const validateCpf = async () => {
     const regex = /^\d{11}$/;
-
     if (!regex.test(cpf)) {
       setCpf("");
       cpfInputRef.current?.focus();
@@ -38,28 +45,17 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
-
-      if (!resposta.success) {
+      if (!resposta.success || !resposta.data) {
         setCpf("");
         cpfInputRef.current?.focus();
         setIsSuccess(false);
         return {
           success: false,
-          message:
-            resposta.message || "Erro ao verificar CPF, tente novamente.",
+          message: resposta.message || "CPF não encontrado.",
         };
-      } else {
-        cpfInputRef.current?.blur();
       }
-
-      if (resposta.data) {
-        return { success: true, message: "Funcionário válido." };
-      }
-
-      setCpf("");
-      cpfInputRef.current?.focus();
-      setIsSuccess(false);
-      return { success: false, message: "CPF não encontrado." };
+      cpfInputRef.current?.blur();
+      return { success: true, message: "Funcionário válido." };
     } catch (err) {
       console.error(err);
       setCpf("");
@@ -69,18 +65,17 @@ function LeitorQrCode() {
     }
   };
 
+  // Enter no input do CPF ------------------------------------------------------
   const handleCpfEnter = async (e) => {
     if (e.key !== "Enter" || showModal) return;
 
     const resultado = await validateCpf();
-
     if (!resultado.success) {
       showTemporaryPopup(resultado.message);
       return;
     }
 
     try {
-      // Consulta pendências abertas
       const pendData = await getOpenPendencies({ cpf });
       const valorKit = 50;
 
@@ -104,7 +99,11 @@ function LeitorQrCode() {
         );
         setShowPendPopup(true);
       } else {
-        setShowModal(true); // abre modal direto se não houver pendências
+        if (tipoOperacao === "devolucao") {
+          setMostrarModalSimNao(true);
+        } else {
+          setShowModal(true); // retirada continua pedindo tamanho
+        }
       }
     } catch (err) {
       console.error(err);
@@ -113,74 +112,100 @@ function LeitorQrCode() {
     }
   };
 
-  // Registra kit selecionado
-  const handleKitSelection = async (kitSize) => {
-    try {
-      const response = await registrarKit({ cpf, kitSize });
-
-      if (response.success) {
-        showTemporaryPopup(`Saída de kit registrada! Tamanho: ${kitSize}`);
-        setCpf("");
-        setIsSuccess(true);
-        setShowModal(false);
-        setMostarModalSimNao(false);
-      } else {
-        setIsSuccess(false);
-        setMostarModalSimNao(false);
-        showTemporaryPopup(response.message || "Erro ao registrar o kit.");
-      }
-    } catch (err) {
-      console.error(err);
-      setIsSuccess(false);
-      setMostarModalSimNao(false);
-      showTemporaryPopup(err.message || "Erro no servidor.");
-    } finally {
-      cpfInputRef.current?.focus();
-      setMostarModalSimNao(false);
-    }
-  };
-
-  // Função para mostrar popup temporário
+  // Popup temporário -------------------------------------------------------------
   const showTemporaryPopup = (message) => {
     setPopupMessage(message);
     setShowPopup(true);
     setTimeout(() => setShowPopup(false), 3000);
   };
 
-  //Validação Teclado
+  // Controlador dos Listeners do teclado ----------------------------------------------------
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (showPendPopup) {
         setShowPendPopup(false);
-        setShowModal(true); // só abre modal depois que o usuário fechar manualmente
+        setShowModal(true);
         return;
       }
 
-      if (!showModal) return;
+      if (mostrarModalSimNao) {
+        if (e.key === "1") handleKitSelection(kitSelecionado);
+        else if (e.key === "2") cancelarOperacao();
+        return;
+      }
 
-      switch (e.key) {
-        case "1":
-          handleKitSelection("P");
-          break;
-        case "2":
-          handleKitSelection("M");
-          break;
-        case "3":
-          handleKitSelection("G");
-          break;
-        case "4":
-          handleKitSelection("GG");
-          break;
-        default:
-          setShowModal(false);
-          cpfInputRef.current?.focus();
-          break;
+      if (showModal) {
+        switch (e.key) {
+          case "1":
+            setKitSelecionado("P");
+            setMostrarModalSimNao(true);
+            break;
+          case "2":
+            setKitSelecionado("M");
+            setMostrarModalSimNao(true);
+            break;
+          case "3":
+            setKitSelecionado("G");
+            setMostrarModalSimNao(true);
+            break;
+          case "4":
+            setKitSelecionado("GG");
+            setMostrarModalSimNao(true);
+            break;
+          default:
+            setShowModal(false);
+            cpfInputRef.current?.focus();
+            break;
+        }
       }
     };
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [showModal, showPendPopup, cpf]);
+  }, [showModal, mostrarModalSimNao, showPendPopup, kitSelecionado]);
+
+  // Foco automático no botão Sim do modal ----------------------------------------------------
+  useEffect(() => {
+    if (mostrarModalSimNao) {
+      btnSimRef.current?.focus();
+    }
+  }, [mostrarModalSimNao]);
+
+  const handleKitSelection = async (kitSize) => {
+    try {
+      if (tipoOperacao === "retirada") {
+        const response = await registrarKit({ cpf, kitSize });
+        if (response.success) {
+          showTemporaryPopup(`Saída de kit registrada! Tamanho: ${kitSize}`);
+          setCpf("");
+          setIsSuccess(true);
+          setShowModal(false);
+          setMostrarModalSimNao(false);
+        } else {
+          setIsSuccess(false);
+          setMostrarModalSimNao(false);
+          showTemporaryPopup(response.message || "Erro ao registrar o kit.");
+        }
+      } else if (tipoOperacao === "devolucao") {
+        const response = await devolucaoKit({ cpf });
+        if (response.success) {
+          showTemporaryPopup(`Devolução de kit registrada!`);
+          setCpf("");
+        } else {
+          showTemporaryPopup(response.message || "Erro ao devolver o kit.");
+        }
+        setMostrarModalSimNao(false); // fecha o modal
+      }
+    } catch (err) {
+      console.error(err);
+      setIsSuccess(false);
+      setMostrarModalSimNao(false);
+      showTemporaryPopup(err.message || "Erro no servidor.");
+    } finally {
+      cpfInputRef.current?.focus();
+    }
+  };
+  //-----------------------------------------------------------------------------------------------------------
   return (
     <div className="flex flex-col w-[400px] mx-auto mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
       <label htmlFor="qrCode" className="text-2x1 font-large">
@@ -200,7 +225,30 @@ function LeitorQrCode() {
         className="mt-4 p-3 border-2 border-[#2faed4] rounded-[25px] w-[300px] text-lg"
       />
 
-      {/* Popup de mensagens gerais */}
+      <div className="flex gap-6 mt-6">
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="tipoOperacao"
+            value="retirada"
+            checked={tipoOperacao === "retirada"}
+            onChange={(e) => setTipoOperacao(e.target.value)}
+          />
+          Retirada
+        </label>
+        <label className="flex items-center gap-2">
+          <input
+            type="radio"
+            name="tipoOperacao"
+            value="devolucao"
+            checked={tipoOperacao === "devolucao"}
+            onChange={(e) => setTipoOperacao(e.target.value)}
+          />
+          Devolução
+        </label>
+      </div>
+
+      {/* Popup */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div
@@ -215,7 +263,7 @@ function LeitorQrCode() {
         </div>
       )}
 
-      {/* Popup de pendências */}
+      {/* Popup pendências */}
       {showPendPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className="bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
@@ -224,7 +272,7 @@ function LeitorQrCode() {
         </div>
       )}
 
-      {/* Modal de seleção de kit */}
+      {/* Modal de seleção kit */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -236,7 +284,8 @@ function LeitorQrCode() {
                 <button
                   key={kit}
                   onClick={() => {
-                    (setMostarModalSimNao(true), setKitSelecionado(kit));
+                    setKitSelecionado(kit);
+                    setMostrarModalSimNao(true);
                   }}
                   className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
                 >
@@ -244,10 +293,26 @@ function LeitorQrCode() {
                 </button>
               ))}
             </div>
+
+            {/* Modal Sim/Não exclusivo para devolução */}
+            {mostrarModalSimNao &&
+              tipoOperacao === "devolucao" &&
+              !showModal && (
+                <ModalSimNao
+                  mostrar={mostrarModalSimNao}
+                  onConfirmar={() => handleKitSelection(null)} // null porque não precisa do tamanho
+                  onCancelar={cancelarOperacao}
+                  btnSimRef={btnSimRef}
+                  btnNaoRef={btnNaoRef}
+                />
+              )}
+
             <ModalSimNao
-              mostrar={MostrarModalSimNao}
+              mostrar={mostrarModalSimNao}
               onConfirmar={() => handleKitSelection(kitSelecionado)}
               onCancelar={cancelarOperacao}
+              btnSimRef={btnSimRef}
+              btnNaoRef={btnNaoRef}
             />
             <button
               onClick={() => {
@@ -282,9 +347,6 @@ function LeitorQrCode() {
           }
         }
       `}</style>
-      {/* .animate-fadeInOut {
-          animation: fadeInOut 3s forwards;
-        } */}
     </div>
   );
 }

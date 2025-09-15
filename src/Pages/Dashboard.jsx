@@ -166,7 +166,7 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser >= 2 && (
+            {levelUser >= 3 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}

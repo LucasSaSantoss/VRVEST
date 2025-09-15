@@ -46,7 +46,11 @@ model Pendency {
   emplName   String @db.VarChar(100)    
   userId  Int
   userName String @db.VarChar(100) 
-  date DateTime 
+  date DateTime
+  devolUserId  Int @default(0)
+  devolUserName String @db.VarChar(100) 
+  devolDate DateTime? 
+  devolType Int @default(1)
   status Int @default(1)
   kitSize String @db.VarChar(5)
 }

@@ -11,16 +11,16 @@ export default function ModalSimNao({ mostrar, onConfirmar, onCancelar }) {
         </h2>
         <div className="flex justify-between mt-4">
           <button
-            onClick={onCancelar}
-            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-          >
-            Não
-          </button>
-          <button
             onClick={onConfirmar}
             className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
           >
             Sim
+          </button>
+          <button
+            onClick={onCancelar}
+            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
+          >
+            Não
           </button>
         </div>
       </div>

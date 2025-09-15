@@ -195,15 +195,24 @@ export async function carregarPendencias() {
   }
 }
 
-export async function atualizarPendencia(id, dados) {
-  const token = localStorage.getItem("token");
+export async function devolucaoKit({ cpf}) {
   try {
-    const res = await axios.put(`${API_URL}/pend/${id}`, dados, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data;
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      `${API_URL}/empl/devolver`,
+      { cpf },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return {
+      success: true,
+      message: res.data.message,
+      pendencia: res.data.pendencia,
+    };
   } catch (err) {
-    console.error("Erro ao atualizar pendência:", err);
-    return { success: false, message: "Erro ao atualizar pendência." };
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro no servidor",
+    };
   }
 }

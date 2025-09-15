@@ -24,15 +24,26 @@ export const getRegistros = async (req, res) => {
 
 export const baixarPendencias = async (req, res) => {
   try {
-    const { ids } = req.body; // array com os ids selecionados
+    const { ids } = req.body;
+    const usuarioID = req.user.id;
+    const usuarioName = req.user.name;
+
+    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Nenhum ID enviado" });
+    }
+
+    const numericIds = ids.map((i) => Number(i));
 
     await prisma.pendency.updateMany({
-      where: {
-        id: { in: ids },
-      },
-      data: {
-        status: 2, // marcar como baixado
-      },
+      where: { id: { in: numericIds } },
+      data: { status: 2,
+        devolUserId: usuarioID,
+        devolUserName: usuarioName,
+        devolDate: new Date(),
+        devolType: 3,
+       },
     });
 
     return res.json({
@@ -46,3 +57,7 @@ export const baixarPendencias = async (req, res) => {
       .json({ success: false, message: "Erro no servidor" });
   }
 };
+
+
+
+

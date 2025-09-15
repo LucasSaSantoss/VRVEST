@@ -6,6 +6,7 @@ import {
   getOpenPendencies,
   updateEmpl,
   getCpf,
+  devolverKit,
 } from "../controllers/employeeController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
@@ -15,6 +16,7 @@ router.post("/", createEmpl); // Criar Funcionários
 router.get("/", getEmpl); // Listar Funcionários
 router.post("/registrarKit", registrarKit); // Registra Pendência através do cpf
 router.post("/pendencias", getOpenPendencies);
+router.post("/devolver", authMiddleware, devolverKit); //Devolução de kits
 router.get("/verificar-cpf/:cpf", getCpf);
 router.put("/:id", authMiddleware, updateEmpl); // Alterar Funcionários
 

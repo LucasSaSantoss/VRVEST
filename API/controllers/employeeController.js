@@ -116,6 +116,11 @@ export const registrarKit = async (req, res) => {
         userId: usuarioID,
         userName: usuarioName,
         date: new Date(),
+        devolUserId: 0,
+        devolUserName: "",
+        devolDate: null,
+        devolType: 1,
+        status: 1,
         kitSize: kitSize,
       },
     });
@@ -251,5 +256,68 @@ export const updateEmpl = async (req, res) => {
   } catch (err) {
     console.error("Erro ao atualizar funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
+  }
+};
+
+export const devolverKit = async (req, res) => {
+  try {
+    const { cpf, kitSize } = req.body;
+
+    // Verifica se o funcionário existe
+    const funcionario = await prisma.employee.findUnique({ where: { cpf } });
+    if (!funcionario) {
+      return res
+        .status(404)
+        .json({ success: false, message: "CPF não encontrado" });
+    }
+
+    // Dados do usuário logado
+    const usuarioID = req.user.id;
+    const usuarioName = req.user.name;
+
+    const limite = new Date();
+    limite.setHours(limite.getHours() - 24);
+
+    // Altera a pendência
+    const UltimaPendencia = await prisma.pendency.findFirst({
+      where: {
+        emplID: funcionario.id,
+        status: 1,
+        date: {
+          gte: limite,
+        },
+        orderBy: {
+          date: "desc", //Usado pra pegar a pendencia mais recente dentro das últimas 24 hrs.
+        },
+      },
+    });
+
+    if (!UltimaPendencia) {
+      return res.json({
+        success: false,
+        message: "Nenhuma pendência recente encontrada para baixar.",
+      });
+    }
+
+    const pendenciaAtualizada = await prisma.pendency.update({
+      where: { id: UltimaPendencia.id },
+      data: {
+        status: 2,
+        devolUserId: usuarioID,
+        devolUserName: usuarioName,
+        devolDate: new Date(),
+      },
+    });
+
+    return res.json({
+      success: true,
+      message: "Última pendência baixada com sucesso",
+      pendencia: pendenciaAtualizada,
+    });
+  } catch (err) {
+    console.error("Erro ao baixar última pendência:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro no servidor" });
   }
 };
