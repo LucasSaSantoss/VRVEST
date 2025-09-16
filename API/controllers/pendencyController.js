@@ -24,40 +24,37 @@ export const getRegistros = async (req, res) => {
 
 export const baixarPendencias = async (req, res) => {
   try {
-    const { ids } = req.body;
+    const { id } = req.body;
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
 
-    if (!ids || !Array.isArray(ids) || ids.length === 0) {
+    if (!id) {
       return res
         .status(400)
         .json({ success: false, message: "Nenhum ID enviado" });
     }
 
-    const numericIds = ids.map((i) => Number(i));
-
-    await prisma.pendency.updateMany({
-      where: { id: { in: numericIds } },
-      data: { status: 2,
+    // Atualiza apenas a pendência correspondente
+    const pendenciaAtualizada = await prisma.pendency.update({
+      where: { id: Number(id) },
+      data: {
+        status: 2, //Baixado;
         devolUserId: usuarioID,
         devolUserName: usuarioName,
         devolDate: new Date(),
-        devolType: 3,
-       },
+        devolType: 3, //Devolvido por meio da tela de baixa financeira;
+      },
     });
 
     return res.json({
       success: true,
-      message: "Pendências baixadas com sucesso",
+      updatedPendencias: [pendenciaAtualizada],
+      message: "Pendência baixada com sucesso",
     });
   } catch (err) {
-    console.error("Erro ao baixar pendências:", err);
+    console.error("Erro ao baixar pendência:", err);
     return res
       .status(500)
       .json({ success: false, message: "Erro no servidor" });
   }
 };
-
-
-
-

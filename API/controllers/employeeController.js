@@ -1,5 +1,6 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
+import { enviarEmail } from "../emailService/emailService.js";
 
 const prisma = new PrismaClient();
 
@@ -125,9 +126,19 @@ export const registrarKit = async (req, res) => {
       },
     });
 
-    res
-      .status(201)
-      .json({ success: true, message: "Saída de kit registrada", pendencia });
+    // Envia e-mail automaticamente
+    await enviarEmail({
+      para: funcionario.email,
+      assunto: "Retirada de Kit",
+      mensagem: `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "Saída de kit registrada",
+      pendencia,
+      funcionario,
+    });
   } catch (err) {
     console.error("Erro ao registrar kit:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
@@ -261,7 +272,7 @@ export const updateEmpl = async (req, res) => {
 
 export const devolverKit = async (req, res) => {
   try {
-    const { cpf, kitSize } = req.body;
+    const { cpf } = req.body;
 
     // Verifica se o funcionário existe
     const funcionario = await prisma.employee.findUnique({ where: { cpf } });
@@ -286,9 +297,9 @@ export const devolverKit = async (req, res) => {
         date: {
           gte: limite,
         },
-        orderBy: {
-          date: "desc", //Usado pra pegar a pendencia mais recente dentro das últimas 24 hrs.
-        },
+      },
+      orderBy: {
+        date: "desc", //Usado pra pegar a pendencia mais recente dentro das últimas 24 hrs.
       },
     });
 
@@ -306,7 +317,18 @@ export const devolverKit = async (req, res) => {
         devolUserId: usuarioID,
         devolUserName: usuarioName,
         devolDate: new Date(),
+        devolType: 2,
       },
+      include: { employee: true }, // pega dados do funcionário relacionado
+    });
+
+    // Envia e-mail automaticamente
+    await enviarEmail({
+      para: funcionario.email,
+      assunto: "Devolução de Kit",
+      mensagem: `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
+        pendenciaAtualizada.devolDate
+      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
     });
 
     return res.json({

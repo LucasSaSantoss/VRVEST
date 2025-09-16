@@ -1,5 +1,5 @@
 import express from "express";
-import { getRegistros,baixarPendencias } from "../controllers/pendencyController.js";
+import { getRegistros, baixarPendencias } from "../controllers/pendencyController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();

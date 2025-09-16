@@ -7,6 +7,7 @@ import {
 } from "../services/api";
 import ModalSimNao from "./ModalSimNao";
 
+
 function LeitorQrCode() {
   const [cpf, setCpf] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -82,8 +83,8 @@ function LeitorQrCode() {
       if (pendData.success && pendData.total > 0) {
         const infoPend = pendData.list.map((p) => (
           <div key={p.id}>
-            {new Date(p.date).toLocaleDateString()} - Tamanho do Kit:{" "}
-            {p.kitSize} - Valor: {valorKit}
+            {new Date(p.date).toLocaleDateString()} - Tamanho do Kit :{" "}
+            {p.kitSize} - Valor : R$ {valorKit}
           </div>
         ));
 
@@ -94,7 +95,7 @@ function LeitorQrCode() {
             </div>
             {infoPend}
             <div>-------------------------------------------</div>
-            <div>Total das pendências: {pendData.total * valorKit}</div>
+            <div>Total das pendências: R$ {pendData.total * valorKit}</div>
           </div>
         );
         setShowPendPopup(true);
@@ -121,10 +122,21 @@ function LeitorQrCode() {
 
   // Controlador dos Listeners do teclado ----------------------------------------------------
   useEffect(() => {
-    const handleKeyPress = (e) => {
+    const handleKeyPress = async (e) => {
       if (showPendPopup) {
         setShowPendPopup(false);
-        setShowModal(true);
+        if (tipoOperacao === "retirada") {
+          setShowModal(true);
+        } else {
+          const response = await devolucaoKit({ cpf });
+          if (response.success) {
+            showTemporaryPopup(`Devolução de kit registrada!`);
+            setCpf("");
+          } else {
+            showTemporaryPopup(response.message || "Erro ao devolver o kit.");
+          }
+          setMostrarModalSimNao(false); // fecha o modal
+        }
         return;
       }
 
@@ -186,15 +198,6 @@ function LeitorQrCode() {
           setMostrarModalSimNao(false);
           showTemporaryPopup(response.message || "Erro ao registrar o kit.");
         }
-      } else if (tipoOperacao === "devolucao") {
-        const response = await devolucaoKit({ cpf });
-        if (response.success) {
-          showTemporaryPopup(`Devolução de kit registrada!`);
-          setCpf("");
-        } else {
-          showTemporaryPopup(response.message || "Erro ao devolver o kit.");
-        }
-        setMostrarModalSimNao(false); // fecha o modal
       }
     } catch (err) {
       console.error(err);

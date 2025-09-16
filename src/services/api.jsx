@@ -173,6 +173,7 @@ export async function registrarKit({ cpf, kitSize }) {
       success: true,
       message: res.data.message,
       pendencia: res.data.pendencia,
+      funcionario: res.data.funcionario,
     };
   } catch (err) {
     return {
