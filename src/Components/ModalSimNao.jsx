@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-export default function ModalSimNao({ mostrar, onConfirmar, onCancelar }) {
+export default function ModalSimNao({
+  mostrar,
+  onConfirmar,
+  onCancelar,
+  isProcessing,
+}) {
   if (!mostrar) return null; // não renderiza nada se não for para mostrar
 
   return (
@@ -12,15 +17,24 @@ export default function ModalSimNao({ mostrar, onConfirmar, onCancelar }) {
         <div className="flex justify-between mt-4">
           <button
             onClick={onConfirmar}
-            className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600"
+            disabled={isProcessing}
+            className={`px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 ${
+              isProcessing
+                ? "bg-gray-400 cursor-not-allowed w-[150px]"
+                : "bg-green-500 hover:bg-green-600"
+            }`}
           >
-            Sim
+            {isProcessing ? "Processando..." : "Sim"}
           </button>
           <button
             onClick={onCancelar}
-            className="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400"
-          >
-            Não
+            disabled={isProcessing}
+            className={`px-4 py-2 bg-red-300 rounded-lg hover:bg-red-400 ${
+              isProcessing
+                ? "bg-gray-400 cursor-not-allowed"
+                : "px-4 py-2 bg-red-300 rounded-lg hover:bg-red-400"
+            }`}
+          >{isProcessing ? "" : "Não"} 
           </button>
         </div>
       </div>

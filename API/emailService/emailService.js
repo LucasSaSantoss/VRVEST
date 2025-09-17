@@ -2,7 +2,7 @@ import nodemailer from "nodemailer";
 
 // transport configurado (exemplo Gmail, mas pode ser outro)
 const transporter = nodemailer.createTransport({
-  service: "Yahoo",
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER, // configure no .env
     pass: process.env.EMAIL_PASS,

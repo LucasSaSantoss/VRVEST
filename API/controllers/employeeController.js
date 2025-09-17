@@ -127,11 +127,11 @@ export const registrarKit = async (req, res) => {
     });
 
     // Envia e-mail automaticamente
-    await enviarEmail({
-      para: funcionario.email,
-      assunto: "Retirada de Kit",
-      mensagem: `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
-    });
+    await enviarEmail(
+      funcionario.email,
+      "Retirada de Kit",
+      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
+    );
 
     res.status(201).json({
       success: true,
@@ -319,17 +319,16 @@ export const devolverKit = async (req, res) => {
         devolDate: new Date(),
         devolType: 2,
       },
-      include: { employee: true }, // pega dados do funcionário relacionado
     });
 
     // Envia e-mail automaticamente
-    await enviarEmail({
-      para: funcionario.email,
-      assunto: "Devolução de Kit",
-      mensagem: `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
+    await enviarEmail(
+      funcionario.email,
+      "Devolução de Kit",
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
         pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
-    });
+      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
+    );
 
     return res.json({
       success: true,

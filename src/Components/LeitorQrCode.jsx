@@ -7,7 +7,6 @@ import {
 } from "../services/api";
 import ModalSimNao from "./ModalSimNao";
 
-
 function LeitorQrCode() {
   const [cpf, setCpf] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -19,19 +18,23 @@ function LeitorQrCode() {
   const [mostrarModalSimNao, setMostrarModalSimNao] = useState(false);
   const [kitSelecionado, setKitSelecionado] = useState(null);
   const [tipoOperacao, setTipoOperacao] = useState("retirada");
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
   const btnNaoRef = useRef(null);
 
-  // Cancela operação ----------------------------------------------------------
+  // Ref para travar processamento no teclado
+  const processingRef = useRef(false);
+
+  // Cancela operação
   const cancelarOperacao = () => {
     setKitSelecionado(null);
     setMostrarModalSimNao(false);
     cpfInputRef.current?.focus();
   };
 
-  // Valida CPF ----------------------------------------------------------------
+  // Valida CPF
   const validateCpf = async () => {
     const regex = /^\d{11}$/;
     if (!regex.test(cpf)) {
@@ -66,7 +69,7 @@ function LeitorQrCode() {
     }
   };
 
-  // Enter no input do CPF ------------------------------------------------------
+  // Enter no input do CPF
   const handleCpfEnter = async (e) => {
     if (e.key !== "Enter" || showModal) return;
 
@@ -103,7 +106,7 @@ function LeitorQrCode() {
         if (tipoOperacao === "devolucao") {
           setMostrarModalSimNao(true);
         } else {
-          setShowModal(true); // retirada continua pedindo tamanho
+          setShowModal(true);
         }
       }
     } catch (err) {
@@ -113,14 +116,14 @@ function LeitorQrCode() {
     }
   };
 
-  // Popup temporário -------------------------------------------------------------
+  // Popup temporário
   const showTemporaryPopup = (message) => {
     setPopupMessage(message);
     setShowPopup(true);
     setTimeout(() => setShowPopup(false), 3000);
   };
 
-  // Controlador dos Listeners do teclado ----------------------------------------------------
+  // Listener do teclado
   useEffect(() => {
     const handleKeyPress = async (e) => {
       if (showPendPopup) {
@@ -135,14 +138,18 @@ function LeitorQrCode() {
           } else {
             showTemporaryPopup(response.message || "Erro ao devolver o kit.");
           }
-          setMostrarModalSimNao(false); // fecha o modal
+          setMostrarModalSimNao(false);
         }
         return;
       }
 
       if (mostrarModalSimNao) {
-        if (e.key === "1") handleKitSelection(kitSelecionado);
-        else if (e.key === "2") cancelarOperacao();
+        if (e.key === "1") {
+          if (processingRef.current) return; // trava repetição
+          handleKitSelection(kitSelecionado);
+        } else if (e.key === "2") {
+          cancelarOperacao();
+        }
         return;
       }
 
@@ -176,7 +183,7 @@ function LeitorQrCode() {
     return () => window.removeEventListener("keydown", handleKeyPress);
   }, [showModal, mostrarModalSimNao, showPendPopup, kitSelecionado]);
 
-  // Foco automático no botão Sim do modal ----------------------------------------------------
+  // Foco automático no botão Sim do modal
   useEffect(() => {
     if (mostrarModalSimNao) {
       btnSimRef.current?.focus();
@@ -184,6 +191,10 @@ function LeitorQrCode() {
   }, [mostrarModalSimNao]);
 
   const handleKitSelection = async (kitSize) => {
+    if (processingRef.current) return;
+    processingRef.current = true;
+    setIsProcessing(true);
+
     try {
       if (tipoOperacao === "retirada") {
         const response = await registrarKit({ cpf, kitSize });
@@ -205,10 +216,13 @@ function LeitorQrCode() {
       setMostrarModalSimNao(false);
       showTemporaryPopup(err.message || "Erro no servidor.");
     } finally {
+      processingRef.current = false; // libera próximo clique/tecla
+      setIsProcessing(false);
       cpfInputRef.current?.focus();
     }
   };
-  //-----------------------------------------------------------------------------------------------------------
+
+  // Render
   return (
     <div className="flex flex-col w-[400px] mx-auto mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
       <label htmlFor="qrCode" className="text-2x1 font-large">
@@ -297,26 +311,15 @@ function LeitorQrCode() {
               ))}
             </div>
 
-            {/* Modal Sim/Não exclusivo para devolução */}
-            {mostrarModalSimNao &&
-              tipoOperacao === "devolucao" &&
-              !showModal && (
-                <ModalSimNao
-                  mostrar={mostrarModalSimNao}
-                  onConfirmar={() => handleKitSelection(null)} // null porque não precisa do tamanho
-                  onCancelar={cancelarOperacao}
-                  btnSimRef={btnSimRef}
-                  btnNaoRef={btnNaoRef}
-                />
-              )}
-
             <ModalSimNao
               mostrar={mostrarModalSimNao}
               onConfirmar={() => handleKitSelection(kitSelecionado)}
               onCancelar={cancelarOperacao}
               btnSimRef={btnSimRef}
               btnNaoRef={btnNaoRef}
+              isProcessing={isProcessing}
             />
+
             <button
               onClick={() => {
                 setShowModal(false);
