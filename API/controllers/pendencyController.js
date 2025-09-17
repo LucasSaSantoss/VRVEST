@@ -1,4 +1,5 @@
 import { PrismaClient } from "@prisma/client";
+import { enviarEmail } from "../emailService/emailService.js";
 
 const prisma = new PrismaClient();
 
@@ -44,7 +45,21 @@ export const baixarPendencias = async (req, res) => {
         devolDate: new Date(),
         devolType: 3, //Devolvido por meio da tela de baixa financeira;
       },
+      include: {
+        employee: true, // Inclui os dados do funcionário relacionado
+      },
     });
+
+    const funcionario = pendenciaAtualizada.employee;
+
+    // Envia e-mail automaticamente
+    await enviarEmail(
+      funcionario.email,
+      "Devolução de Kit",
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
+        pendenciaAtualizada.devolDate
+      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}, através da baixa de pendências.`
+    );
 
     return res.json({
       success: true,

@@ -38,6 +38,7 @@ model Employee {
   cadUserName String @db.VarChar(100) 
   modality String @db.VarChar(5)
   active Int @default(1)
+  pendencies Pendency[]
 }
 
 model Pendency {
@@ -53,4 +54,5 @@ model Pendency {
   devolType Int @default(1)
   status Int @default(1)
   kitSize String @db.VarChar(5)
+   employee     Employee @relation(fields: [emplID], references: [id])
 }
