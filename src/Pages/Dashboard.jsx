@@ -88,7 +88,7 @@ export default function Dashboard() {
             >
               {locked ? <FaArrowLeft /> : <FaArrowRight />}
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                {locked ? "Ocultar menu lateral" : "Manter aba lateral"}
+                {locked ? "Ocultar menu lateral" : "Manter menu lateral"}
               </span>
             </button>
           </div>
