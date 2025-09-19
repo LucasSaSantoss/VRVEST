@@ -13,14 +13,6 @@ export default function TabelaUsuarios() {
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
 
-  const registrosPorPagina = regPorPagina;
-  const indiceUltimoRegistro = paginaAtual * registrosPorPagina;
-  const indicePrimeiroRegistro = indiceUltimoRegistro - registrosPorPagina;
-
-  if (indiceUltimoRegistro === 0) {
-    setPaginaAtual(1);
-  }
-
   useEffect(() => {
     fetch("http://localhost:3000/users")
       .then((res) => res.json())
@@ -39,14 +31,26 @@ export default function TabelaUsuarios() {
         .includes(filtroNome.toLowerCase())
   );
 
-  const usuariosPagina = usuariosFiltrados.slice(
+  const handleEditar = (user) => {
+    setUsuarioSelecionado(user);
+    setShowModalAlter(true);
+  };
+
+  // Paginação
+  const totalPaginas = Math.ceil(usuariosFiltrados.length / regPorPagina);
+  const indiceUltimoRegistro = paginaAtual * regPorPagina;
+  const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
+  const registrosFiltrados = usuariosFiltrados.slice(
     indicePrimeiroRegistro,
     indiceUltimoRegistro
   );
 
-  const handleEditar = (user) => {
-    setUsuarioSelecionado(user);
-    setShowModalAlter(true);
+  const handleProximaPagina = () => {
+    if (paginaAtual < totalPaginas) setPaginaAtual((prev) => prev + 1);
+  };
+
+  const handlePaginaAnterior = () => {
+    if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
   };
 
   return (
@@ -99,7 +103,7 @@ export default function TabelaUsuarios() {
               <div className="flex justify-between items-center mb-4">
                 <h2 className="text-2xl font-bold">Cadastro de Usuário</h2>
                 <button
-                  className="text-white bg-red-500 border-2 border-red-500 rounded font-bold text-xl px-0.5 hover:bg-red-700 hover:scale-110 transition duration-200"
+                  className="text-white  border-2  rounded font-bold text-xl px-0.5 hover:bg-red-700 hover:scale-110 transition duration-200"
                   onClick={() => setShowModalCreate(false)}
                 >
                   ✖
@@ -108,6 +112,9 @@ export default function TabelaUsuarios() {
               <CreateUser
                 onClose={() => {
                   setShowModalCreate(false);
+                  fetch("http://localhost:3000/users")
+                    .then((res) => res.json())
+                    .then((data) => setUsuarios(data));
                 }}
               />
             </div>
@@ -129,7 +136,7 @@ export default function TabelaUsuarios() {
           </tr>
         </thead>
         <tbody>
-          {usuariosPagina.map((user) => (
+          {registrosFiltrados.map((user) => (
             <tr
               key={user.id}
               className="text-center text-md hover:bg-blue-100 transition odd:bg-white even:bg-gray-100 "
@@ -145,7 +152,7 @@ export default function TabelaUsuarios() {
                     ? "SUPERVISOR"
                     : ""}
               </td>
-              <td className="py-2 px-4">{user.active ? "Sim" : "Não"}</td>
+              <td className="py-2 px-4">{user.active === 1 ? "Sim" : "Não"}</td>
               <td className="py-2 px-4">
                 <div className="flex justify-center items-center gap-3">
                   {/* Botão Editar */}
@@ -178,36 +185,39 @@ export default function TabelaUsuarios() {
                 ✖
               </button>
             </div>
-            <AlterUser user={usuarioSelecionado} />
+            <AlterUser
+              user={usuarioSelecionado}
+              onClose={() => {
+                fetch("http://localhost:3000/users")
+                  .then((res) => res.json())
+                  .then((data) => setUsuarios(data));
+              }}
+            />
           </div>
         </div>
       )}
 
       {/* PAGINAÇÃO */}
-      <div className="flex justify-center mt-4 gap-1">
-        <button
-          onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
-          className="px-3 py-1 bg-[#36b0d4] rounded hover:bg-blue-400"
-        >
-          Anterior
-        </button>
-        <span className="px-3 py-1">
-          Página {paginaAtual} de{" "}
-          {Math.ceil(usuariosFiltrados.length / registrosPorPagina)}
-        </span>
-        <button
-          onClick={() =>
-            setPaginaAtual((prev) =>
-              Math.min(
-                prev + 1,
-                Math.ceil(usuariosFiltrados.length / registrosPorPagina)
-              )
-            )
-          }
-          className="px-3 py-1 bg-[#36b0d4] rounded hover:bg-blue-400"
-        >
-          Próxima
-        </button>
+      <div className="flex justify-between mt-4 items-center">
+        <div className="flex gap-2 ml-[35vw] items-center">
+          <button
+            onClick={handlePaginaAnterior}
+            disabled={paginaAtual === 1}
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="ml-1">
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+          <button
+            onClick={handleProximaPagina}
+            disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+          >
+            Próxima
+          </button>
+        </div>
       </div>
     </div>
   );

@@ -55,7 +55,7 @@ export const createEmpl = async (req, res) => {
 
 export const getEmpl = async (req, res) => {
   try {
-    const empl = await prisma.employee.findMany({ where: { active: 1 } });
+    const empl = await prisma.employee.findMany({});
     res.status(200).json(empl);
   } catch (err) {
     console.error("Erro ao buscar funcionários:", err);
@@ -133,12 +133,7 @@ export const registrarKit = async (req, res) => {
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
     );
-    // await emailQueue.add("enviar", {
-    //   para: funcionario.email,
-    //   assunto: "Retirada de Kit",
-    //   mensagem: `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
-    // });
-
+   
     res.status(201).json({
       success: true,
       message: "Saída de kit registrada",

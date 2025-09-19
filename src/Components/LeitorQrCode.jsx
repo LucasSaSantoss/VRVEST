@@ -105,7 +105,9 @@ function LeitorQrCode() {
         setShowPendPopup(true);
       } else {
         if (tipoOperacao === "devolucao") {
-          setMostrarModalSimNao(true);
+          showTemporaryPopup("Nenhuma pendência encontrada para devolução.");
+          setCpf("");
+          cpfInputRef.current?.focus();
         } else {
           setShowModal(true);
         }
@@ -155,7 +157,7 @@ function LeitorQrCode() {
               setIsSuccess(false);
               cpfInputRef.current?.focus();
             } else {
-              setPopupMessage(response.message || "Erro ao devolver o kit."); 
+              setPopupMessage(response.message || "Erro ao devolver o kit.");
               setIsSuccess(false);
               cpfInputRef.current?.focus();
             }

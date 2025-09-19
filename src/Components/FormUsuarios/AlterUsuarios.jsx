@@ -198,6 +198,23 @@ export default function AlterUser({ user, onClose, onUpdate }) {
             </select>
           </div>
 
+          <div className="flex-1 min-w-[200px] w-[20]">
+            <label htmlFor="ativo" className="block text-sm font-semibold mb-1">
+              Ativo:
+            </label>
+            <select
+              id="ativo"
+              value={active}
+              onChange={(e) => setActive(e.target.value)}
+              required
+              className="w-[20] p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Selecione uma opção</option>
+              <option value="1">Ativo</option>
+              <option value="2">Inativo</option>
+            </select>
+          </div>
+
           <div className="w-full flex justify-center">
             <button
               type="submit"

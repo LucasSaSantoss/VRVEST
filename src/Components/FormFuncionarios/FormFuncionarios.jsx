@@ -11,6 +11,7 @@ export default function ListaFuncionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
   const [regPorPagina, setRegPorPagina] = useState(10);
+  const [showPopup, setShowPopup] = useState(false);
 
   // Modais
   const [showCreateFunc, setshowCreateFunc] = useState(false); // Criação
@@ -184,15 +185,16 @@ export default function ListaFuncionarios() {
               <h2 className="text-2xl font-bold">Cadastro de Funcionário</h2>
               <button
                 onClick={() => setshowCreateFunc(false)}
-                className="text-red-500 font-bold text-xl hover:scale-110 transition duration-300 ease-in-out "
+                className="text-red-500 font-bold text-xl hover:bg-red-700 hover:scale-110 transition duration-200 ease-in-out "
               >
                 ✖
               </button>
             </div>
             <CreateFunc
               onClose={() => {
-                listarFuncionarios();
                 setshowCreateFunc(false);
+                listarFuncionarios();
+                setShowPopup("Funcionário criado com sucesso.")
               }}
             />
           </div>

@@ -22,7 +22,7 @@ import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 export default function Dashboard() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
-  const [selected, setSelected] = useState("home");
+  const [selected, setSelected] = useState("qrcode");
   const [locked, setLocked] = useState(false);
   const [levelUser, setLevelUser] = useState(0);
 
@@ -95,18 +95,20 @@ export default function Dashboard() {
 
           {/* Menu */}
           <ul className="p-3 space-y-3 h-[60vh] ">
-            <li
-              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+            {levelUser >= 3 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "home" ? "bg-white text-gray-800 rounded" : "hover:bg-white hover:text-gray-800"}`}
-              onClick={() => setSelected("home")}
-            >
-              <span className="text-xl  rounded-full">
-                <LuLayoutGrid />
-              </span>
-              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                Home
-              </span>
-            </li>
+                onClick={() => setSelected("home")}
+              >
+                <span className="text-xl  rounded-full">
+                  <LuLayoutGrid />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Home
+                </span>
+              </li>
+            )}
 
             <li
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -182,7 +184,6 @@ export default function Dashboard() {
             )}
           </ul>
 
-            
           {/* Logoff */}
           <div
             className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"

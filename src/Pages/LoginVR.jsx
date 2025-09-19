@@ -5,10 +5,12 @@ export default function LoginVR() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [popupTemporario, setPopupTemporario] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
+    setPopupTemporario(false);
 
     const res = await loginUsuario({ email, password });
 
@@ -16,8 +18,13 @@ export default function LoginVR() {
       localStorage.setItem("token", res.token);
       window.location.href = "/dashboard";
     } else {
-      console.log(res.message);
-      setError(res.message);
+      setError(res.message || "Usuário ou senha incorretos.");
+      setPopupTemporario(true);
+
+      // fecha popup depois de 3 segundos
+      setTimeout(() => {
+        setPopupTemporario(false);
+      }, 3000);
     }
   };
   return (
@@ -101,8 +108,37 @@ export default function LoginVR() {
             Entrar
           </button>
 
-          {error && <p className="text-red-500 mt-2">{error}</p>}
+          {/* {error && <p className="text-red-500 mt-2">{error}</p>} */}
         </form>
+        {/* Popup de erro */}
+        {popupTemporario && (
+          <div className="absolute bottom-6 right-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+            {error}
+          </div>
+        )}
+        <style jsx>{`
+          @keyframes fadeInOut {
+            0% {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+            10% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+            90% {
+              opacity: 1;
+              transform: translateY(0);
+            }
+            100% {
+              opacity: 0;
+              transform: translateY(10px);
+            }
+          }
+          .animate-fadeInOut {
+            animation: fadeInOut 3s ease-in-out;
+          }
+        `}</style>
       </div>
     </div>
   );
