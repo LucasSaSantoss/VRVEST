@@ -2,7 +2,9 @@ import nodemailer from "nodemailer";
 
 // transport configurado (exemplo Gmail, mas pode ser outro)
 const transporter = nodemailer.createTransport({
-  service: "gmail",
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // STARTTLS será usado
   auth: {
     user: process.env.EMAIL_USER, // configure no .env
     pass: process.env.EMAIL_PASS,

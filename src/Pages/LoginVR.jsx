@@ -80,9 +80,9 @@ export default function LoginVR() {
               <label htmlFor="password" className="text-sm">
                 Senha
               </label>
-              <a href="#" className="text-sm text-blue-100 hover:underline">
+              {/* <a href="#" className="text-sm text-blue-100 hover:underline">
                 Esqueceu a senha?
-              </a>
+              </a> */}
             </div>
             <input
               id="password"

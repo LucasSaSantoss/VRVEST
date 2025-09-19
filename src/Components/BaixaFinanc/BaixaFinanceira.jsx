@@ -13,6 +13,10 @@ export default function ListaPendencias() {
   const [MostrarModalSimNao, setMostrarModalSimNao] = useState(false);
   const [filtroPorBaixa, setFiltroPorBaixa] = useState(1);
   const [idSelecionado, setIdSelecionado] = useState(null);
+  const [funcSelecionado, setFuncSelecionado] = useState("");
+  const [dataSelecionada, setDataSelecionada] = useState(null);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [mensagem, setMensagem] = useState("");
 
   // Estados para popup de mensagens
   const [popupMessage, setPopupMessage] = useState("");
@@ -51,6 +55,7 @@ export default function ListaPendencias() {
   // Função para baixar uma pendência específica
 
   const baixarPendencias = async (id) => {
+    setIsProcessing(true);
     try {
       const resposta = await axios.put(
         `${API_URL}/pend/baixar`,
@@ -79,7 +84,7 @@ export default function ListaPendencias() {
           ).toLocaleString("pt-BR")} por ${pendenciaAtualizada.devolUserName}`,
           true
         );
-
+        setIsProcessing(false);
         setMostrarModalSimNao(false);
       } else {
         showTemporaryPopup(
@@ -87,11 +92,13 @@ export default function ListaPendencias() {
           false
         );
         setMostrarModalSimNao(false);
+        setIsProcessing(false);
       }
     } catch (err) {
       console.error("Erro ao baixar pendência:", err);
       showTemporaryPopup("Erro ao baixar pendência.", false);
       setMostrarModalSimNao(false);
+      setIsProcessing(false);
     }
   };
 
@@ -129,43 +136,49 @@ export default function ListaPendencias() {
         <label className="font-bold text-4xl mb-3">Baixa Financeira</label>
       </div>
 
-      <div className="mb-4 flex items-center gap-3 w-full justify-between mt-5">
-        <div className="mb-4 flex items-center gap-3">
-          <label>Registros por página:</label>
-          <select
-            value={regPorPagina}
-            onChange={(e) => {
-              setRegPorPagina(Number(e.target.value));
-              setPaginaAtual(1);
-            }}
-            className="border rounded p-1"
-          >
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+      <div className="flex items-center justify-between w-full mt-5 mb-4 gap-6">
+        {/* Filtros */}
+        <div className="flex items-center gap-6">
+          <div className="flex items-center gap-2">
+            <label>Registros por página:</label>
+            <select
+              value={regPorPagina}
+              onChange={(e) => {
+                setRegPorPagina(Number(e.target.value));
+                setPaginaAtual(1);
+              }}
+              className="border rounded p-1"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+            </select>
+          </div>
 
-          <label className="ml-30">Apresentar pendências:</label>
-          <select
-            value={filtroPorBaixa}
-            onChange={(e) => {
-              setFiltroPorBaixa(Number(e.target.value));
-              setPaginaAtual(1);
-            }}
-            className="border rounded p-1"
-          >
-            <option value={1}>Em Aberto</option>
-            <option value={2}>Baixadas</option>
-            <option value={0}>Todas</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <label>Apresentar pendências:</label>
+            <select
+              value={filtroPorBaixa}
+              onChange={(e) => {
+                setFiltroPorBaixa(Number(e.target.value));
+                setPaginaAtual(1);
+              }}
+              className="border rounded p-1"
+            >
+              <option value={1}>Em Aberto</option>
+              <option value={2}>Baixadas</option>
+              <option value={0}>Todas</option>
+            </select>
+          </div>
         </div>
 
+        {/* Busca */}
         <input
           type="text"
           placeholder="Filtrar por nome ou usuário"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
-          className="mb-4 p-2 border rounded w-[30vw]"
+          className="border bg-white w-[30vw] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -232,9 +245,14 @@ export default function ListaPendencias() {
                 {p.status === 1 ? (
                   <button
                     onClick={() => {
-                      (setIdSelecionado(p.id), setMostrarModalSimNao(true));
+                      (setIdSelecionado(p.id),
+                        setFuncSelecionado(p.emplName),
+                        setMostrarModalSimNao(true));
+                      setMensagem(
+                        `Deseja baixar a pendência do funcionário ${p.emplName}, criada na data ${new Date(p.date).toLocaleString("pt-BR")}?`
+                      );
                     }}
-                    className="px-4 py-1 bg-blue-500 text-white rounded hover:bg-blue-400"
+                    className="px-4 py-1 bg-[#1d8aaa] text-white rounded hover:bg-blue-500"
                   >
                     Baixar
                   </button>
@@ -259,7 +277,7 @@ export default function ListaPendencias() {
           <button
             onClick={handlePaginaAnterior}
             disabled={paginaAtual === 1}
-            className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
           >
             Anterior
           </button>
@@ -269,7 +287,7 @@ export default function ListaPendencias() {
           <button
             onClick={handleProximaPagina}
             disabled={paginaAtual === totalPaginas || totalPaginas === 0}
-            className="px-4 py-1 bg-gray-300 rounded hover:bg-gray-400 disabled:opacity-50"
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
           >
             Próxima
           </button>
@@ -283,6 +301,8 @@ export default function ListaPendencias() {
             listarPendencias();
             setMostrarModalSimNao(false);
           }}
+          isProcessing={isProcessing}
+          mensagem={mensagem}
         />
       </div>
 

@@ -19,6 +19,7 @@ function LeitorQrCode() {
   const [kitSelecionado, setKitSelecionado] = useState(null);
   const [tipoOperacao, setTipoOperacao] = useState("retirada");
   const [isProcessing, setIsProcessing] = useState(false);
+  const [mensagem, setMensagem] = useState("");
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -131,14 +132,43 @@ function LeitorQrCode() {
         if (tipoOperacao === "retirada") {
           setShowModal(true);
         } else {
-          const response = await devolucaoKit({ cpf });
-          if (response.success) {
-            showTemporaryPopup(`Devolução de kit registrada!`);
-            setCpf("");
-          } else {
-            showTemporaryPopup(response.message || "Erro ao devolver o kit.");
+          setMostrarModalSimNao(true);
+          setIsProcessing(true);
+
+          // Popup de "processando"
+          setPopupMessage("Processando devolução e envio de e-mail...");
+          setShowPopup(true);
+
+          try {
+            const response = await devolucaoKit({ cpf });
+
+            if (response.success && response.expired) {
+              setPopupMessage("Devolução de kit registrada!");
+              setCpf("");
+              setIsSuccess(true);
+              cpfInputRef.current?.focus();
+            } else if (response.expired) {
+              setPopupMessage(
+                response.message ||
+                  "A última pendência encontrada está fora do prazo de 24h."
+              );
+              setIsSuccess(false);
+              cpfInputRef.current?.focus();
+            } else {
+              setPopupMessage(response.message || "Erro ao devolver o kit."); 
+              setIsSuccess(false);
+              cpfInputRef.current?.focus();
+            }
+          } catch (err) {
+            setPopupMessage("Erro ao processar devolução.");
+          } finally {
+            setIsSuccess(false);
+            setIsProcessing(false);
+            setMostrarModalSimNao(false);
+
+            // fecha popup depois de alguns segundos
+            setTimeout(() => setShowPopup(false), 3000);
           }
-          setMostrarModalSimNao(false);
         }
         return;
       }
@@ -157,22 +187,27 @@ function LeitorQrCode() {
         switch (e.key) {
           case "1":
             setKitSelecionado("P");
+            setMensagem("Tamanho P selecionado. Deseja prosseguir?");
             setMostrarModalSimNao(true);
             break;
           case "2":
             setKitSelecionado("M");
+            setMensagem("Tamanho M selecionado. Deseja prosseguir?");
             setMostrarModalSimNao(true);
             break;
           case "3":
             setKitSelecionado("G");
+            setMensagem("Tamanho G selecionado. Deseja prosseguir?");
             setMostrarModalSimNao(true);
             break;
           case "4":
             setKitSelecionado("GG");
+            setMensagem("Tamanho GG selecionado. Deseja prosseguir?");
             setMostrarModalSimNao(true);
             break;
           default:
             setShowModal(false);
+            setMensagem("");
             cpfInputRef.current?.focus();
             break;
         }
@@ -181,7 +216,14 @@ function LeitorQrCode() {
 
     window.addEventListener("keydown", handleKeyPress);
     return () => window.removeEventListener("keydown", handleKeyPress);
-  }, [showModal, mostrarModalSimNao, showPendPopup, kitSelecionado]);
+  }, [
+    showModal,
+    mostrarModalSimNao,
+    showPendPopup,
+    kitSelecionado,
+    tipoOperacao,
+    cpf,
+  ]);
 
   // Foco automático no botão Sim do modal
   useEffect(() => {
@@ -224,7 +266,7 @@ function LeitorQrCode() {
 
   // Render
   return (
-    <div className="flex flex-col w-[400px] mx-auto mt-30 border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
+    <div className="flex flex-col w-[400px] mx-auto mt-[25vh] border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
       <label htmlFor="qrCode" className="text-2x1 font-large">
         QR Code:
       </label>
@@ -303,6 +345,9 @@ function LeitorQrCode() {
                   onClick={() => {
                     setKitSelecionado(kit);
                     setMostrarModalSimNao(true);
+                    setMensagem(
+                      `kit selecionado - tamanho ${kit}. Deseja prosseguir?`
+                    );
                   }}
                   className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
                 >
@@ -318,6 +363,7 @@ function LeitorQrCode() {
               btnSimRef={btnSimRef}
               btnNaoRef={btnNaoRef}
               isProcessing={isProcessing}
+              mensagem={mensagem}
             />
 
             <button

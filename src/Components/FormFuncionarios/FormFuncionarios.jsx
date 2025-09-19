@@ -10,12 +10,13 @@ import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
 export default function ListaFuncionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
+  const [regPorPagina, setRegPorPagina] = useState(10);
 
   // Modais
   const [showCreateFunc, setshowCreateFunc] = useState(false); // Criação
   const [MostrarAlterFunc, setMostarAlterFunc] = useState(false); // Edição
   const [showModalCracha, setShowModalCracha] = useState(false); // QR Code
-
+  const [paginaAtual, setPaginaAtual] = useState(1);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
 
   // Impressão
@@ -50,6 +51,23 @@ export default function ListaFuncionarios() {
     setMostarAlterFunc(true);
   };
 
+  // Paginação
+  const totalPaginas = Math.ceil(funcionariosFiltrados.length / regPorPagina);
+  const indiceUltimoRegistro = paginaAtual * regPorPagina;
+  const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
+  const registrosFiltrados = funcionariosFiltrados.slice(
+    indicePrimeiroRegistro,
+    indiceUltimoRegistro
+  );
+
+  const handleProximaPagina = () => {
+    if (paginaAtual < totalPaginas) setPaginaAtual((prev) => prev + 1);
+  };
+
+  const handlePaginaAnterior = () => {
+    if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
+  };
+
   return (
     <>
       <div className="p-4">
@@ -57,23 +75,43 @@ export default function ListaFuncionarios() {
           <h1 className="text-4xl font-bold">Funcionários Cadastrados</h1>
 
           {/* Barra de ação */}
-          <div className="justify-between w-full flex mt-4 items-center">
+          <div className="w-full flex items-center justify-between mt-8">
             {/* Novo funcionário */}
             <button
-              className="bg-green-700 text-white px-4 py-2 rounded hover:bg-green-800 transition"
+              className="bg-[#27ae60] text-white px-4 py-2 rounded hover:bg-green-800 transition"
               onClick={() => setshowCreateFunc(true)}
             >
               Novo Funcionário
             </button>
 
-            {/* Busca */}
-            <input
-              type="text"
-              placeholder="Buscar Funcionário..."
-              value={filtroNome}
-              onChange={(e) => setFiltroNome(e.target.value)}
-              className="border mt-5 bg-white min-w-[500px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ml-4"
-            />
+            {/* Busca + paginação */}
+            <div className="flex items-center gap-6">
+              {/* Busca */}
+              <input
+                type="text"
+                placeholder="Buscar Funcionário..."
+                value={filtroNome}
+                onChange={(e) => setFiltroNome(e.target.value)}
+                className="border bg-white min-w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+
+              {/* Registros por página */}
+              <div className="flex items-center">
+                <label className="mr-3">Registros por página:</label>
+                <select
+                  value={regPorPagina}
+                  onChange={(e) => {
+                    setRegPorPagina(Number(e.target.value));
+                    setPaginaAtual(1);
+                  }}
+                  className="border rounded p-1"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -91,7 +129,7 @@ export default function ListaFuncionarios() {
             </tr>
           </thead>
           <tbody>
-            {funcionariosFiltrados.map((employee) => (
+            {registrosFiltrados.map((employee) => (
               <tr
                 key={employee.id}
                 className="text-center text-md hover:bg-blue-100 transition odd:bg-white even:bg-gray-100"
@@ -109,7 +147,7 @@ export default function ListaFuncionarios() {
                     {/* Editar */}
                     <button
                       onClick={() => abrirAlterForm(employee)}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-blue-600 hover:bg-blue-500 flex items-center justify-center hover:scale-110 transition duration-200"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-[#1d8aaa] hover:bg-[#1d8aaa] flex items-center justify-center hover:scale-110 transition duration-200"
                     >
                       <FaRegEdit
                         className="h-6 w-6 text-gray-700"
@@ -123,7 +161,7 @@ export default function ListaFuncionarios() {
                         setShowModalCracha(true);
                         setFuncSelecionado(employee);
                       }}
-                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-green-600 hover:bg-green-300 hover:scale-110 transition duration-200"
+                      className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-[#27ae60] hover:bg-[#27ae60] hover:scale-110 transition duration-200"
                     >
                       <LuQrCode
                         className="h-6 w-6 text-gray-700"
@@ -218,6 +256,29 @@ export default function ListaFuncionarios() {
           </div>
         </div>
       )}
+
+      {/* PAGINAÇÃO */}
+      <div className="flex justify-between mt-4 items-center">
+        <div className="flex gap-2 ml-[35vw] items-center">
+          <button
+            onClick={handlePaginaAnterior}
+            disabled={paginaAtual === 1}
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+          >
+            Anterior
+          </button>
+          <span className="ml-1">
+            Página {paginaAtual} de {totalPaginas}
+          </span>
+          <button
+            onClick={handleProximaPagina}
+            disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+          >
+            Próxima
+          </button>
+        </div>
+      </div>
     </>
   );
 }

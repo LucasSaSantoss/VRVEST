@@ -1,6 +1,7 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
+// import { emailQueue } from "../emailService/queues/emailQueue.js";
 
 const prisma = new PrismaClient();
 
@@ -126,12 +127,17 @@ export const registrarKit = async (req, res) => {
       },
     });
 
-    // Envia e-mail automaticamente
+    // Enviar e-mail automaticamente
     await enviarEmail(
       funcionario.email,
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
     );
+    // await emailQueue.add("enviar", {
+    //   para: funcionario.email,
+    //   assunto: "Retirada de Kit",
+    //   mensagem: `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
+    // });
 
     res.status(201).json({
       success: true,
@@ -286,30 +292,37 @@ export const devolverKit = async (req, res) => {
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
 
-    const limite = new Date();
-    limite.setHours(limite.getHours() - 24);
-
-    // Altera a pendência
+    // Última pendência em aberto (sem limite de tempo)
     const UltimaPendencia = await prisma.pendency.findFirst({
       where: {
         emplID: funcionario.id,
         status: 1,
-        date: {
-          gte: limite,
-        },
       },
       orderBy: {
-        date: "desc", //Usado pra pegar a pendencia mais recente dentro das últimas 24 hrs.
+        date: "desc",
       },
     });
 
     if (!UltimaPendencia) {
       return res.json({
         success: false,
-        message: "Nenhuma pendência recente encontrada para baixar.",
+        message: "Nenhuma pendência em aberto encontrada para baixar.",
       });
     }
 
+    // Valida prazo de 24h
+    const limite = new Date();
+    limite.setHours(limite.getHours() - 24);
+
+    if (UltimaPendencia.date < limite) {
+      return res.json({
+        success: false,
+        expired: true, 
+        message: "A última pendência encontrada está fora do prazo de 24h.",
+      });
+    }
+
+    // Atualiza a pendência
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: UltimaPendencia.id },
       data: {
@@ -332,7 +345,7 @@ export const devolverKit = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Última pendência baixada com sucesso",
+      message: "Última pendência baixada com sucesso.",
       pendencia: pendenciaAtualizada,
     });
   } catch (err) {

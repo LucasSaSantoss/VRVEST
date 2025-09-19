@@ -75,7 +75,7 @@ export default function Dashboard() {
           focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[21vh]`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          style={{ backgroundColor: "rgb(23, 110, 150)" }}
+          style={{ backgroundColor: "#16607a" }}
         >
           <div className="p-4 flex justify-between items-center border-b">
             <span
@@ -155,7 +155,7 @@ export default function Dashboard() {
             {levelUser >= 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("baixa")}
               >
                 <span className="text-xl">
@@ -201,7 +201,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[220px]">
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[180px]">
           {pages[selected]}
         </main>
       </div>

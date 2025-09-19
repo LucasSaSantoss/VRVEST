@@ -1,6 +1,6 @@
 function HeaderQRCode() {
   return (
-    <div className="flex flex-row rounded-xl fixed top-0 left-0 w-full z-40 shadow-md h-[21vh] items-center bg-[rgb(23,110,150)]">
+    <div className="flex flex-row rounded-xl fixed top-0 left-0 w-full z-40 shadow-md h-[21vh] items-center bg-[#16607a]">
       <img
         className="w-[20vw] h-[15vh] mr-10 mt-2"
         src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png"
