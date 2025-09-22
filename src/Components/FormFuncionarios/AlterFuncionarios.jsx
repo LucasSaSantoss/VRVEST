@@ -100,7 +100,13 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
                 type="text"
                 id="nome"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  const somenteLetras = e.target.value.replace(
+                    /[^a-zA-Z\s]/g,
+                    ""
+                  );
+                  setName(somenteLetras);
+                }}
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 required
@@ -137,7 +143,10 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
               type="text"
               id="cpf"
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
+              onChange={(e) => {
+                const somenteNumeros = e.target.value.replace(/\D/g, "");
+                setCpf(somenteNumeros);
+              }}
               maxLength={11}
               placeholder="Digite o CPF"
               required
@@ -154,7 +163,13 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
               type="text"
               id="cargo"
               value={position}
-              onChange={(e) => setPosition(e.target.value)}
+              onChange={(e) => {
+                const somenteLetras = e.target.value.replace(
+                  /[^a-zA-Z\s]/g,
+                  ""
+                );
+                setPosition(somenteLetras);
+              }}
               maxLength={50}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"

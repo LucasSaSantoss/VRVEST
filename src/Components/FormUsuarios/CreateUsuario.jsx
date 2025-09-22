@@ -99,11 +99,11 @@ export default function CreateUser({ onClose, mostrarPopup }) {
                 placeholder="Digite o nome completo"
                 value={name}
                 onChange={(e) => {
-                  const valorSomenteLetras = e.target.value.replace(
-                    /[0-9]/g,
+                  const somenteLetras = e.target.value.replace(
+                    /[^a-zA-Z\s]/g,
                     ""
                   );
-                  setName(valorSomenteLetras);
+                  setName(somenteLetras);
                 }}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
@@ -161,7 +161,13 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               name="cargo"
               maxLength={50}
               value={position}
-              onChange={(e) => setPosition(e.target.value)}
+              onChange={(e) => {
+                const somenteLetras = e.target.value.replace(
+                  /[^a-zA-Z\s]/g,
+                  ""
+                );
+                setPosition(somenteLetras);
+              }}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             />
