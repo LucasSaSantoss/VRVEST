@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { alterarUsuario } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
 
-export default function AlterUser({ user, onClose, onUpdate }) {
+export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
   const navigate = useNavigate();
 
   const [name, setName] = useState(user?.name || "");
@@ -30,7 +30,7 @@ export default function AlterUser({ user, onClose, onUpdate }) {
     e.preventDefault();
 
     if (!user?.id) {
-      alert("Usuário não informado");
+      mostrarPopup("Usuário não informado", "error");
       return;
     }
 
@@ -51,38 +51,29 @@ export default function AlterUser({ user, onClose, onUpdate }) {
 
     // Validação de campos vazios
     if (!name || !email || !sector || !position || !level) {
-      setPopup({
-        mostrar: true,
-        mensagem: "Preencha todos os campos obrigatórios.",
-        tipo: "error",
-      });
-      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      mostrarPopup("Preencha todos os campos obrigatórios.", "error");
       return;
     }
 
     try {
       const res = await alterarUsuario(user.id, payload);
 
-      setPopup({
-        mostrar: true,
-        mensagem: res.message || "Alteração realizada",
-        tipo: res.success ? "success" : "error",
-      });
-
-      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      mostrarPopup(
+        res.message || "Alteração realizada",
+        res.success ? "success" : "error"
+      );
 
       if (res.success) {
         setMostarModalSimNao(false);
         if (onUpdate) await onUpdate();
         if (onClose) onClose();
+      } else {
+        setMostarModalSimNao(false);
+        if (onClose) onClose();
       }
     } catch (err) {
-      setPopup({
-        mostrar: true,
-        mensagem: "Não foi possível atualizar o usuário",
-        tipo: "error",
-      });
-      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      mostrarPopup("Não foi possível atualizar o usuário", "error");
+      setMostarModalSimNao(false);
       console.error("Erro no handleSubmit:", err);
     }
   }
@@ -90,7 +81,7 @@ export default function AlterUser({ user, onClose, onUpdate }) {
   return (
     <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
       <div className="w-full">
-        <form className="flex flex-wrap gap-5" onSubmit={handleSubmit}>
+        <form className="flex flex-wrap gap-5">
           <div className="flex flex-wrap w-full gap-4">
             <div className="flex-1 min-w-[425px]">
               <label
@@ -217,11 +208,18 @@ export default function AlterUser({ user, onClose, onUpdate }) {
 
           <div className="w-full flex justify-center">
             <button
-              type="submit"
+              type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              onClick={() => setMostarModalSimNao(true)}
             >
               Salvar Alterações
             </button>
+            <ModalSimNao
+              mostrar={MostrarModalSimNao}
+              onConfirmar={handleSubmit}
+              onCancelar={cancelarOperacao}
+              mensagem={"Deseja finalizar o cadastro deste usuário?"}
+            />
           </div>
         </form>
 

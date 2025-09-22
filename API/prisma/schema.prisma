@@ -23,6 +23,8 @@ model User {
   position String @db.VarChar(100) 
   level Int @default(1)
   active Int @default(1)
+
+  @@check(email ~* "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
 }
 
 

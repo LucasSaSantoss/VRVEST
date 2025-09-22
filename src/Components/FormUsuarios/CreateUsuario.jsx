@@ -2,7 +2,7 @@ import { cadastrarUsuario } from "../../services/api";
 import { useState } from "react";
 import ModalSimNao from "../ModalSimNao";
 
-export default function CreateUser({ onClose }) {
+export default function CreateUser({ onClose, mostrarPopup }) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -10,7 +10,6 @@ export default function CreateUser({ onClose }) {
   const [position, setPosition] = useState("");
   const [level, setLevel] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
-  const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
   const [popup, setPopup] = useState({
@@ -61,6 +60,12 @@ export default function CreateUser({ onClose }) {
         if (onClose) onClose();
       }
       setMostarModalSimNao(false);
+      setName("");
+      setEmail("");
+      setPassword("");
+      setPosition("");
+      setSector("");
+      setLevel("");
     } else {
       setPopup({
         mostrar: true,
@@ -93,7 +98,13 @@ export default function CreateUser({ onClose }) {
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 value={name}
-                onChange={(e) => setName(e.target.value)}
+                onChange={(e) => {
+                  const valorSomenteLetras = e.target.value.replace(
+                    /[0-9]/g,
+                    ""
+                  );
+                  setName(valorSomenteLetras);
+                }}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
@@ -217,6 +228,7 @@ export default function CreateUser({ onClose }) {
               mostrar={MostrarModalSimNao}
               onConfirmar={handleCadastro}
               onCancelar={cancelarOperacao}
+              mensagem={"Deseja finalizar o cadastro do usuário?"}
             />
           </div>
         </form>
@@ -224,7 +236,6 @@ export default function CreateUser({ onClose }) {
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity duration-700 ease-in-out
-
             ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
           >
             {popup.mensagem}

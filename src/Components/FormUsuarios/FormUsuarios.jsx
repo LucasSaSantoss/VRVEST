@@ -12,6 +12,15 @@ export default function TabelaUsuarios() {
   const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info", // success / error / info
+  });
+  const mostrarPopup = (mensagem, tipo = "info") => {
+    setPopup({ mostrar: true, mensagem, tipo });
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+  };
 
   useEffect(() => {
     fetch("http://localhost:3000/users")
@@ -111,10 +120,11 @@ export default function TabelaUsuarios() {
               </div>
               <CreateUser
                 onClose={() => {
-                  setShowModalCreate(false);
                   fetch("http://localhost:3000/users")
                     .then((res) => res.json())
                     .then((data) => setUsuarios(data));
+                  // setShowModalCreate(false);
+                  // mostrarPopup = { mostrarPopup };
                 }}
               />
             </div>
@@ -180,20 +190,33 @@ export default function TabelaUsuarios() {
               <h2 className="text-2xl font-bold">Alterar Usuário</h2>
               <button
                 className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
-                onClick={() => setShowModalAlter(false)}
+                onClick={() => setShowModalAlter(false)} // Fecha manualmente
               >
                 ✖
               </button>
             </div>
             <AlterUser
               user={usuarioSelecionado}
-              onClose={() => {
-                fetch("http://localhost:3000/users")
-                  .then((res) => res.json())
-                  .then((data) => setUsuarios(data));
+              onUpdate={async () => {
+                // Atualiza apenas a lista de usuários sem fechar o modal
+                const res = await fetch("http://localhost:3000/users");
+                const data = await res.json();
+                setUsuarios(data);
+                setShowModalAlter(false);
               }}
+              onClose={() => setShowModalAlter(false)}
+              mostrarPopup={mostrarPopup}
             />
           </div>
+        </div>
+      )}
+
+      {popup.mostrar && (
+        <div
+          className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+      ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+        >
+          {popup.mensagem}
         </div>
       )}
 
@@ -219,6 +242,29 @@ export default function TabelaUsuarios() {
           </button>
         </div>
       </div>
+      <style jsx>{`
+        @keyframes fadeInOut {
+          0% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          10% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          90% {
+            opacity: 1;
+            transform: translateY(0);
+          }
+          100% {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+        }
+        .animate-fadeInOut {
+          animation: fadeInOut 3s forwards;
+        }
+      `}</style>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import {
@@ -25,6 +26,8 @@ export default function Dashboard() {
   const [selected, setSelected] = useState("qrcode");
   const [locked, setLocked] = useState(false);
   const [levelUser, setLevelUser] = useState(0);
+  const [popupMessage, setPopupMessage] = useState("");
+  const [showPopup, setShowPopup] = useState(false);
 
   let timeoutId;
 
@@ -40,16 +43,41 @@ export default function Dashboard() {
     }
   };
 
+  const showTemporaryPopup = (msg) => {
+    setPopupMessage(msg);
+    setShowPopup(true);
+    setTimeout(() => setShowPopup(false), 3000);
+  };
+
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token) {
       navigate("/");
       return;
     }
-    const decodedToken = jwtDecode(token);
-    setLevelUser(decodedToken.level);
-  }, [navigate]);
+    //   const decodedToken = jwtDecode(token);
+    //   setLevelUser(decodedToken.level);
+    // }, [navigate]);
+    try {
+      const decodedToken = jwtDecode(token);
+      const agora = Date.now() / 1000; // em segundos
 
+      if (decodedToken.exp < agora) {
+        // Token expirado
+        localStorage.removeItem("token");
+        showTemporaryPopup("Sua sessão expirou, faça login novamente.");
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
+      }
+      setLevelUser(decodedToken.level);
+    } catch (err) {
+      console.error("Erro ao verificar token:", err);
+      localStorage.removeItem("token");
+      showTemporaryPopup("Token inválido, faça login novamente.");
+      navigate("/");
+    }
+  }, [selected, navigate]);
   const handleLogoff = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -205,6 +233,12 @@ export default function Dashboard() {
         <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[180px]">
           {pages[selected]}
         </main>
+
+        {showPopup && (
+          <div className="fixed bottom-5 right-5 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in">
+            {popupMessage}
+          </div>
+        )}
       </div>
     </>
   );

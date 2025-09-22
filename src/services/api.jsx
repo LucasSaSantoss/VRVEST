@@ -1,4 +1,6 @@
 import axios from "axios";
+// import { navigate } from "react-router-dom";
+// import jwtDecode from "jwt-decode";
 
 const API_URL = "http://localhost:3000";
 
@@ -217,3 +219,36 @@ export async function devolucaoKit({ cpf}) {
     };
   }
 }
+
+// ------------------------------ Verificação de Token ----------------------------
+
+const api = axios.create({
+  baseURL: API_URL,
+});
+
+// Interceptor para anexar token em cada requisição
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("token");
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Interceptor para capturar erros de resposta
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      const msg = error.response.data?.message;
+
+      if (msg === "Token expirado" || msg === "Token inválido") {
+        localStorage.removeItem("token");
+        window.location.href = "/"; // redireciona pro login
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
+export {api}

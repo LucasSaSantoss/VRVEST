@@ -2,6 +2,7 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import validator from "validator";
 
 const prisma = new PrismaClient();
 
@@ -59,6 +60,11 @@ export const loginUser = async (req, res) => {
 
 export const createUser = async (req, res) => {
   const { name, email, password, sector, position, level } = req.body;
+
+  if (!validator.isEmail(email)) {
+    return res.status(400).json({ message: "Email inválido." });    
+  }
+
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
 
