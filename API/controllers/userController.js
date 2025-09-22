@@ -62,7 +62,7 @@ export const createUser = async (req, res) => {
   const { name, email, password, sector, position, level } = req.body;
 
   if (!validator.isEmail(email)) {
-    return res.status(400).json({ message: "Email inválido." });    
+    return res.status(400).json({ message: "Email inválido." });
   }
 
   try {
@@ -112,6 +112,9 @@ export const updateUser = async (req, res) => {
         .json({ success: false, message: "Usuário não encontrado" });
     }
 
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Email inválido." });
+    }
     // Construção de campos a serem alterados (apenas se diferentes)
     const camposAlterados = {};
 

@@ -1,6 +1,7 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
+import validator from "cpf-cnpj-validator";
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
 const prisma = new PrismaClient();
@@ -13,6 +14,10 @@ export const createEmpl = async (req, res) => {
       return res
         .status(400)
         .json({ message: "Existem dados em branco, favor preencher." });
+    }
+
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Email inválido." });
     }
 
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
@@ -133,7 +138,7 @@ export const registrarKit = async (req, res) => {
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
     );
-   
+
     res.status(201).json({
       success: true,
       message: "Saída de kit registrada",
@@ -196,6 +201,9 @@ export const updateEmpl = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Funcionário não encontrado" });
+    }
+    if (!validator.isEmail(email)) {
+      return res.status(400).json({ message: "Email inválido." });
     }
 
     const camposAlterados = {};
@@ -312,7 +320,7 @@ export const devolverKit = async (req, res) => {
     if (UltimaPendencia.date < limite) {
       return res.json({
         success: false,
-        expired: true, 
+        expired: true,
         message: "A última pendência encontrada está fora do prazo de 24h.",
       });
     }
