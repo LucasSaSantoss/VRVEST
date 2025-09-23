@@ -26,6 +26,14 @@ export default function CreateFunc({ onClose }) {
     tipo: "info",
   });
 
+  const limparNome = (e) => {
+    let valor = e.target.value;
+    valor = valor.replace(/[^a-zA-ZÀ ]/g, "");
+    valor = valor.replace(/ \s+/g, " ");
+    valor = valor.trimStart();
+    setName(valor);
+  };
+
   const temCamposAlterados = () => {
     return (
       name.trim() !== "" ||
@@ -108,10 +116,7 @@ export default function CreateFunc({ onClose }) {
                 type="text"
                 id="nome"
                 value={name}
-                onChange={(e) => {
-                  const somenteLetras = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                  setName(somenteLetras);
-                }}
+                onChange={limparNome}
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 required
@@ -130,7 +135,7 @@ export default function CreateFunc({ onClose }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={limparEmail}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
@@ -168,10 +173,13 @@ export default function CreateFunc({ onClose }) {
               type="text"
               id="cargo"
               value={position}
-             onChange={(e) => {
-                  const somenteLetras = e.target.value.replace(/[^a-zA-Z\s]/g, "");
-                  setPosition(somenteLetras);
-                }}
+              onChange={(e) => {
+                const somenteLetras = e.target.value.replace(
+                  /[^a-zA-Z\s]/g,
+                  ""
+                );
+                setPosition(somenteLetras);
+              }}
               maxLength={50}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"

@@ -13,7 +13,7 @@ import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
 import HomeVRVest from "../Components/homeVRVest";
-// import RelatoriosVRVest from "../Components/RelatoriosVRVest";
+import Relatorios from "../Components/RelatoriosVRVest"; 
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -85,7 +85,7 @@ export default function Dashboard() {
 
   const pages = {
     home: <HomeVRVest />,
-    // relatorios: <RelatoriosVRVest />,
+    relatorios: <Relatorios />,
     qrcode: <QrCodeVRVest />,
     tabela: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
@@ -196,7 +196,7 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser >= 3 && (
+            {levelUser >= 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}

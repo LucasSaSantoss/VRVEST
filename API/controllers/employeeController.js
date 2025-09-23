@@ -202,9 +202,6 @@ export const updateEmpl = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Funcionário não encontrado" });
     }
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Email inválido." });
-    }
 
     const camposAlterados = {};
     if (name && name !== funcionario.name) camposAlterados.name = name;
@@ -281,53 +278,72 @@ export const updateEmpl = async (req, res) => {
 
 export const devolverKit = async (req, res) => {
   try {
-    const { cpf } = req.body;
+    const { cpf, id } = req.body;
 
     // Verifica se o funcionário existe
-    const funcionario = await prisma.employee.findUnique({ where: { cpf } });
+    const funcionario = await prisma.employee.findUnique({
+      where: { cpf },
+    });
+
     if (!funcionario) {
       return res
         .status(404)
         .json({ success: false, message: "CPF não encontrado" });
     }
 
+    const pendenciaSelecionada = await prisma.pendency.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!pendenciaSelecionada) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erro ao Devolver Kit." });
+    }
+
+    if (pendenciaSelecionada.emplID !== funcionario.id) {
+      return res.status(400).json({
+        success: false,
+        message: "Essa pendência não pertence a este funcionário.",
+      });
+    }
+
     // Dados do usuário logado
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
 
-    // Última pendência em aberto (sem limite de tempo)
-    const UltimaPendencia = await prisma.pendency.findFirst({
-      where: {
-        emplID: funcionario.id,
-        status: 1,
-      },
-      orderBy: {
-        date: "desc",
-      },
-    });
+    // // Última pendência em aberto (sem limite de tempo)
+    // const UltimaPendencia = await prisma.pendency.findFirst({
+    //   where: {
+    //     emplID: funcionario.id,
+    //     status: 1,
+    //   },
+    //   orderBy: {
+    //     date: "desc",
+    //   },
+    // });
 
-    if (!UltimaPendencia) {
-      return res.json({
-        success: false,
-        message: "Nenhuma pendência em aberto encontrada para baixar.",
-      });
-    }
+    // if (!UltimaPendencia) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Nenhuma pendência em aberto encontrada para baixar.",
+    //   });
+    // }
 
     // Valida prazo de 24h
     const limite = new Date();
-    limite.setHours(limite.getHours() - 24);
+    limite.setHours(limite.getHours() - 36);
 
-    if (UltimaPendencia.date < limite) {
+    if (pendenciaSelecionada.date < limite) {
       return res.json({
         success: false,
         expired: true,
-        message: "A última pendência encontrada está fora do prazo de 24h.",
+        message: "A última pendência encontrada está fora do prazo de 36hrs.",
       });
     }
 
     // Atualiza a pendência
     const pendenciaAtualizada = await prisma.pendency.update({
-      where: { id: UltimaPendencia.id },
+      where: { id: pendenciaSelecionada.id },
       data: {
         status: 2,
         devolUserId: usuarioID,
@@ -348,7 +364,9 @@ export const devolverKit = async (req, res) => {
 
     return res.json({
       success: true,
-      message: "Última pendência baixada com sucesso.",
+      message: `Pendência do dia ${new Date(
+        pendenciaAtualizada.date
+      ).toLocaleString("pt-BR")}, do colaborador ${pendenciaAtualizada.emplName} baixada com sucesso.`,
       pendencia: pendenciaAtualizada,
     });
   } catch (err) {

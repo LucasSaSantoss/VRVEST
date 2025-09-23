@@ -198,12 +198,12 @@ export async function carregarPendencias() {
   }
 }
 
-export async function devolucaoKit({ cpf}) {
+export async function devolucaoKit({ cpf, id }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl/devolver`,
-      { cpf },
+      { cpf, id }, 
       { headers: { Authorization: `Bearer ${token}` } }
     );
 

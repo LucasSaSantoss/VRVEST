@@ -20,6 +20,7 @@ function LeitorQrCode() {
   const [tipoOperacao, setTipoOperacao] = useState("retirada");
   const [isProcessing, setIsProcessing] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -85,21 +86,80 @@ function LeitorQrCode() {
       const valorKit = 50;
 
       if (pendData.success && pendData.total > 0) {
-        const infoPend = pendData.list.map((p) => (
-          <div key={p.id}>
-            {new Date(p.date).toLocaleDateString()} - Tamanho do Kit :{" "}
-            {p.kitSize} - Valor : R$ {valorKit}
-          </div>
-        ));
+        const limite = new Date();
+        limite.setHours(limite.getHours() - 36);
 
         setPendPopupMessage(
-          <div>
-            <div>
-              Este funcionário possui {pendData.total} pendência(s) em aberto:
+          <div className="fixed inset-0 flex items-center justify-center z-50">
+            <div className="bg-white text-black px-6 py-4 rounded-lg shadow-lg w-[600px]">
+              <h2 className="text-xl font-bold mb-4 text-center">
+                Pendências em Aberto
+              </h2>
+              <table className="w-full border-collapse border border-gray-300">
+                <thead>
+                  <tr className="bg-gray-200">
+                    <th className="border border-gray-300 px-2 py-1">Data</th>
+                    <th className="border border-gray-300 px-2 py-1">
+                      Tamanho
+                    </th>
+                    <th className="border border-gray-300 px-2 py-1">Valor</th>
+                    {tipoOperacao === "devolucao" && (
+                      <th className="border border-gray-300 px-2 py-1">
+                        Selecionar
+                      </th>
+                    )}
+                  </tr>
+                </thead>
+                <tbody className="text-sm">
+                  {pendData.list.map((p) => {
+                    const dataPendencia = new Date(p.date);
+                    const podeSelecionar = dataPendencia >= limite;
+                    return (
+                      <tr key={p.id}>
+                        <td className="border border-gray-300 px-2 py-1">
+                          {dataPendencia.toLocaleDateString()}
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          {p.kitSize}
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1">
+                          R$ 50
+                        </td>
+                        {tipoOperacao === "devolucao" && (
+                          <td className="border border-gray-300 px-2 py-1 text-center">
+                            {podeSelecionar ? (
+                              <input
+                                id={p.id}
+                                type="radio"
+                                name="pendencia"
+                                value={p.id}
+                                // checked={pendenciaSelecionada == p.id}
+                                onChange={(e) => {
+                                  setPendenciaSelecionada(e.target.value);
+                                  console.log(p.id);
+                                }}
+                              />
+                            ) : (
+                              <span className="text-gray-400 text-sm">
+                                Não selecionável
+                              </span>
+                            )}
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+              <div className="w-full mt-2 items-center">
+                <div className="flex bg-gray-100 font-bold border border-gray-300">
+                  <div className="px-2 py-1 text-right flex-1">Total</div>
+                  <div className="px-2 py-1 flex-1">
+                    R$ {pendData.list.length * 50}
+                  </div>
+                </div>
+              </div>
             </div>
-            {infoPend}
-            <div>-------------------------------------------</div>
-            <div>Total das pendências: R$ {pendData.total * valorKit}</div>
           </div>
         );
         setShowPendPopup(true);
@@ -136,13 +196,16 @@ function LeitorQrCode() {
         } else {
           setMostrarModalSimNao(true);
           setIsProcessing(true);
-
+          console.log("teste");
           // Popup de "processando"
           setPopupMessage("Processando devolução e envio de e-mail...");
           setShowPopup(true);
 
           try {
-            const response = await devolucaoKit({ cpf });
+            const response = await devolucaoKit({
+              cpf,
+              id: pendenciaSelecionada,
+            });
 
             if (response.success && response.expired) {
               setPopupMessage("Devolução de kit registrada!");
@@ -152,7 +215,7 @@ function LeitorQrCode() {
             } else if (response.expired) {
               setPopupMessage(
                 response.message ||
-                  "A última pendência encontrada está fora do prazo de 24h."
+                  "A última pendência encontrada está fora do prazo de 36hrs."
               );
               setIsSuccess(false);
               cpfInputRef.current?.focus();
@@ -286,7 +349,7 @@ function LeitorQrCode() {
         className="mt-4 p-3 border-2 border-[#2faed4] rounded-[25px] w-[300px] text-lg"
       />
 
-      <div className="flex gap-6 mt-6">
+      <div className="flex gap-6 mt-6  text-lg">
         <label className="flex items-center gap-2">
           <input
             type="radio"
@@ -311,7 +374,7 @@ function LeitorQrCode() {
 
       {/* Popup */}
       {showPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
           <div
             className={
               isSuccess
@@ -326,8 +389,8 @@ function LeitorQrCode() {
 
       {/* Popup pendências */}
       {showPendPopup && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-          <div className="bg-yellow-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-red-700 text-white text-2xl px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
             {pendPopupMessage}
           </div>
         </div>
@@ -341,20 +404,27 @@ function LeitorQrCode() {
               Selecione o KIT que será retirado
             </h2>
             <div className="flex justify-center gap-6 mb-4">
-              {["P", "M", "G", "GG"].map((kit) => (
-                <button
-                  key={kit}
-                  onClick={() => {
-                    setKitSelecionado(kit);
-                    setMostrarModalSimNao(true);
-                    setMensagem(
-                      `kit selecionado - tamanho ${kit}. Deseja prosseguir?`
-                    );
-                  }}
-                  className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
-                >
-                  {kit}
-                </button>
+              {[
+                { kit: "P", numero: 1 },
+                { kit: "M", numero: 2 },
+                { kit: "G", numero: 3 },
+                { kit: "GG", numero: 4 },
+              ].map(({ kit, numero }) => (
+                <div key={kit} className="flex flex-col items-center">
+                  <button
+                    onClick={() => {
+                      setKitSelecionado(kit);
+                      setMostrarModalSimNao(true);
+                      setMensagem(`Tamanho ${kit}. Deseja prosseguir?`);
+                    }}
+                    className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
+                  >
+                    {kit}
+                  </button>
+
+                  {/* Número exclusivo abaixo de cada botão */}
+                  <span className="mt-2 text-sm font-semibold">{numero}</span>
+                </div>
               ))}
             </div>
 
