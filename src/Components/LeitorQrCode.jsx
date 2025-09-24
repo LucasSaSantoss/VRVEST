@@ -26,8 +26,6 @@ function LeitorQrCode() {
   const btnSimRef = useRef(null);
   const btnNaoRef = useRef(null);
 
-
-
   // Ref para travar processamento no teclado
   const processingRef = useRef(false);
 
@@ -137,7 +135,7 @@ function LeitorQrCode() {
                                 name="pendencia"
                                 value={p.id}
                                 id={p.id}
-                                // checked={valorPend === p.id}
+                                checked={pendenciaSelecionada === p.id}
                                 onChange={() => setPendenciaSelecionada(p.id)} // só atualiza no clique
                               />
                             ) : (

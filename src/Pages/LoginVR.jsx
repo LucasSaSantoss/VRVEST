@@ -54,7 +54,7 @@ export default function LoginVR() {
             />
           </div>
         </div>
-        <div className="ml-[10vw] mb-5 w-[30vw] scale-120">
+        <div className="ml-[10vw] mb-5 w-[20vw] scale-120">
           <img
             src="https://vrdocs.hmas.com.br/images/index_giphy.webp"
             alt=""
