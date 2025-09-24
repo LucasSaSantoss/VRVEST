@@ -185,25 +185,12 @@ export async function registrarKit({ cpf, kitSize }) {
   }
 }
 
-export async function carregarPendencias() {
-  const token = localStorage.getItem("token");
-  try {
-    const res = await axios.get(`${API_URL}/pend`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    return res.data;
-  } catch (err) {
-    console.error("Erro ao carregar pendências:", err);
-    return { success: false, message: "Erro ao buscar pendências" };
-  }
-}
-
 export async function devolucaoKit({ cpf, id }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl/devolver`,
-      { cpf, id }, 
+      { cpf, id },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -217,6 +204,19 @@ export async function devolucaoKit({ cpf, id }) {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
     };
+  }
+}
+
+export async function carregarPendencias() {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.get(`${API_URL}/pend`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao carregar pendências:", err);
+    return { success: false, message: "Erro ao buscar pendências" };
   }
 }
 
@@ -251,4 +251,4 @@ api.interceptors.response.use(
   }
 );
 
-export {api}
+export { api };

@@ -32,6 +32,7 @@ function LeitorQrCode() {
   // Cancela operação
   const cancelarOperacao = () => {
     setKitSelecionado(null);
+    setPendenciaSelecionada(null);
     setMostrarModalSimNao(false);
     cpfInputRef.current?.focus();
   };
@@ -123,7 +124,7 @@ function LeitorQrCode() {
                           {p.kitSize}
                         </td>
                         <td className="border border-gray-300 px-2 py-1">
-                          R$ 50
+                          R$ {valorKit}
                         </td>
                         {tipoOperacao === "devolucao" && (
                           <td className="border border-gray-300 px-2 py-1 text-center">
@@ -133,11 +134,9 @@ function LeitorQrCode() {
                                 type="radio"
                                 name="pendencia"
                                 value={p.id}
-                                // checked={pendenciaSelecionada == p.id}
-                                onChange={(e) => {
-                                  setPendenciaSelecionada(e.target.value);
-                                  console.log(p.id);
-                                }}
+                                onChange={(e) =>
+                                  setPendenciaSelecionada(e.target.value)
+                                }
                               />
                             ) : (
                               <span className="text-gray-400 text-sm">
@@ -155,7 +154,7 @@ function LeitorQrCode() {
                 <div className="flex bg-gray-100 font-bold border border-gray-300">
                   <div className="px-2 py-1 text-right flex-1">Total</div>
                   <div className="px-2 py-1 flex-1">
-                    R$ {pendData.list.length * 50}
+                    R$ {pendData.list.length * valorKit}
                   </div>
                 </div>
               </div>
@@ -188,51 +187,23 @@ function LeitorQrCode() {
 
   // Listener do teclado
   useEffect(() => {
-    const handleKeyPress = async (e) => {
+    const handleKeyPress = (e) => {
       if (showPendPopup) {
         setShowPendPopup(false);
         if (tipoOperacao === "retirada") {
           setShowModal(true);
         } else {
-          setMostrarModalSimNao(true);
-          setIsProcessing(true);
-          console.log("teste");
-          // Popup de "processando"
-          setPopupMessage("Processando devolução e envio de e-mail...");
-          setShowPopup(true);
-
-          try {
-            const response = await devolucaoKit({
-              cpf,
-              id: pendenciaSelecionada,
-            });
-
-            if (response.success && response.expired) {
-              setPopupMessage("Devolução de kit registrada!");
-              setCpf("");
-              setIsSuccess(true);
-              cpfInputRef.current?.focus();
-            } else if (response.expired) {
-              setPopupMessage(
-                response.message ||
-                  "A última pendência encontrada está fora do prazo de 36hrs."
-              );
-              setIsSuccess(false);
-              cpfInputRef.current?.focus();
-            } else {
-              setPopupMessage(response.message || "Erro ao devolver o kit.");
-              setIsSuccess(false);
-              cpfInputRef.current?.focus();
-            }
-          } catch (err) {
-            setPopupMessage("Erro ao processar devolução.");
-          } finally {
+          if (pendenciaSelecionada) {
+            console.log(pendenciaSelecionada);
+            setMensagem("Deseja realmente devolver a pendência selecionada?");
+            setMostrarModalSimNao(true);
+          } else {
+            console.log(pendenciaSelecionada);
             setIsSuccess(false);
-            setIsProcessing(false);
-            setMostrarModalSimNao(false);
-
-            // fecha popup depois de alguns segundos
-            setTimeout(() => setShowPopup(false), 3000);
+            showTemporaryPopup(
+              "Não existem pendências para baixar ou nenhuma foi selecionada."
+            );
+            cpfInputRef.current?.focus();
           }
         }
         return;
@@ -240,8 +211,12 @@ function LeitorQrCode() {
 
       if (mostrarModalSimNao) {
         if (e.key === "1") {
-          if (processingRef.current) return; // trava repetição
-          handleKitSelection(kitSelecionado);
+          if (processingRef.current) return;
+          if (tipoOperacao === "retirada") {
+            handleKitSelection(kitSelecionado);
+          } else {
+            handleDevolucao();
+          }
         } else if (e.key === "2") {
           cancelarOperacao();
         }
@@ -290,13 +265,14 @@ function LeitorQrCode() {
     cpf,
   ]);
 
-  // Foco automático no botão Sim do modal
+  // Foco automático no botão Sim
   useEffect(() => {
     if (mostrarModalSimNao) {
       btnSimRef.current?.focus();
     }
   }, [mostrarModalSimNao]);
 
+  // Retirada de kit
   const handleKitSelection = async (kitSize) => {
     if (processingRef.current) return;
     processingRef.current = true;
@@ -311,10 +287,12 @@ function LeitorQrCode() {
           setIsSuccess(true);
           setShowModal(false);
           setMostrarModalSimNao(false);
+          cpfInputRef.current?.focus();
         } else {
           setIsSuccess(false);
           setMostrarModalSimNao(false);
           showTemporaryPopup(response.message || "Erro ao registrar o kit.");
+          cpfInputRef.current?.focus();
         }
       }
     } catch (err) {
@@ -323,13 +301,60 @@ function LeitorQrCode() {
       setMostrarModalSimNao(false);
       showTemporaryPopup(err.message || "Erro no servidor.");
     } finally {
-      processingRef.current = false; // libera próximo clique/tecla
+      processingRef.current = false;
       setIsProcessing(false);
       cpfInputRef.current?.focus();
     }
   };
 
-  // Render
+  // Processa devolução
+  const handleDevolucao = async () => {
+    if (!pendenciaSelecionada) {
+      setMostrarModalSimNao(false);
+      showTemporaryPopup("Selecione uma pendência para devolver.");
+      return;
+    }
+
+    setIsProcessing(true);
+    setPopupMessage("Processando devolução e envio de e-mail...");
+    setMostrarModalSimNao(false);
+    setShowPopup(true);
+
+    try {
+      const response = await devolucaoKit({
+        cpf,
+        id: pendenciaSelecionada,
+      });
+
+      if (response.success && !response.expired) {
+        setMostrarModalSimNao(false);
+        setPopupMessage("Devolução de kit registrada!");
+        setCpf("");
+        setIsSuccess(true);
+        setPendenciaSelecionada(null);
+      } else if (response.expired) {
+        setPopupMessage(
+          response.message ||
+            "A última pendência encontrada está fora do prazo de 36hrs."
+        );
+        setIsSuccess(false);
+        setMostrarModalSimNao(false);
+      } else {
+        setPopupMessage(response.message || "Erro ao devolver o kit.");
+        setIsSuccess(false);
+        setMostrarModalSimNao(false);
+      }
+    } catch (err) {
+      setPopupMessage("Erro ao processar devolução.");
+      setMostrarModalSimNao(false);
+    } finally {
+      setIsProcessing(false);
+      setMostrarModalSimNao(false);
+      setTimeout(() => setShowPopup(false), 3000);
+      cpfInputRef.current?.focus();
+    }
+  };
+
   return (
     <div className="flex flex-col w-[400px] mx-auto mt-[25vh] border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
       <label htmlFor="qrCode" className="text-2x1 font-large">
@@ -349,27 +374,28 @@ function LeitorQrCode() {
         className="mt-4 p-3 border-2 border-[#2faed4] rounded-[25px] w-[300px] text-lg"
       />
 
-      <div className="flex gap-6 mt-6  text-lg">
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="tipoOperacao"
-            value="retirada"
-            checked={tipoOperacao === "retirada"}
-            onChange={(e) => setTipoOperacao(e.target.value)}
-          />
+      <div className="flex gap-4 mt-6">
+        <button
+          onClick={() => setTipoOperacao("retirada")}
+          className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
+            tipoOperacao === "retirada"
+              ? "bg-blue-500 text-white shadow-lg"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
           Retirada
-        </label>
-        <label className="flex items-center gap-2">
-          <input
-            type="radio"
-            name="tipoOperacao"
-            value="devolucao"
-            checked={tipoOperacao === "devolucao"}
-            onChange={(e) => setTipoOperacao(e.target.value)}
-          />
+        </button>
+
+        <button
+          onClick={() => setTipoOperacao("devolucao")}
+          className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
+            tipoOperacao === "devolucao"
+              ? "bg-red-500 text-white shadow-lg"
+              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+          }`}
+        >
           Devolução
-        </label>
+        </button>
       </div>
 
       {/* Popup */}
@@ -396,7 +422,7 @@ function LeitorQrCode() {
         </div>
       )}
 
-      {/* Modal de seleção kit */}
+      {/* Modal seleção de kit */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
           <div className="bg-white p-6 rounded-lg shadow-lg w-96">
@@ -421,22 +447,10 @@ function LeitorQrCode() {
                   >
                     {kit}
                   </button>
-
-                  {/* Número exclusivo abaixo de cada botão */}
                   <span className="mt-2 text-sm font-semibold">{numero}</span>
                 </div>
               ))}
             </div>
-
-            <ModalSimNao
-              mostrar={mostrarModalSimNao}
-              onConfirmar={() => handleKitSelection(kitSelecionado)}
-              onCancelar={cancelarOperacao}
-              btnSimRef={btnSimRef}
-              btnNaoRef={btnNaoRef}
-              isProcessing={isProcessing}
-              mensagem={mensagem}
-            />
 
             <button
               onClick={() => {
@@ -450,7 +464,19 @@ function LeitorQrCode() {
           </div>
         </div>
       )}
-
+      <ModalSimNao
+        mostrar={mostrarModalSimNao}
+        onConfirmar={() =>
+          tipoOperacao === "retirada"
+            ? handleKitSelection(kitSelecionado)
+            : handleDevolucao()
+        }
+        onCancelar={cancelarOperacao}
+        btnSimRef={btnSimRef}
+        btnNaoRef={btnNaoRef}
+        isProcessing={isProcessing}
+        mensagem={mensagem}
+      />
       <style jsx>{`
         @keyframes fadeInOut {
           0% {

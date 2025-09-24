@@ -135,7 +135,7 @@ export default function CreateFunc({ onClose }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={limparEmail}
+                onChange={(e)=> setEmail(e.target.value)}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required

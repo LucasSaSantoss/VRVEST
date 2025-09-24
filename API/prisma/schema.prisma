@@ -24,7 +24,6 @@ model User {
   level Int @default(1)
   active Int @default(1)
 
-  @@check(email ~* "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")
 }
 
 
@@ -50,8 +49,8 @@ model Pendency {
   userId  Int
   userName String @db.VarChar(100) 
   date DateTime
-  devolUserId  Int @default(0)
-  devolUserName String @db.VarChar(100) 
+  devolUserId  Int? @default(0)
+  devolUserName String? @db.VarChar(100)
   devolDate DateTime? 
   devolType Int @default(1)
   status Int @default(1)
