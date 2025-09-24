@@ -3,7 +3,7 @@ import { cadastrarFuncionario } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 
-export default function CreateFunc({ onClose }) {
+export default function CreateFuncTemp({}) {
   const navigate = useNavigate();
 
   const [name, setName] = useState("");
@@ -12,6 +12,7 @@ export default function CreateFunc({ onClose }) {
   const [position, setPosition] = useState("");
   const [sector, setSector] = useState("");
   const [modality, setModality] = useState("");
+  const [obs, setObs] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
@@ -92,7 +93,7 @@ export default function CreateFunc({ onClose }) {
       setMostarModalSimNao(false);
       return;
     }
-    const data = await cadastrarFuncionario({
+    const data = await cadastrarFuncionarioTemporario({
       name,
       cpf,
       email,
@@ -119,10 +120,16 @@ export default function CreateFunc({ onClose }) {
   };
 
   return (
-    <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
-      <div className="w-full">
+    <div className="mt-[20vh] bg-gray-100 flex items-center justify-center">
+      <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-8 shadow-lg w-full">
+        {/* Título */}
+        <h1 className="text-3xl font-bold text-center text-cyan-700 mb-8">
+          Cadastro de Funcionário Temporário
+        </h1>
+
         <form className="flex flex-wrap gap-4">
           <div className="flex flex-wrap w-full gap-2">
+            {/* Nome */}
             <div className="flex-1 min-w-[425px]">
               <label
                 htmlFor="nome"
@@ -134,14 +141,15 @@ export default function CreateFunc({ onClose }) {
                 type="text"
                 id="nome"
                 value={name}
-                onChange={(e) => limparTexto(e,setName)}
+                onChange={(e) => limparTexto(e, setName)}
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 required
-                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
               />
             </div>
 
+            {/* Email */}
             <div className="flex-1 min-w-[450px]">
               <label
                 htmlFor="email"
@@ -153,11 +161,11 @@ export default function CreateFunc({ onClose }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e)=> setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
-                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
               />
             </div>
           </div>
@@ -178,7 +186,7 @@ export default function CreateFunc({ onClose }) {
               maxLength={11}
               placeholder="Digite o CPF"
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
             />
           </div>
 
@@ -191,10 +199,10 @@ export default function CreateFunc({ onClose }) {
               type="text"
               id="cargo"
               value={position}
-              onChange={(e) => limparTexto(e,setPosition)}
+              onChange={(e) => limparTexto(e, setPosition)}
               maxLength={50}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
             />
           </div>
 
@@ -208,7 +216,7 @@ export default function CreateFunc({ onClose }) {
               value={sector}
               onChange={(e) => setSector(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
             >
               <option value="">Selecione o setor</option>
               <option value="SALA AMARELA">SALA AMARELA</option>
@@ -246,7 +254,7 @@ export default function CreateFunc({ onClose }) {
               value={modality}
               onChange={(e) => setModality(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
             >
               <option value="">Selecione a modalidade</option>
               <option value="PJ">PJ</option>
@@ -255,10 +263,28 @@ export default function CreateFunc({ onClose }) {
             </select>
           </div>
 
+          <div className="flex-1">
+            {/* Observação */}
+            <div className="flex-1 min-w-[200px] w-full">
+              <label htmlFor="obs" className="block text-sm font-semibold mb-1">
+                Observações:
+              </label>
+              <input
+                type="text"
+                id="obs"
+                value={obs}
+                onChange={(e) => setObs(e.target.value)}
+                maxLength={200}
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+              />
+            </div>
+          </div>
+          {/* Botão */}
           <div className="w-full flex justify-center">
             <button
               type="button"
-              className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              className="px-6 py-2 mt-4 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition text-sm font-semibold shadow-md"
               onClick={() => {
                 if (temCamposAlterados()) {
                   setMostarModalSimNao(true);
@@ -285,10 +311,11 @@ export default function CreateFunc({ onClose }) {
           </div>
         </form>
 
+        {/* Popup */}
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
-            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+        ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
           >
             {popup.mensagem}
           </div>

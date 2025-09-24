@@ -18,6 +18,32 @@ export default function CreateUser({ onClose, mostrarPopup }) {
     tipo: "info",
   });
 
+  const limparTexto = (e, setState) => {
+    let valor = e.target.value;
+    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, ""); // só letras e espaço
+    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
+    valor = valor.trimStart(); // remove espaço no começo
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    setState(valor);
+  };
+
+  const limparEmail = (e, setState) => {
+    let valor = e.target.value;
+    valor = valor.replace(/[^a-zA-ZÀ-ú@. ]/g, ""); // só letras, @, ponto e espaço
+    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
+    valor = valor.trimStart(); // remove espaço no começo
+
+    // Permite no máximo 1 @ → remove os extras
+    const primeiraArroba = valor.indexOf("@");
+    if (primeiraArroba !== -1) {
+      // mantém só o primeiro @, remove os outros
+      valor =
+        valor.slice(0, primeiraArroba + 1) +
+        valor.slice(primeiraArroba + 1).replace(/@/g, "");
+    }
+    setState(valor);
+  };
+
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
@@ -98,13 +124,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 value={name}
-                onChange={(e) => {
-                  const somenteLetras = e.target.value.replace(
-                    /[^a-zA-Z\s]/g,
-                    ""
-                  );
-                  setName(somenteLetras);
-                }}
+                onChange={(e) => limparTexto(e, setName)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
@@ -124,7 +144,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
                 maxLength={80}
                 placeholder="email@email.com.br"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => limparEmail(e, setEmail)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
@@ -161,13 +181,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               name="cargo"
               maxLength={50}
               value={position}
-              onChange={(e) => {
-                const somenteLetras = e.target.value.replace(
-                  /[^a-zA-Z\s]/g,
-                  ""
-                );
-                setPosition(somenteLetras);
-              }}
+              onChange={(e) => limparTexto(e, setPosition)}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             />
@@ -204,7 +218,8 @@ export default function CreateUser({ onClose, mostrarPopup }) {
             >
               <option value="">Selecione uma opção</option>
               <option value="1">OPERADOR</option>
-              <option value="2">SUPERVISOR</option>
+              <option value="2">CONTROLADOR</option>
+              <option value="3">SUPERVISOR</option>
             </select>
           </div>
 

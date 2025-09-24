@@ -72,7 +72,7 @@ export const createUser = async (req, res) => {
     if (existingUser) {
       return res.status(400).json({ message: "Email já registrado" });
     }
-
+    const cadUserID = req.user.id;
     const newUser = await prisma.user.create({
       data: {
         name,
@@ -83,6 +83,24 @@ export const createUser = async (req, res) => {
         level: parseInt(level, 10),
       },
     });
+
+    
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: cadUserID, // ID do usuário que fez a criação
+        action: "Criação de Usuário", // ação
+        newData: {
+          name: newUser.name,
+          email: newUser.email,
+          sector: newUser.sector,
+          position: newUser.position,
+          level: newUser.level,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
 
     res.status(201).json({ message: "Usuário criado", id: newUser.id });
   } catch (err) {
@@ -95,8 +113,19 @@ export const createUser = async (req, res) => {
 };
 
 export const getUsers = async (req, res) => {
-  const users = await prisma.user.findMany();
-  res.json(users);
+  try {
+    const users = await prisma.user.findMany({
+      where: {
+        level: {
+          not: 4,
+        },
+      },
+    });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Erro ao buscar usuários" });
+  }
 };
 
 export const updateUser = async (req, res) => {
@@ -115,6 +144,7 @@ export const updateUser = async (req, res) => {
     if (!validator.isEmail(email)) {
       return res.status(400).json({ message: "Email inválido." });
     }
+
     // Construção de campos a serem alterados (apenas se diferentes)
     const camposAlterados = {};
 
@@ -173,6 +203,22 @@ export const updateUser = async (req, res) => {
       where: { id: Number(id) },
       data: camposAlterados,
     });
+
+    // ---------------- LOGS ----------------
+    const logChanges = Object.keys(camposAlterados).reduce((acc, key) => {
+      acc[key] = { old: usuario[key], new: updatedUser[key] };
+      return acc;
+    }, {});
+
+    await prisma.userLog.create({
+      data: {
+        userId: usuario.id, // ID do usuário que fez a alteração
+        action: "Alteração de usuário",
+        changes: logChanges, // JSON criado para apresentar os campos alterados
+        newData: updatedUser, // todo o objeto atualizado (ou pode ser só campos alterados)
+      },
+    });
+    // --------------------------------------
 
     return res.json({
       success: true,

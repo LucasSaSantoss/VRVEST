@@ -23,7 +23,6 @@ model User {
   position String @db.VarChar(100) 
   level Int @default(1)
   active Int @default(1)
-
 }
 
 
@@ -39,6 +38,9 @@ model Employee {
   cadUserName String @db.VarChar(100) 
   modality String @db.VarChar(5)
   active Int @default(1)
+  tempEmpl Boolean @default(false)
+  tempEmplObs String? @db.VarChar(255)
+  tempEmplImg String? @db.VarChar(255)
   pendencies Pendency[]
 }
 
@@ -55,5 +57,14 @@ model Pendency {
   devolType Int @default(1)
   status Int @default(1)
   kitSize String @db.VarChar(5)
-   employee     Employee @relation(fields: [emplID], references: [id])
+  employee     Employee @relation(fields: [emplID], references: [id])
+}
+
+model UserLog {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  action    String
+  changes   Json?
+  newData   Json?
+  createdAt DateTime @default(now())
 }

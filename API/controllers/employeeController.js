@@ -16,10 +16,6 @@ export const createEmpl = async (req, res) => {
         .json({ message: "Existem dados em branco, favor preencher." });
     }
 
-    if (!validator.isEmail(email)) {
-      return res.status(400).json({ message: "Email inválido." });
-    }
-
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
     if (existingEmpl)
       return res.status(400).json({ message: "Email já registrado" });
@@ -43,6 +39,23 @@ export const createEmpl = async (req, res) => {
         modality,
       },
     });
+
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: cadUserID, // ID do usuário que fez a criação
+        action: "Criação de Funcionário", // ação
+        newData: {
+          name: newEmpl.name,
+          email: newEmpl.email,
+          sector: newEmpl.sector,
+          position: newEmpl.position,
+          modality: newEmpl.modality,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
 
     res
       .status(201)
@@ -139,6 +152,23 @@ export const registrarKit = async (req, res) => {
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
     );
 
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: usuarioID, // ID do usuário que fez a criação
+        action: "Retirada de Kit", // ação
+        newData: {
+          emplID: pendencia.emplID,
+          emplName: pendencia.emplName,
+          userId: usuarioID,
+          userName: usuarioName,
+          kitSize: pendencia.kitSize,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
+
     res.status(201).json({
       success: true,
       message: "Saída de kit registrada",
@@ -192,6 +222,8 @@ export const updateEmpl = async (req, res) => {
     const { id } = req.params;
     const { name, cpf, email, sector, position, modality, active } = req.body;
 
+    const idUsuario = req.params.id;
+
     // Busca o funcionário existente
     const funcionario = await prisma.employee.findUnique({
       where: { id: Number(id) },
@@ -201,6 +233,21 @@ export const updateEmpl = async (req, res) => {
       return res
         .status(404)
         .json({ success: false, message: "Funcionário não encontrado" });
+    }
+
+    if (
+      !name ||
+      !cpf ||
+      !email ||
+      !sector ||
+      !position ||
+      !modality ||
+      !active
+    ) {
+      return res.status(400).json({
+        success: false,
+        message: "Existem dados em branco, favor verificar.",
+      });
     }
 
     const camposAlterados = {};
@@ -220,21 +267,6 @@ export const updateEmpl = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Nenhum campo foi alterado",
-      });
-    }
-
-    if (
-      !name ||
-      !cpf ||
-      !email ||
-      !sector ||
-      !position ||
-      !modality ||
-      !active
-    ) {
-      return res.status(400).json({
-        success: false,
-        message: "Existem dados em branco, favor verificar.",
       });
     }
 
@@ -264,6 +296,22 @@ export const updateEmpl = async (req, res) => {
       where: { id: Number(id) },
       data: camposAlterados,
     });
+
+    // ---------------- LOGS ----------------
+    const logChanges = Object.keys(camposAlterados).reduce((acc, key) => {
+      acc[key] = { old: funcionario[key], new: updatedEmpl[key] };
+      return acc;
+    }, {});
+
+    await prisma.userLog.create({
+      data: {
+        userId: req.user.id, // ID do usuário que fez a alteração
+        action: "Alteração de Funcionário",
+        changes: logChanges, // JSON criado para apresentar os campos alterados
+        newData: updatedEmpl, // todo o objeto atualizado (ou pode ser só campos alterados)
+      },
+    });
+    // --------------------------------------
 
     res.json({
       success: true,
@@ -362,11 +410,32 @@ export const devolverKit = async (req, res) => {
       ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
     );
 
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: usuarioID, // ID do usuário que fez a criação
+        action: "Devolução de Kit", // ação
+        newData: {
+          emplID: pendenciaAtualizada.emplID,
+          emplName: pendenciaAtualizada.emplName,
+          devolUserId: pendenciaAtualizada.devolUserId,
+          devolUserName: pendenciaAtualizada.devolUserName,
+          userId: usuarioID,
+          userName: usuarioName,
+          kitSize: pendenciaAtualizada.kitSize,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
+
     return res.json({
       success: true,
       message: `Pendência do dia ${new Date(
         pendenciaAtualizada.date
-      ).toLocaleString("pt-BR")}, do colaborador ${pendenciaAtualizada.emplName} baixada com sucesso.`,
+      ).toLocaleString(
+        "pt-BR"
+      )}, do colaborador ${pendenciaAtualizada.emplName} baixada com sucesso.`,
       pendencia: pendenciaAtualizada,
     });
   } catch (err) {

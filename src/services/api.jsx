@@ -104,15 +104,20 @@ export async function cadastrarUsuario({
   position,
   level,
 }) {
+  const token = localStorage.getItem("token");
   try {
-    const res = await axios.post(`${API_URL}/users`, {
-      name,
-      email,
-      password,
-      sector,
-      position,
-      level,
-    });
+    const res = await axios.post(
+      `${API_URL}/users`,
+      {
+        name,
+        email,
+        password,
+        sector,
+        position,
+        level,
+      },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
 
     return {
       success: true,

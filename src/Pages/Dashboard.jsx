@@ -13,12 +13,13 @@ import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
 import HomeVRVest from "../Components/homeVRVest";
-import Relatorios from "../Components/RelatoriosVRVest"; 
+import Relatorios from "../Components/RelatoriosVRVest";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
 import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
+import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -87,7 +88,8 @@ export default function Dashboard() {
     home: <HomeVRVest />,
     relatorios: <Relatorios />,
     qrcode: <QrCodeVRVest />,
-    tabela: <TabelaUsuarios />,
+    funcionarioTemp: <CreateFuncTemp />,
+    usuarios: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
     baixa: <ListaPendencias />,
   };
@@ -123,7 +125,7 @@ export default function Dashboard() {
 
           {/* Menu */}
           <ul className="p-3 space-y-3 h-[60vh] ">
-            {levelUser >= 3 && (
+            {levelUser === 4 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "home" ? "bg-white text-gray-800 rounded" : "hover:bg-white hover:text-gray-800"}`}
@@ -137,36 +139,38 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
+            {levelUser === 1 ||
+              (levelUser > 2 && (
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => setSelected("qrcode")}
+                >
+                  <span className="text-xl">
+                    <LuQrCode />
+                  </span>
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    QR Code
+                  </span>
+                </li>
+              ))}
 
             <li
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-              onClick={() => setSelected("qrcode")}
+                ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+              onClick={() => setSelected("funcionarioTemp")}
             >
-              <span className="text-xl">
-                <LuQrCode />
+              <span className="text-xl ">
+                <FaHospitalUser />
               </span>
-              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                QR Code
+              <span
+                className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+              >
+                Cadastro de Funcionário Temporário
               </span>
             </li>
-
-            {levelUser >= 2 && (
-              <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "tabela" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("tabela")}
-              >
-                <span className="text-xl ">
-                  <LuUserCog />
-                </span>
-                <span
-                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
-                >
-                  Cadastro de usuários
-                </span>
-              </li>
-            )}
 
             {levelUser >= 2 && (
               <li
@@ -179,6 +183,23 @@ export default function Dashboard() {
                 </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Cadastro de Funcionários
+                </span>
+              </li>
+            )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "usuarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("usuarios")}
+              >
+                <span className="text-xl ">
+                  <LuUserCog />
+                </span>
+                <span
+                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+                >
+                  Cadastro de usuários
                 </span>
               </li>
             )}
@@ -196,7 +217,7 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser >= 2 && (
+            {levelUser === 4 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}

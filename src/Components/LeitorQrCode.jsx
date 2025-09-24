@@ -26,6 +26,8 @@ function LeitorQrCode() {
   const btnSimRef = useRef(null);
   const btnNaoRef = useRef(null);
 
+
+
   // Ref para travar processamento no teclado
   const processingRef = useRef(false);
 
@@ -115,6 +117,7 @@ function LeitorQrCode() {
                   {pendData.list.map((p) => {
                     const dataPendencia = new Date(p.date);
                     const podeSelecionar = dataPendencia >= limite;
+
                     return (
                       <tr key={p.id}>
                         <td className="border border-gray-300 px-2 py-1">
@@ -130,13 +133,12 @@ function LeitorQrCode() {
                           <td className="border border-gray-300 px-2 py-1 text-center">
                             {podeSelecionar ? (
                               <input
-                                id={p.id}
                                 type="radio"
                                 name="pendencia"
                                 value={p.id}
-                                onChange={(e) =>
-                                  setPendenciaSelecionada(e.target.value)
-                                }
+                                id={p.id}
+                                // checked={valorPend === p.id}
+                                onChange={() => setPendenciaSelecionada(p.id)} // só atualiza no clique
                               />
                             ) : (
                               <span className="text-gray-400 text-sm">
@@ -161,6 +163,7 @@ function LeitorQrCode() {
             </div>
           </div>
         );
+
         setShowPendPopup(true);
       } else {
         if (tipoOperacao === "devolucao") {
@@ -379,8 +382,8 @@ function LeitorQrCode() {
           onClick={() => setTipoOperacao("retirada")}
           className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
             tipoOperacao === "retirada"
-              ? "bg-blue-500 text-white shadow-lg"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              ? "bg-blue-700 text-white shadow-lg"
+              : "bg-blue-400 text-white shadow-lg"
           }`}
         >
           Retirada
@@ -390,8 +393,8 @@ function LeitorQrCode() {
           onClick={() => setTipoOperacao("devolucao")}
           className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
             tipoOperacao === "devolucao"
-              ? "bg-red-500 text-white shadow-lg"
-              : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              ? "bg-red-700 text-white shadow-lg"
+              : "bg-red-400 text-white shadow-lg"
           }`}
         >
           Devolução
