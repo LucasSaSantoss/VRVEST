@@ -1,7 +1,7 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
-import validator from "cpf-cnpj-validator";
+
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
 const prisma = new PrismaClient();
@@ -60,6 +60,118 @@ export const createEmpl = async (req, res) => {
     res
       .status(201)
       .json({ success: true, message: "Funcionário criado", id: newEmpl.id });
+  } catch (err) {
+    if (err.code === "P2002") {
+      return res
+        .status(400)
+        .json({ success: false, message: "CPF ou Email já cadastrado" });
+    }
+    console.error("Erro ao criar Funcionário:", err);
+    res.status(500).json({ success: false, message: "Erro no servidor" });
+  }
+};
+
+export const createTempEmpl = async (req, res) => {
+  try {
+    const { name, cpf, email, sector, position, modality, obs } = req.body;
+
+    // Dados do usuário logado
+    const cadUserID = req.user.id;
+    const cadUserName = req.user.name;
+
+    if (!name || !cpf || !email || !sector || !position || !modality) {
+      return res
+        .status(400)
+        .json({ message: "Existem dados em branco, favor preencher." });
+    }
+
+    const existingEmpl = await prisma.employee.findUnique({ where: { cpf } });
+    if (existingEmpl) {
+      if (existingEmpl.tempEmpl === 1) {
+        const tempEmplReact = await prisma.employee.update({
+          where: { id: existingEmpl.id },
+          data: {
+            name: name,
+            email: email,
+            sector: sector,
+            position: position,
+            modality: modality,
+            active: 1,
+            tempEmplObs: obs,
+            tempAlterDate: new Date(),
+          },
+        });
+        // ---------------- LOG ----------------
+        const logChanges = Object.keys(existingEmpl).reduce((acc, key) => {
+          acc[key] = { old: existingEmpl[key], new: tempEmplReact[key] };
+          return acc;
+        }, {});
+
+        await prisma.userLog.create({
+          data: {
+            userId: cadUserID,
+            action: "Reativação de Funcionário Temporário",
+            changes: logChanges,
+            newData: tempEmplReact,
+          },
+        });
+        // --------------------------------------
+
+        return res.status(201).json({
+          message:
+            "Email já registrado anteriormente. Usuário Temporário Reativado.",
+          success: true,
+        });
+      } else {
+        return res.status(400).json({
+          message: "Funcionário já cadastrado no sistema.",
+          success: false,
+        });
+      }
+    }
+
+    const newEmplTemp = await prisma.employee.create({
+      data: {
+        name,
+        cpf,
+        email,
+        sector,
+        position,
+        cadUserID,
+        cadUserName,
+        modality,
+        tempCreatedDate: new Date(),
+        tempAlterDate: new Date(),
+        tempEmpl: 1,
+        tempEmplObs: obs,
+      },
+    });
+
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: cadUserID, // ID do usuário que fez a criação
+        action: "Criação de Funcionário Temporário.",
+        newData: {
+          name: newEmplTemp.name,
+          email: newEmplTemp.email,
+          sector: newEmplTemp.sector,
+          position: newEmplTemp.position,
+          modality: newEmplTemp.modality,
+          tempCreatedDate: newEmplTemp.tempCreatedDate,
+          tempEmpl: newEmplTemp.tempEmpl,
+          tempEmplObs: newEmplTemp.tempEmplObs,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
+
+    res.status(201).json({
+      success: true,
+      message: "Funcionário Temporário criado",
+      id: newEmplTemp.id,
+    });
   } catch (err) {
     if (err.code === "P2002") {
       return res
@@ -178,6 +290,128 @@ export const registrarKit = async (req, res) => {
   } catch (err) {
     console.error("Erro ao registrar kit:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
+  }
+};
+
+export const devolverKit = async (req, res) => {
+  try {
+    const { cpf, id } = req.body;
+
+    // Verifica se o funcionário existe
+    const funcionario = await prisma.employee.findUnique({
+      where: { cpf },
+    });
+
+    if (!funcionario) {
+      return res
+        .status(404)
+        .json({ success: false, message: "CPF não encontrado" });
+    }
+
+    const pendenciaSelecionada = await prisma.pendency.findUnique({
+      where: { id: Number(id) },
+    });
+    if (!pendenciaSelecionada) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Erro ao Devolver Kit." });
+    }
+
+    if (pendenciaSelecionada.emplID !== funcionario.id) {
+      return res.status(400).json({
+        success: false,
+        message: "Essa pendência não pertence a este funcionário.",
+      });
+    }
+
+    // Dados do usuário logado
+    const usuarioID = req.user.id;
+    const usuarioName = req.user.name;
+
+    // // Última pendência em aberto (sem limite de tempo)
+    // const UltimaPendencia = await prisma.pendency.findFirst({
+    //   where: {
+    //     emplID: funcionario.id,
+    //     status: 1,
+    //   },
+    //   orderBy: {
+    //     date: "desc",
+    //   },
+    // });
+
+    // if (!UltimaPendencia) {
+    //   return res.json({
+    //     success: false,
+    //     message: "Nenhuma pendência em aberto encontrada para baixar.",
+    //   });
+    // }
+
+    // Valida prazo de 24h
+    const limite = new Date();
+    limite.setHours(limite.getHours() - 36);
+
+    if (pendenciaSelecionada.date < limite) {
+      return res.json({
+        success: false,
+        expired: true,
+        message: "A última pendência encontrada está fora do prazo de 36hrs.",
+      });
+    }
+
+    // Atualiza a pendência
+    const pendenciaAtualizada = await prisma.pendency.update({
+      where: { id: pendenciaSelecionada.id },
+      data: {
+        status: 2,
+        devolUserId: usuarioID,
+        devolUserName: usuarioName,
+        devolDate: new Date(),
+        devolType: 2,
+      },
+    });
+
+    // Envia e-mail automaticamente
+    await enviarEmail(
+      funcionario.email,
+      "Devolução de Kit",
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
+        pendenciaAtualizada.devolDate
+      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
+    );
+
+    // ---------------- LOGS ----------------
+    await prisma.userLog.create({
+      data: {
+        userId: usuarioID, // ID do usuário que fez a criação
+        action: "Devolução de Kit", // ação
+        newData: {
+          emplID: pendenciaAtualizada.emplID,
+          emplName: pendenciaAtualizada.emplName,
+          devolUserId: pendenciaAtualizada.devolUserId,
+          devolUserName: pendenciaAtualizada.devolUserName,
+          userId: usuarioID,
+          userName: usuarioName,
+          kitSize: pendenciaAtualizada.kitSize,
+        },
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
+
+    return res.json({
+      success: true,
+      message: `Pendência do dia ${new Date(
+        pendenciaAtualizada.date
+      ).toLocaleString(
+        "pt-BR"
+      )}, do colaborador ${pendenciaAtualizada.emplName} baixada com sucesso.`,
+      pendencia: pendenciaAtualizada,
+    });
+  } catch (err) {
+    console.error("Erro ao baixar última pendência:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro no servidor" });
   }
 };
 
@@ -324,124 +558,3 @@ export const updateEmpl = async (req, res) => {
   }
 };
 
-export const devolverKit = async (req, res) => {
-  try {
-    const { cpf, id } = req.body;
-
-    // Verifica se o funcionário existe
-    const funcionario = await prisma.employee.findUnique({
-      where: { cpf },
-    });
-
-    if (!funcionario) {
-      return res
-        .status(404)
-        .json({ success: false, message: "CPF não encontrado" });
-    }
-
-    const pendenciaSelecionada = await prisma.pendency.findUnique({
-      where: { id: Number(id) },
-    });
-    if (!pendenciaSelecionada) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Erro ao Devolver Kit." });
-    }
-
-    if (pendenciaSelecionada.emplID !== funcionario.id) {
-      return res.status(400).json({
-        success: false,
-        message: "Essa pendência não pertence a este funcionário.",
-      });
-    }
-
-    // Dados do usuário logado
-    const usuarioID = req.user.id;
-    const usuarioName = req.user.name;
-
-    // // Última pendência em aberto (sem limite de tempo)
-    // const UltimaPendencia = await prisma.pendency.findFirst({
-    //   where: {
-    //     emplID: funcionario.id,
-    //     status: 1,
-    //   },
-    //   orderBy: {
-    //     date: "desc",
-    //   },
-    // });
-
-    // if (!UltimaPendencia) {
-    //   return res.json({
-    //     success: false,
-    //     message: "Nenhuma pendência em aberto encontrada para baixar.",
-    //   });
-    // }
-
-    // Valida prazo de 24h
-    const limite = new Date();
-    limite.setHours(limite.getHours() - 36);
-
-    if (pendenciaSelecionada.date < limite) {
-      return res.json({
-        success: false,
-        expired: true,
-        message: "A última pendência encontrada está fora do prazo de 36hrs.",
-      });
-    }
-
-    // Atualiza a pendência
-    const pendenciaAtualizada = await prisma.pendency.update({
-      where: { id: pendenciaSelecionada.id },
-      data: {
-        status: 2,
-        devolUserId: usuarioID,
-        devolUserName: usuarioName,
-        devolDate: new Date(),
-        devolType: 2,
-      },
-    });
-
-    // Envia e-mail automaticamente
-    await enviarEmail(
-      funcionario.email,
-      "Devolução de Kit",
-      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
-        pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
-    );
-
-    // ---------------- LOGS ----------------
-    await prisma.userLog.create({
-      data: {
-        userId: usuarioID, // ID do usuário que fez a criação
-        action: "Devolução de Kit", // ação
-        newData: {
-          emplID: pendenciaAtualizada.emplID,
-          emplName: pendenciaAtualizada.emplName,
-          devolUserId: pendenciaAtualizada.devolUserId,
-          devolUserName: pendenciaAtualizada.devolUserName,
-          userId: usuarioID,
-          userName: usuarioName,
-          kitSize: pendenciaAtualizada.kitSize,
-        },
-        createdAt: new Date(),
-      },
-    });
-    // --------------------------------------
-
-    return res.json({
-      success: true,
-      message: `Pendência do dia ${new Date(
-        pendenciaAtualizada.date
-      ).toLocaleString(
-        "pt-BR"
-      )}, do colaborador ${pendenciaAtualizada.emplName} baixada com sucesso.`,
-      pendencia: pendenciaAtualizada,
-    });
-  } catch (err) {
-    console.error("Erro ao baixar última pendência:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Erro no servidor" });
-  }
-};

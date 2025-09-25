@@ -38,9 +38,11 @@ model Employee {
   cadUserName String @db.VarChar(100) 
   modality String @db.VarChar(5)
   active Int @default(1)
-  tempEmpl Boolean @default(false)
+  tempEmpl Int @default(0)
   tempEmplObs String? @db.VarChar(255)
   tempEmplImg String? @db.VarChar(255)
+  tempCreatedDate DateTime? 
+  tempAlterDate DateTime? 
   pendencies Pendency[]
 }
 

@@ -35,6 +35,8 @@ export const baixarPendencias = async (req, res) => {
         .json({ success: false, message: "Nenhum ID enviado" });
     }
 
+    const oldPend = await prisma.pendency.findUnique({ where: { id } });
+
     // Atualiza apenas a pendência correspondente
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: Number(id) },
@@ -52,13 +54,27 @@ export const baixarPendencias = async (req, res) => {
 
     const funcionario = pendenciaAtualizada.employee;
 
+    // ---------------- LOG ----------------
+
+    await prisma.userLog.create({
+      data: {
+        userId: usuarioID,
+        action: "Baixa de Pendência",
+        newData: pendenciaAtualizada,
+        createdAt: new Date(),
+      },
+    });
+    // --------------------------------------
+
     // Envia e-mail automaticamente
     await enviarEmail(
       funcionario.email,
       "Devolução de Kit",
       `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
         pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}, através da baixa de pendências.`
+      ).toLocaleString(
+        "pt-BR"
+      )} pelo usuário ${usuarioName}, através da baixa de pendências.`
     );
 
     return res.json({

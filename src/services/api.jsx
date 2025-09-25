@@ -65,6 +65,40 @@ export async function cadastrarFuncionario({
   }
 }
 
+export async function cadastrarFuncionarioTemporario({
+  name,
+  cpf,
+  email,
+  sector,
+  position,
+  modality,
+  obs,
+}) {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      `${API_URL}/empl/tempEmpl`,
+      { name, cpf, email, sector, position, modality, obs },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return {
+      success: true,
+      data: res.data,
+      message: "Funcionário cadastrado com sucesso!",
+    };
+  } catch (err) {
+    console.log(
+      "Erro ao criar funcionário:",
+      err.response?.data || err.message
+    );
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro no servidor",
+    };
+  }
+}
+
 export async function alterarFuncionario(id, dados) {
   const token = localStorage.getItem("token");
   try {

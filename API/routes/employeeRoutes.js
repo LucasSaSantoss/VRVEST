@@ -7,12 +7,14 @@ import {
   updateEmpl,
   getCpf,
   devolverKit,
+  createTempEmpl,
 } from "../controllers/employeeController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
 router.post("/", createEmpl); // Criar Funcionários
+router.post("/tempEmpl",authMiddleware, createTempEmpl); //Criar Funcionários Temporários
 router.get("/", getEmpl); // Listar Funcionários
 router.post("/registrarKit", registrarKit); // Registra Pendência através do cpf
 router.post("/pendencias", getOpenPendencies);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { cadastrarFuncionario } from "../../services/api";
+import { cadastrarFuncionarioTemporario } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 
@@ -38,9 +38,6 @@ export default function CreateFuncTemp({}) {
 
   const limparEmail = (e, setState) => {
     let valor = e.target.value;
-    valor = valor.replace(/[^a-zA-ZÀ-ú@. ]/g, ""); // só letras, @, ponto e espaço
-    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
-    valor = valor.trimStart(); // remove espaço no começo
 
     // Permite no máximo 1 @ → remove os extras
     const primeiraArroba = valor.indexOf("@");
@@ -50,6 +47,10 @@ export default function CreateFuncTemp({}) {
         valor.slice(0, primeiraArroba + 1) +
         valor.slice(primeiraArroba + 1).replace(/@/g, "");
     }
+    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
+    valor = valor.trimStart(); // remove espaço no começo
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@._ ]/g, ""); // só letras, @, ponto e espaço
     setState(valor);
   };
 
@@ -100,6 +101,7 @@ export default function CreateFuncTemp({}) {
       sector,
       position,
       modality,
+      obs,
     });
 
     setMensagem(data.message);
@@ -120,7 +122,7 @@ export default function CreateFuncTemp({}) {
   };
 
   return (
-    <div className="mt-[20vh] bg-gray-100 flex items-center justify-center">
+    <div className="mt-[10vh] bg-gray-100 flex items-center justify-center">
       <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-8 shadow-lg w-full">
         {/* Título */}
         <h1 className="text-3xl font-bold text-center text-cyan-700 mb-8">
@@ -161,7 +163,7 @@ export default function CreateFuncTemp({}) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => limparEmail(e, setEmail)}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
@@ -263,23 +265,23 @@ export default function CreateFuncTemp({}) {
             </select>
           </div>
 
-          <div className="flex-1">
-            {/* Observação */}
-            <div className="flex-1 min-w-[200px] w-full">
-              <label htmlFor="obs" className="block text-sm font-semibold mb-1">
-                Observações:
-              </label>
-              <input
-                type="text"
-                id="obs"
-                value={obs}
-                onChange={(e) => setObs(e.target.value)}
-                maxLength={200}
-                required
-                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
-              />
-            </div>
+          {/* Observação */}
+          <div className="w-full">
+            <label htmlFor="obs" className="block text-sm font-semibold mb-1">
+              Observações:
+            </label>
+            <input
+              type="text"
+              id="obs"
+              value={obs}
+              onChange={(e) => setObs(e.target.value)}
+              maxLength={200}
+              required
+              placeholder="Digite alguma observação (opcional)"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+            />
           </div>
+
           {/* Botão */}
           <div className="w-full flex justify-center">
             <button

@@ -1,12 +1,23 @@
 import nodemailer from "nodemailer";
 
 // transport configurado (exemplo Gmail, mas pode ser outro)
+// const transporter = nodemailer.createTransport({
+//   host: "smtp.gmail.com",
+//   port: 587,
+//   secure: false, // STARTTLS será usado
+//   auth: {
+//     user: process.env.EMAIL_USER, // configure no .env
+//     pass: process.env.EMAIL_PASS,
+//   },
+// });
+// Looking to send emails in production? Check out our Email API/SMTP product!
+// 9e0f77678c5a9a14704286d135adf103 token
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
+  host: "sandbox.smtp.mailtrap.io",
+  port: 2525,
   secure: false, // STARTTLS será usado
   auth: {
-    user: process.env.EMAIL_USER, // configure no .env
+    user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });

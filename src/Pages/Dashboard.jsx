@@ -8,7 +8,7 @@ import {
   LuQrCode,
   LuUserCog,
 } from "react-icons/lu";
-import { FaHospitalUser, FaArrowRight, FaArrowLeft } from "react-icons/fa";
+import { FaHospitalUser, FaArrowRight, FaArrowLeft,FaBusinessTime } from "react-icons/fa";
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
@@ -163,7 +163,7 @@ export default function Dashboard() {
               onClick={() => setSelected("funcionarioTemp")}
             >
               <span className="text-xl ">
-                <FaHospitalUser />
+                <FaBusinessTime />
               </span>
               <span
                 className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}

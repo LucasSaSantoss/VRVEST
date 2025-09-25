@@ -135,8 +135,9 @@ function LeitorQrCode() {
                                 name="pendencia"
                                 value={p.id}
                                 id={p.id}
-                                checked={pendenciaSelecionada === p.id}
-                                onChange={() => setPendenciaSelecionada(p.id)} // só atualiza no clique
+                                onChange={(e) => {
+                                  setPendenciaSelecionada(p.id);
+                                }}
                               />
                             ) : (
                               <span className="text-gray-400 text-sm">
@@ -179,6 +180,12 @@ function LeitorQrCode() {
     }
   };
 
+  useEffect(() => {
+    if (pendenciaSelecionada) {
+      console.log("Estado atualizado:", pendenciaSelecionada);
+    }
+  }, [pendenciaSelecionada]);
+
   // Popup temporário
   const showTemporaryPopup = (message) => {
     setPopupMessage(message);
@@ -195,11 +202,9 @@ function LeitorQrCode() {
           setShowModal(true);
         } else {
           if (pendenciaSelecionada) {
-            console.log(pendenciaSelecionada);
             setMensagem("Deseja realmente devolver a pendência selecionada?");
             setMostrarModalSimNao(true);
           } else {
-            console.log(pendenciaSelecionada);
             setIsSuccess(false);
             showTemporaryPopup(
               "Não existem pendências para baixar ou nenhuma foi selecionada."
@@ -264,6 +269,7 @@ function LeitorQrCode() {
     kitSelecionado,
     tipoOperacao,
     cpf,
+    pendenciaSelecionada,
   ]);
 
   // Foco automático no botão Sim

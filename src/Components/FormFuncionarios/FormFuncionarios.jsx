@@ -126,6 +126,7 @@ export default function ListaFuncionarios() {
               <th className="py-2 px-4">Setor</th>
               <th className="py-2 px-4">Cargo</th>
               <th className="py-2 px-4">Ativo</th>
+              <th className="py-2 px-4">Temporário</th>
               <th className="py-2 px-4">Ações</th>
             </tr>
           </thead>
@@ -142,6 +143,9 @@ export default function ListaFuncionarios() {
                 <td className="py-2 px-4">{employee.position}</td>
                 <td className="py-2 px-4">
                   {employee.active === 1 ? "Sim" : "Não"}
+                </td>
+                <td className={`py-2 px-4 ${employee.tempEmpl === 1? "text-red-600": "text-blue-600"}`}>
+                  {employee.tempEmpl === 1 ? "Sim" : "Não"}
                 </td>
                 <td className="py-2 px-4">
                   <div className="flex justify-center items-center gap-3">
@@ -194,7 +198,7 @@ export default function ListaFuncionarios() {
               onClose={() => {
                 setshowCreateFunc(false);
                 listarFuncionarios();
-                setShowPopup("Funcionário criado com sucesso.")
+                setShowPopup("Funcionário criado com sucesso.");
               }}
             />
           </div>
