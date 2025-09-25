@@ -363,80 +363,85 @@ function LeitorQrCode() {
   };
 
   return (
-    <div className="flex flex-col w-[400px] mx-auto mt-[25vh] border-2 border-[#2faed4] rounded-[15px] p-12 shadow-xl/20 items-center">
-      <label htmlFor="qrCode" className="text-2x1 font-large">
-        QR Code:
-      </label>
+    <div className="flex flex-col w-[500px] mx-auto mt-[15vh] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
+      <h1 className="text-3xl font-bold text-cyan-700 mb-6 text-center">
+        Leitor de QR Code
+      </h1>
+
+      {/* Input QR */}
+      <label
+        htmlFor="qrCodeNum"
+        className="text-lg font-semibold text-gray-700"
+      ></label>
       <input
         ref={cpfInputRef}
         id="qrCodeNum"
         type="text"
         inputMode="numeric"
-        placeholder="Escaneie o QR Code"
+        placeholder=" Escaneie o QR Code:"
         pattern="\d*"
         maxLength={11}
         value={cpf}
         onChange={(e) => setCpf(e.target.value)}
         onKeyDown={handleCpfEnter}
-        className="mt-4 p-3 border-2 border-[#2faed4] rounded-[25px] w-[300px] text-lg"
+        className="mt-3 p-3 border-2 border-cyan-300 rounded-xl w-full text-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400 transition"
       />
 
-      <div className="flex gap-4 mt-6">
+      {/* Botões de operação */}
+      <div className="flex gap-4 mt-6 w-full justify-center">
         <button
           onClick={() => setTipoOperacao("retirada")}
-          className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
-            tipoOperacao === "retirada"
-              ? "bg-blue-700 text-white shadow-lg"
-              : "bg-blue-400 text-white shadow-lg"
-          }`}
+          className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
+        ${
+          tipoOperacao === "retirada"
+            ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
+            : "bg-blue-300 text-white shadow-md hover:bg-blue-400"
+        }`}
         >
           Retirada
         </button>
 
         <button
           onClick={() => setTipoOperacao("devolucao")}
-          className={`px-6 py-3 rounded-lg font-bold text-xl transition ${
-            tipoOperacao === "devolucao"
-              ? "bg-red-700 text-white shadow-lg"
-              : "bg-red-400 text-white shadow-lg"
-          }`}
+          className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
+        ${
+          tipoOperacao === "devolucao"
+            ? "bg-red-600 text-white shadow-lg hover:bg-red-700"
+            : "bg-red-300 text-white shadow-md hover:bg-red-400"
+        }`}
         >
           Devolução
         </button>
       </div>
 
-      {/* Popup */}
+      {/* Popup de sucesso/erro */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div
-            className={
-              isSuccess
-                ? "bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
-                : "bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
-            }
+            className={`px-6 py-3 rounded-lg shadow-lg text-white font-semibold animate-fadeInOut ${isSuccess ? "bg-green-500" : "bg-red-500"}`}
           >
             {popupMessage}
           </div>
         </div>
       )}
 
-      {/* Popup pendências */}
+      {/* Popup de pendências */}
       {showPendPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="bg-red-700 text-white text-2xl px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
+          <div className="bg-red-700 text-white text-xl px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
             {pendPopupMessage}
           </div>
         </div>
       )}
 
-      {/* Modal seleção de kit */}
+      {/* Modal de seleção de KIT sem fundo preto */}
       {showModal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-opacity-50 z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-96">
-            <h2 className="text-xl font-bold mb-4 text-center">
-              Selecione o KIT que será retirado
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-96">
+            <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
+              Selecione o KIT
             </h2>
-            <div className="flex justify-center gap-6 mb-4">
+            <div className="grid grid-cols-4 gap-4 justify-center mb-6">
               {[
                 { kit: "P", numero: 1 },
                 { kit: "M", numero: 2 },
@@ -450,27 +455,30 @@ function LeitorQrCode() {
                       setMostrarModalSimNao(true);
                       setMensagem(`Tamanho ${kit}. Deseja prosseguir?`);
                     }}
-                    className="w-16 h-16 rounded-md bg-gray-200 hover:bg-gray-300 font-bold text-lg"
+                    className="w-16 h-16 rounded-lg bg-cyan-100 hover:bg-cyan-200 font-bold text-lg shadow-md transition"
                   >
                     {kit}
                   </button>
-                  <span className="mt-2 text-sm font-semibold">{numero}</span>
+                  <span className="mt-2 font-semibold text-gray-700">
+                    {numero}
+                  </span>
                 </div>
               ))}
             </div>
-
             <button
               onClick={() => {
                 setShowModal(false);
                 cpfInputRef.current?.focus();
               }}
-              className="bg-blue-500 text-white px-4 py-2 rounded w-full"
+              className="bg-cyan-500 text-white px-4 py-2 rounded-lg w-full hover:bg-cyan-600 transition"
             >
               Fechar
             </button>
           </div>
         </div>
       )}
+
+      {/* Modal Sim/Não */}
       <ModalSimNao
         mostrar={mostrarModalSimNao}
         onConfirmar={() =>
@@ -484,6 +492,7 @@ function LeitorQrCode() {
         isProcessing={isProcessing}
         mensagem={mensagem}
       />
+
       <style jsx>{`
         @keyframes fadeInOut {
           0% {
