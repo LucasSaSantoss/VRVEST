@@ -10,6 +10,8 @@ import {
   createTempEmpl,
 } from "../controllers/employeeController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
+import multer from "multer";
+import path from "path";
 
 const router = express.Router();
 

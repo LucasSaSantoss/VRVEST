@@ -3,6 +3,7 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
+import { differenceInHours } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -84,7 +85,8 @@ export const createUser = async (req, res) => {
       },
     });
 
-    
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
     // ---------------- LOGS ----------------
     await prisma.userLog.create({
       data: {
@@ -97,7 +99,7 @@ export const createUser = async (req, res) => {
           position: newUser.position,
           level: newUser.level,
         },
-        createdAt: new Date(),
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -204,6 +206,8 @@ export const updateUser = async (req, res) => {
       data: camposAlterados,
     });
 
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
     // ---------------- LOGS ----------------
     const logChanges = Object.keys(camposAlterados).reduce((acc, key) => {
       acc[key] = { old: usuario[key], new: updatedUser[key] };
@@ -216,6 +220,7 @@ export const updateUser = async (req, res) => {
         action: "Alteração de usuário",
         changes: logChanges, // JSON criado para apresentar os campos alterados
         newData: updatedUser, // todo o objeto atualizado (ou pode ser só campos alterados)
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------

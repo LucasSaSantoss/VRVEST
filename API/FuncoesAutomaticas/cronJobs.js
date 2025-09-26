@@ -1,7 +1,6 @@
 import cron from "node-cron";
 import { PrismaClient } from "@prisma/client";
-import { formatInTimeZone, format } from "date-fns-tz";
-import { differenceInHours, differenceInMinutes } from "date-fns";
+import { differenceInHours } from "date-fns";
 
 const prisma = new PrismaClient();
 
@@ -18,7 +17,7 @@ export const validaFuncTemp = async () => {
       if (func.tempAlterDate) {
         const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
         const difference = differenceInHours(dataBR, func.tempAlterDate);
-
+        console.log(difference);
         if (difference >= 36) {
           const funcAtualizado = await prisma.employee.update({
             where: { id: func.id },
@@ -55,7 +54,7 @@ export const validaFuncTemp = async () => {
 };
 
 // Agenda para rodar de 1 em 1 hora
-cron.schedule("0 * * * *", () => {
+cron.schedule("* * * * *", () => {
   console.log("[CRON] Rodando validação automática...");
   validaFuncTemp();
 });

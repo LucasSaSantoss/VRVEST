@@ -1,6 +1,9 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
+import { differenceInHours } from "date-fns";
+import fs from "fs";
+import path from "path";
 
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
@@ -40,6 +43,8 @@ export const createEmpl = async (req, res) => {
       },
     });
 
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
     // ---------------- LOGS ----------------
     await prisma.userLog.create({
       data: {
@@ -52,7 +57,7 @@ export const createEmpl = async (req, res) => {
           position: newEmpl.position,
           modality: newEmpl.modality,
         },
-        createdAt: new Date(),
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -73,34 +78,47 @@ export const createEmpl = async (req, res) => {
 
 export const createTempEmpl = async (req, res) => {
   try {
-    const { name, cpf, email, sector, position, modality, obs } = req.body;
+    const { name, cpf, email, sector, position, modality, obs, avatarImage } =
+      req.body;
 
-    // Dados do usuário logado
-    const cadUserID = req.user.id;
-    const cadUserName = req.user.name;
-
-    if (!name || !cpf || !email || !sector || !position || !modality) {
+    // Validação mínima
+    if (
+      !name ||
+      !cpf ||
+      !email ||
+      !sector ||
+      !position ||
+      !modality ||
+      !avatarImage
+    ) {
       return res
         .status(400)
         .json({ message: "Existem dados em branco, favor preencher." });
     }
 
+    // Dados do usuário logado
+    const cadUserID = req.user.id;
+    const cadUserName = req.user.name;
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
+    // Verifica se funcionário já existe
     const existingEmpl = await prisma.employee.findUnique({ where: { cpf } });
     if (existingEmpl) {
       if (existingEmpl.tempEmpl === 1) {
         const tempEmplReact = await prisma.employee.update({
           where: { id: existingEmpl.id },
           data: {
-            name: name,
-            email: email,
-            sector: sector,
-            position: position,
-            modality: modality,
+            name,
+            email,
+            sector,
+            position,
+            modality,
             active: 1,
             tempEmplObs: obs,
             tempAlterDate: new Date(),
           },
         });
+
         // ---------------- LOG ----------------
         const logChanges = Object.keys(existingEmpl).reduce((acc, key) => {
           acc[key] = { old: existingEmpl[key], new: tempEmplReact[key] };
@@ -115,8 +133,8 @@ export const createTempEmpl = async (req, res) => {
             newData: tempEmplReact,
           },
         });
-        // --------------------------------------
 
+        // --------------------------------------
         return res.status(201).json({
           message:
             "Email já registrado anteriormente. Usuário Temporário Reativado.",
@@ -130,6 +148,27 @@ export const createTempEmpl = async (req, res) => {
       }
     }
 
+    // Define o caminho para salvar a imagem
+    const folderPath = "/public/images/";
+    if (!fs.existsSync(folderPath))
+      fs.mkdirSync(folderPath, { recursive: true });
+
+    const fileName = `${cpf}.png`;
+    const filePath = path.join(folderPath, fileName);
+
+    // Função para salvar Base64 como arquivo
+    const saveBase64Image = (base64String, filePath) => {
+      const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+      const buffer = matches
+        ? Buffer.from(matches[2], "base64")
+        : Buffer.from(base64String, "base64");
+      fs.writeFileSync(filePath, buffer);
+      console.log(`Imagem salva em: ${filePath}`);
+    };
+
+    saveBase64Image(avatarImage, filePath);
+
+    // Cria o funcionário temporário no banco
     const newEmplTemp = await prisma.employee.create({
       data: {
         name,
@@ -144,6 +183,7 @@ export const createTempEmpl = async (req, res) => {
         tempAlterDate: new Date(),
         tempEmpl: 1,
         tempEmplObs: obs,
+        tempEmplImg: fileName, // só grava o nome do arquivo
       },
     });
 
@@ -162,7 +202,7 @@ export const createTempEmpl = async (req, res) => {
           tempEmpl: newEmplTemp.tempEmpl,
           tempEmplObs: newEmplTemp.tempEmplObs,
         },
-        createdAt: new Date(),
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -173,11 +213,6 @@ export const createTempEmpl = async (req, res) => {
       id: newEmplTemp.id,
     });
   } catch (err) {
-    if (err.code === "P2002") {
-      return res
-        .status(400)
-        .json({ success: false, message: "CPF ou Email já cadastrado" });
-    }
     console.error("Erro ao criar Funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
@@ -239,6 +274,7 @@ export const registrarKit = async (req, res) => {
     // Dados do usuário logado
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
 
     // Cria a pendência
     const pendencia = await prisma.pendency.create({
@@ -247,7 +283,7 @@ export const registrarKit = async (req, res) => {
         emplName: funcionario.name,
         userId: usuarioID,
         userName: usuarioName,
-        date: new Date(),
+        date: dateBRNow,
         devolUserId: 0,
         devolUserName: "",
         devolDate: null,
@@ -276,7 +312,7 @@ export const registrarKit = async (req, res) => {
           userName: usuarioName,
           kitSize: pendencia.kitSize,
         },
-        createdAt: new Date(),
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -327,6 +363,7 @@ export const devolverKit = async (req, res) => {
     // Dados do usuário logado
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
 
     // // Última pendência em aberto (sem limite de tempo)
     // const UltimaPendencia = await prisma.pendency.findFirst({
@@ -349,6 +386,7 @@ export const devolverKit = async (req, res) => {
     // Valida prazo de 24h
     const limite = new Date();
     limite.setHours(limite.getHours() - 36);
+    const difference = differenceInHours();
 
     if (pendenciaSelecionada.date < limite) {
       return res.json({
@@ -365,7 +403,7 @@ export const devolverKit = async (req, res) => {
         status: 2,
         devolUserId: usuarioID,
         devolUserName: usuarioName,
-        devolDate: new Date(),
+        devolDate: dateBRNow,
         devolType: 2,
       },
     });
@@ -393,7 +431,7 @@ export const devolverKit = async (req, res) => {
           userName: usuarioName,
           kitSize: pendenciaAtualizada.kitSize,
         },
-        createdAt: new Date(),
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -531,6 +569,8 @@ export const updateEmpl = async (req, res) => {
       data: camposAlterados,
     });
 
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
     // ---------------- LOGS ----------------
     const logChanges = Object.keys(camposAlterados).reduce((acc, key) => {
       acc[key] = { old: funcionario[key], new: updatedEmpl[key] };
@@ -543,6 +583,7 @@ export const updateEmpl = async (req, res) => {
         action: "Alteração de Funcionário",
         changes: logChanges, // JSON criado para apresentar os campos alterados
         newData: updatedEmpl, // todo o objeto atualizado (ou pode ser só campos alterados)
+        createdAt: dateBRNow,
       },
     });
     // --------------------------------------
@@ -557,4 +598,3 @@ export const updateEmpl = async (req, res) => {
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
 };
-

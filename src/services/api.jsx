@@ -73,12 +73,13 @@ export async function cadastrarFuncionarioTemporario({
   position,
   modality,
   obs,
+  avatarImage,
 }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl/tempEmpl`,
-      { name, cpf, email, sector, position, modality, obs },
+      { name, cpf, email, sector, position, modality, obs,avatarImage },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
