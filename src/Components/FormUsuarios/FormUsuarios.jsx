@@ -159,8 +159,8 @@ export default function TabelaUsuarios() {
                 {user.level === 1
                   ? "OPERADOR"
                   : user.level === 2
-                    ? "SUPERVISOR"
-                    : ""}
+                    ? "CONTROLADOR"
+                    : "SUPERVISOR"}
               </td>
               <td className="py-2 px-4">{user.active === 1 ? "Sim" : "Não"}</td>
               <td className="py-2 px-4">
