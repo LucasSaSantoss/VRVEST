@@ -26,11 +26,50 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
     tipo: "info",
   });
 
+  const limparTexto = (e, setState) => {
+    let valor = e.target.value;
+    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, "");
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.toUpperCase();
+    setState(valor);
+  };
+
+  const limparEmail = (e, setState) => {
+    let valor = e.target.value;
+    const primeiraArroba = valor.indexOf("@");
+    if (primeiraArroba !== -1) {
+      valor =
+        valor.slice(0, primeiraArroba + 1) +
+        valor.slice(primeiraArroba + 1).replace(/@/g, "");
+    }
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
+    valor = valor.toLowerCase();
+    setState(valor);
+  };
+
+  const validarEmail = (email) => {
+    // Regex simples de validação de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setMostarModalSimNao(false);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    return re.test(email);
+  };
+
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (!user?.id) {
       mostrarPopup("Usuário não informado", "error");
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
       return;
     }
 
@@ -97,11 +136,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
                 placeholder="Digite o nome completo"
                 value={name}
                 onChange={(e) => {
-                  const somenteLetras = e.target.value.replace(
-                    /[^a-zA-Z\s]/g,
-                    ""
-                  );
-                  setName(somenteLetras);
+                  limparTexto(e, setName);
                 }}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
@@ -121,7 +156,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
                 maxLength={80}
                 placeholder="email@email.com.br"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => limparEmail(e, setEmail)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
@@ -157,11 +192,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
               maxLength={50}
               value={position}
               onChange={(e) => {
-                const somenteLetras = e.target.value.replace(
-                  /[^a-zA-Z\s]/g,
-                  ""
-                );
-                setPosition(somenteLetras);
+                limparTexto(e, setPosition);
               }}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"

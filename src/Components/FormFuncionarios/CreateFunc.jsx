@@ -28,27 +28,27 @@ export default function CreateFunc({ onClose }) {
 
   const limparTexto = (e, setState) => {
     let valor = e.target.value;
-    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, ""); // só letras e espaço
-    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
-    valor = valor.trimStart(); // remove espaço no começo
+    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, "");
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
     valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.toUpperCase();
     setState(valor);
   };
 
   const limparEmail = (e, setState) => {
     let valor = e.target.value;
-    valor = valor.replace(/[^a-zA-ZÀ-ú@. ]/g, ""); // só letras, @, ponto e espaço
-    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
-    valor = valor.trimStart(); // remove espaço no começo
-
-    // Permite no máximo 1 @ → remove os extras
     const primeiraArroba = valor.indexOf("@");
     if (primeiraArroba !== -1) {
-      // mantém só o primeiro @, remove os outros
       valor =
         valor.slice(0, primeiraArroba + 1) +
         valor.slice(primeiraArroba + 1).replace(/@/g, "");
     }
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
+    valor = valor.toLowerCase();
     setState(valor);
   };
 
@@ -72,6 +72,14 @@ export default function CreateFunc({ onClose }) {
     modality,
   };
 
+  const validarEmail = (email) => {
+    // Regex simples de validação de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setMostarModalSimNao(false);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    return re.test(email);
+  };
+
   const handleCadastro = async (e) => {
     e.preventDefault();
     if (
@@ -92,6 +100,12 @@ export default function CreateFunc({ onClose }) {
       setMostarModalSimNao(false);
       return;
     }
+
+    if (!validarEmail(email)) {
+      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
+      return;
+    }
+    
     const data = await cadastrarFuncionario({
       name,
       cpf,
@@ -134,7 +148,7 @@ export default function CreateFunc({ onClose }) {
                 type="text"
                 id="nome"
                 value={name}
-                onChange={(e) => limparTexto(e,setName)}
+                onChange={(e) => limparTexto(e, setName)}
                 maxLength={80}
                 placeholder="Digite o nome completo"
                 required
@@ -153,7 +167,7 @@ export default function CreateFunc({ onClose }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e)=> setEmail(e.target.value)}
+                onChange={(e) => limparEmail(e, setEmail)}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
@@ -191,7 +205,7 @@ export default function CreateFunc({ onClose }) {
               type="text"
               id="cargo"
               value={position}
-              onChange={(e) => limparTexto(e,setPosition)}
+              onChange={(e) => limparTexto(e, setPosition)}
               maxLength={50}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"

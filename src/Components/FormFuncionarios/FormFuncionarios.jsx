@@ -73,7 +73,7 @@ export default function ListaFuncionarios() {
     <>
       <div className="p-4">
         <div className="flex flex-col items-start mb-4">
-          <h1 className="text-4xl font-bold">Funcionários Cadastrados</h1>
+          <h1 className="text-4xl font-bold">Colaboradores Cadastrados</h1>
 
           {/* Barra de ação */}
           <div className="w-full flex items-center justify-between mt-8">
@@ -82,7 +82,7 @@ export default function ListaFuncionarios() {
               className="bg-[#27ae60] text-white px-4 py-2 rounded hover:bg-green-800 transition"
               onClick={() => setshowCreateFunc(true)}
             >
-              Novo Funcionário
+              Novo Colaborador
             </button>
 
             {/* Busca + paginação */}
@@ -186,7 +186,7 @@ export default function ListaFuncionarios() {
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Cadastro de Funcionário</h2>
+              <h2 className="text-2xl font-bold">Cadastro de Colaborador</h2>
               <button
                 onClick={() => setshowCreateFunc(false)}
                 className="text-red-500 font-bold text-xl hover:bg-red-700 hover:scale-110 transition duration-200 ease-in-out "
@@ -209,7 +209,7 @@ export default function ListaFuncionarios() {
       {MostrarAlterFunc && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
-            <h2 className="text-2xl font-bold">Alteração de Funcionários</h2>
+            <h2 className="text-2xl font-bold">Alteração de Colaboradores</h2>
             <div className="flex justify-end items-center mb-4 ">
               <button
                 className="text-red-500 font-bold text-xl hover:scale-110 duration-300 ease-in-out"

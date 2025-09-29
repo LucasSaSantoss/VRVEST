@@ -20,28 +20,36 @@ export default function CreateUser({ onClose, mostrarPopup }) {
 
   const limparTexto = (e, setState) => {
     let valor = e.target.value;
-    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, ""); // só letras e espaço
-    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
-    valor = valor.trimStart(); // remove espaço no começo
+    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, "");
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
     valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.toUpperCase();
     setState(valor);
   };
 
   const limparEmail = (e, setState) => {
     let valor = e.target.value;
-    valor = valor.replace(/[^a-zA-ZÀ-ú@. ]/g, ""); // só letras, @, ponto e espaço
-    valor = valor.replace(/\s+/g, " "); // remove espaços múltiplos
-    valor = valor.trimStart(); // remove espaço no começo
-
-    // Permite no máximo 1 @ → remove os extras
     const primeiraArroba = valor.indexOf("@");
     if (primeiraArroba !== -1) {
-      // mantém só o primeiro @, remove os outros
       valor =
         valor.slice(0, primeiraArroba + 1) +
         valor.slice(primeiraArroba + 1).replace(/@/g, "");
     }
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
+    valor = valor.toLowerCase();
     setState(valor);
+  };
+
+  const validarEmail = (email) => {
+    // Regex simples de validação de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setMostarModalSimNao(false);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    return re.test(email);
   };
 
   const cancelarOperacao = () => {
@@ -61,6 +69,12 @@ export default function CreateUser({ onClose, mostrarPopup }) {
   };
 
   const handleCadastro = async (e) => {
+    
+    if (!validarEmail(email)) {
+      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
+      return;
+    }
+
     e.preventDefault();
     if (name && email && sector && position && password && level) {
       const data = await cadastrarUsuario({

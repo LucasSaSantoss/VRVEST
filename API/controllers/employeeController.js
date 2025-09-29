@@ -21,8 +21,52 @@ export const createEmpl = async (req, res) => {
     }
 
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
-    if (existingEmpl)
-      return res.status(400).json({ message: "Email já registrado" });
+    if (existingEmpl) {
+      if (existingEmpl.tempEmpl === 1) {
+        const tempEmplReact = await prisma.employee.update({
+          where: { id: existingEmpl.id },
+          data: {
+            name,
+            email,
+            sector,
+            position,
+            modality,
+            active: 1,
+            templEmpl: 0,
+            tempEmplObs: obs,
+            tempAlterDate: dateBRNow,
+          },
+        });
+
+        // ------------------------------- LOG -------------------------------
+
+        const logChanges = Object.keys(existingEmpl).reduce((acc, key) => {
+          acc[key] = { old: existingEmpl[key], new: tempEmplReact[key] };
+          return acc;
+        }, {});
+
+        await prisma.userLog.create({
+          data: {
+            userId: cadUserID,
+            action: "Colaborador Temporário alterado para Permanente.",
+            changes: logChanges,
+            newData: tempEmplReact,
+            createdAt: dateBRNow,
+          },
+        });
+
+        return res.status(201).json({
+          message:
+            "Email já registrado anteriormente. Usuário Temporário Reativado.",
+          success: true,
+        });
+      } else {
+        return res.status(400).json({
+          message: "Colaborador já cadastrado no sistema.",
+          success: false,
+        });
+      }
+    }
 
     const validCpf = await prisma.employee.findUnique({ where: { cpf } });
     if (validCpf) return res.status(400).json({ message: "CPF já registrado" });
@@ -89,7 +133,7 @@ export const createTempEmpl = async (req, res) => {
         .json({ message: "Existem dados em branco, favor preencher." });
     }
 
-    if(!avatarFile){
+    if (!avatarFile) {
       return res
         .status(400)
         .json({ message: "Favor capturar a foto do colocaborador." });

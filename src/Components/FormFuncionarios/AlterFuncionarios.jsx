@@ -26,11 +26,50 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
     tipo: "info",
   });
 
+  const limparTexto = (e, setState) => {
+    let valor = e.target.value;
+    valor = valor.replace(/[^a-zA-ZÀ-ú ]/g, "");
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.toUpperCase();
+    setState(valor);
+  };
+
+  const limparEmail = (e, setState) => {
+    let valor = e.target.value;
+    const primeiraArroba = valor.indexOf("@");
+    if (primeiraArroba !== -1) {
+      valor =
+        valor.slice(0, primeiraArroba + 1) +
+        valor.slice(primeiraArroba + 1).replace(/@/g, "");
+    }
+    valor = valor.replace(/\s+/g, " ");
+    valor = valor.trimStart();
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
+    valor = valor.toLowerCase();
+    setState(valor);
+  };
+
+  const validarEmail = (email) => {
+    // Regex simples de validação de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setMostarModalSimNao(false);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    return re.test(email);
+  };
+
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (!employee?.id) {
       alert("Funcionário não informado");
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
       return;
     }
 
@@ -101,11 +140,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
                 id="nome"
                 value={name}
                 onChange={(e) => {
-                  const somenteLetras = e.target.value.replace(
-                    /[^a-zA-Z\s]/g,
-                    ""
-                  );
-                  setName(somenteLetras);
+                  limparTexto(e, name);
                 }}
                 maxLength={80}
                 placeholder="Digite o nome completo"
@@ -125,7 +160,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => (limparEmail = (e, setEmail))}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
@@ -164,11 +199,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
               id="cargo"
               value={position}
               onChange={(e) => {
-                const somenteLetras = e.target.value.replace(
-                  /[^a-zA-Z\s]/g,
-                  ""
-                );
-                setPosition(somenteLetras);
+                limparTexto(e, position);
               }}
               maxLength={50}
               required

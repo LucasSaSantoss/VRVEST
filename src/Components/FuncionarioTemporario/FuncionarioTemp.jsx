@@ -40,6 +40,7 @@ export default function CreateFuncTemp() {
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
     valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.toUpperCase();
     setState(valor);
   };
 
@@ -55,6 +56,7 @@ export default function CreateFuncTemp() {
     valor = valor.trimStart();
     valor = valor.replace(/(.)\1{2,}/g, "$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
+    valor = valor.toLowerCase();
     setState(valor);
   };
 
@@ -145,7 +147,7 @@ export default function CreateFuncTemp() {
     <div className="mt-[4vh] bg-gray-100 flex items-center justify-center">
       <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-8 shadow-lg w-full">
         <h1 className="text-3xl font-bold text-center text-cyan-700 mb-8">
-          Cadastro de Funcionário Temporário
+          Cadastro de Colaborador Temporário
         </h1>
 
         <form className="flex flex-wrap gap-4">
@@ -159,7 +161,7 @@ export default function CreateFuncTemp() {
               />
             ) : (
               <div className="w-40 h-40 bg-gray-200 rounded-full flex items-center justify-center text-gray-500 border-2 border-dashed border-gray-400">
-                Foto do Funcionário
+                Foto do Colaborador
               </div>
             )}
             <button
