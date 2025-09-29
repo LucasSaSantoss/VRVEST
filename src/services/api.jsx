@@ -73,15 +73,30 @@ export async function cadastrarFuncionarioTemporario({
   position,
   modality,
   obs,
-  avatarImage,
+  avatarImage, // agora é File
 }) {
   try {
     const token = localStorage.getItem("token");
-    const res = await axios.post(
-      `${API_URL}/empl/tempEmpl`,
-      { name, cpf, email, sector, position, modality, obs,avatarImage },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+
+    const formData = new FormData();
+    formData.append("name", name);
+    formData.append("cpf", cpf);
+    formData.append("email", email);
+    formData.append("sector", sector);
+    formData.append("position", position);
+    formData.append("modality", modality);
+    formData.append("obs", obs);
+
+    if (avatarImage) {
+      formData.append("avatarImage", avatarImage.file); // envia como arquivo
+    }
+
+    const res = await axios.post(`${API_URL}/empl/tempEmpl`, formData, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "multipart/form-data",
+      },
+    });
 
     return {
       success: true,

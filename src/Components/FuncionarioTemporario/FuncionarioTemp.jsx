@@ -15,14 +15,21 @@ export default function CreateFuncTemp() {
   const [modality, setModality] = useState("");
   const [obs, setObs] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
-  const [popup, setPopup] = useState({ mostrar: false, mensagem: "", tipo: "info" });
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info",
+  });
   const [showWebcamModal, setShowWebcamModal] = useState(false);
   const [avatarImage, setAvatarImage] = useState(null);
 
   const handleOpenWebcam = () => setShowWebcamModal(true);
   const handleCloseWebcam = () => setShowWebcamModal(false);
-  const handlePhotoTaken = (imageDataUrl) => {
-    setAvatarImage(imageDataUrl);
+  const handlePhotoTaken = (file) => {
+    setAvatarImage({
+      file: file,
+      preview: URL.createObjectURL(file), // cria URL para o preview
+    });
     handleCloseWebcam();
   };
   const cancelarOperacao = () => setMostarModalSimNao(false);
@@ -40,49 +47,98 @@ export default function CreateFuncTemp() {
     let valor = e.target.value;
     const primeiraArroba = valor.indexOf("@");
     if (primeiraArroba !== -1) {
-      valor = valor.slice(0, primeiraArroba + 1) + valor.slice(primeiraArroba + 1).replace(/@/g, "");
+      valor =
+        valor.slice(0, primeiraArroba + 1) +
+        valor.slice(primeiraArroba + 1).replace(/@/g, "");
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
     valor = valor.replace(/(.)\1{2,}/g, "$1$1");
-    valor = valor.replace(/[^a-zA-ZÀ-ú@._ ]/g, "");
+    valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     setState(valor);
   };
 
   const temCamposAlterados = () => {
-    return name.trim() || email.trim() || cpf.trim() || position.trim() || sector.trim() || modality.trim() || avatarImage;
+    return (
+      name.trim() ||
+      email.trim() ||
+      cpf.trim() ||
+      position.trim() ||
+      sector.trim() ||
+      modality.trim()
+    ); /*|| avatarImage;*/
+  };
+
+  const validarEmail = (email) => {
+    // Regex simples de validação de email
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setMostarModalSimNao(false);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    return re.test(email);
   };
 
   const handleCadastro = async (e) => {
     e.preventDefault();
 
     if (!name || !email || !cpf || !position || !sector || !modality) {
-      setPopup({ mostrar: true, mensagem: "Existem dados em branco, favor preencher.", tipo: "error" });
-      setTimeout(() => setPopup(prev => ({ ...prev, mostrar: false })), 3000);
+      setPopup({
+        mostrar: true,
+        mensagem: "Existem dados em branco, favor preencher.",
+        tipo: "error",
+      });
+      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
       setMostarModalSimNao(false);
+      return;
+    }
+
+    if (!validarEmail(email)) {
+      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
       return;
     }
 
     if (!avatarImage) {
-      setPopup({ mostrar: true, mensagem: "Favor preencher o campo imagem.", tipo: "error" });
-      setTimeout(() => setPopup(prev => ({ ...prev, mostrar: false })), 3000);
+      setPopup({
+        mostrar: true,
+        mensagem: "Favor preencher o campo imagem.",
+        tipo: "error",
+      });
+      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      setMostarModalSimNao(false);
       return;
     }
 
     const data = await cadastrarFuncionarioTemporario({
-      name, cpf, email, sector, position, modality, obs, avatarImage
+      name,
+      cpf,
+      email,
+      sector,
+      position,
+      modality,
+      obs,
+      avatarImage,
     });
 
-    setPopup({ mostrar: true, mensagem: data.message, tipo: data.success ? "success" : "error" });
+    setPopup({
+      mostrar: true,
+      mensagem: data.message,
+      tipo: data.success ? "success" : "error",
+    });
 
     if (data.success) {
       setMostarModalSimNao(false);
-      setName(""); setEmail(""); setCpf(""); setPosition(""); setSector(""); setModality(""); setObs(""); setAvatarImage(null);
+      setName("");
+      setEmail("");
+      setCpf("");
+      setPosition("");
+      setSector("");
+      setModality("");
+      setObs("");
+      setAvatarImage(null);
     } else {
       setMostarModalSimNao(false);
     }
 
-    setTimeout(() => setPopup(prev => ({ ...prev, mostrar: false })), 3000);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
   };
 
   return (
@@ -97,7 +153,7 @@ export default function CreateFuncTemp() {
           <div className="w-full flex flex-col items-center gap-2">
             {avatarImage ? (
               <img
-                src={avatarImage}
+                src={avatarImage.preview} // aqui usa a URL de preview
                 alt="Avatar Capturado"
                 className="w-40 h-40 object-cover rounded-full border-4 border-cyan-500 shadow-lg"
               />
@@ -133,7 +189,9 @@ export default function CreateFuncTemp() {
 
             {/* Email */}
             <div className="flex-1 min-w-[450px]">
-              <label className="block text-sm font-semibold mb-1">E-mail:</label>
+              <label className="block text-sm font-semibold mb-1">
+                E-mail:
+              </label>
               <input
                 type="email"
                 value={email}
@@ -186,8 +244,12 @@ export default function CreateFuncTemp() {
               <option value="SALA AMARELA">SALA AMARELA</option>
               <option value="SALA VERMELHA">SALA VERMELHA</option>
               <option value="TRAUMA">TRAUMA</option>
-              <option value="EMERGÊNCIA PEDIÁTRICA">EMERGÊNCIA PEDIÁTRICA</option>
-              <option value="OBSERVAÇÃO PEDIÁTRICA">OBSERVAÇÃO PEDIÁTRICA</option>
+              <option value="EMERGÊNCIA PEDIÁTRICA">
+                EMERGÊNCIA PEDIÁTRICA
+              </option>
+              <option value="OBSERVAÇÃO PEDIÁTRICA">
+                OBSERVAÇÃO PEDIÁTRICA
+              </option>
               <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
               <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
               <option value="UI ADULTO">UI ADULTO</option>
@@ -203,7 +265,9 @@ export default function CreateFuncTemp() {
 
           {/* Modalidade */}
           <div className="flex-1 min-w-[200px] w-full">
-            <label className="block text-sm font-semibold mb-1">Modalidade:</label>
+            <label className="block text-sm font-semibold mb-1">
+              Modalidade:
+            </label>
             <select
               value={modality}
               onChange={(e) => setModality(e.target.value)}
@@ -219,7 +283,9 @@ export default function CreateFuncTemp() {
 
           {/* Observações */}
           <div className="w-full">
-            <label className="block text-sm font-semibold mb-1">Observações:</label>
+            <label className="block text-sm font-semibold mb-1">
+              Observações:
+            </label>
             <input
               type="text"
               value={obs}
@@ -234,7 +300,11 @@ export default function CreateFuncTemp() {
           <div className="w-full flex justify-center gap-4">
             <button
               type="button"
-              onClick={() => temCamposAlterados() ? setMostarModalSimNao(true) : alert("Preencha algum campo")}
+              onClick={() =>
+                temCamposAlterados()
+                  ? setMostarModalSimNao(true)
+                  : alert("Preencha algum campo")
+              }
               className="px-6 py-2 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition"
             >
               Cadastrar
@@ -249,8 +319,10 @@ export default function CreateFuncTemp() {
 
         {/* Popup */}
         {popup.mostrar && (
-          <div className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
-            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}>
+          <div
+            className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+          >
             {popup.mensagem}
           </div>
         )}

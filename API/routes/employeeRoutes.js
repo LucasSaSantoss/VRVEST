@@ -12,11 +12,12 @@ import {
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import multer from "multer";
 import path from "path";
+import { upload } from "../uploadConfig/uploadConfig.js";
 
 const router = express.Router();
 
 router.post("/", createEmpl); // Criar Funcionários
-router.post("/tempEmpl",authMiddleware, createTempEmpl); //Criar Funcionários Temporários
+router.post("/tempEmpl", authMiddleware, upload.single("avatarImage"), createTempEmpl);
 router.get("/", getEmpl); // Listar Funcionários
 router.post("/registrarKit", registrarKit); // Registra Pendência através do cpf
 router.post("/pendencias", getOpenPendencies);

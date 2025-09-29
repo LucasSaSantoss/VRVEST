@@ -4,6 +4,7 @@ import { enviarEmail } from "../emailService/emailService.js";
 import { differenceInHours } from "date-fns";
 import fs from "fs";
 import path from "path";
+import { upload } from "../uploadConfig/uploadConfig.js";
 
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
@@ -78,22 +79,20 @@ export const createEmpl = async (req, res) => {
 
 export const createTempEmpl = async (req, res) => {
   try {
-    const { name, cpf, email, sector, position, modality, obs, avatarImage } =
-      req.body;
+    const { name, cpf, email, sector, position, modality, obs } = req.body;
+    const avatarFile = req.file; // vem do multer
 
     // Validação mínima
-    if (
-      !name ||
-      !cpf ||
-      !email ||
-      !sector ||
-      !position ||
-      !modality ||
-      !avatarImage
-    ) {
+    if (!name || !cpf || !email || !sector || !position || !modality) {
       return res
         .status(400)
         .json({ message: "Existem dados em branco, favor preencher." });
+    }
+
+    if(!avatarFile){
+      return res
+        .status(400)
+        .json({ message: "Favor capturar a foto do colocaborador." });
     }
 
     // Dados do usuário logado
@@ -115,7 +114,7 @@ export const createTempEmpl = async (req, res) => {
             modality,
             active: 1,
             tempEmplObs: obs,
-            tempAlterDate: new Date(),
+            tempAlterDate: dateBRNow,
           },
         });
 
@@ -131,10 +130,10 @@ export const createTempEmpl = async (req, res) => {
             action: "Reativação de Funcionário Temporário",
             changes: logChanges,
             newData: tempEmplReact,
+            createdAt: dateBRNow,
           },
         });
 
-        // --------------------------------------
         return res.status(201).json({
           message:
             "Email já registrado anteriormente. Usuário Temporário Reativado.",
@@ -148,25 +147,7 @@ export const createTempEmpl = async (req, res) => {
       }
     }
 
-    // Define o caminho para salvar a imagem
-    const folderPath = "/public/images/";
-    if (!fs.existsSync(folderPath))
-      fs.mkdirSync(folderPath, { recursive: true });
-
-    const fileName = `${cpf}.png`;
-    const filePath = path.join(folderPath, fileName);
-
-    // Função para salvar Base64 como arquivo
-    const saveBase64Image = (base64String, filePath) => {
-      const matches = base64String.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-      const buffer = matches
-        ? Buffer.from(matches[2], "base64")
-        : Buffer.from(base64String, "base64");
-      fs.writeFileSync(filePath, buffer);
-      console.log(`Imagem salva em: ${filePath}`);
-    };
-
-    saveBase64Image(avatarImage, filePath);
+    // ---------------- Imagem ---------------
 
     // Cria o funcionário temporário no banco
     const newEmplTemp = await prisma.employee.create({
@@ -179,18 +160,18 @@ export const createTempEmpl = async (req, res) => {
         cadUserID,
         cadUserName,
         modality,
-        tempCreatedDate: new Date(),
-        tempAlterDate: new Date(),
+        tempCreatedDate: dateBRNow,
+        tempAlterDate: dateBRNow,
         tempEmpl: 1,
         tempEmplObs: obs,
-        tempEmplImg: fileName, // só grava o nome do arquivo
+        tempEmplImg: avatarFile ? avatarFile.filename : null, // grava só o nome do arquivo
       },
     });
 
     // ---------------- LOGS ----------------
     await prisma.userLog.create({
       data: {
-        userId: cadUserID, // ID do usuário que fez a criação
+        userId: cadUserID,
         action: "Criação de Funcionário Temporário.",
         newData: {
           name: newEmplTemp.name,
@@ -201,11 +182,11 @@ export const createTempEmpl = async (req, res) => {
           tempCreatedDate: newEmplTemp.tempCreatedDate,
           tempEmpl: newEmplTemp.tempEmpl,
           tempEmplObs: newEmplTemp.tempEmplObs,
+          tempEmplImg: newEmplTemp.tempEmplImg,
         },
         createdAt: dateBRNow,
       },
     });
-    // --------------------------------------
 
     res.status(201).json({
       success: true,

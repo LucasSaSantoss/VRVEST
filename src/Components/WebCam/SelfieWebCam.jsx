@@ -66,8 +66,13 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
   // Lógica para usar a foto tirada
   const usePhoto = () => {
     const canvas = canvasRef.current;
-    const image = canvas.toDataURL("image/png");
-    onUsePhoto(image);
+    canvas.toBlob((blob) => {
+      if (!blob) return;
+      const file = new File([blob], `avatar_${Date.now()}.png`, {
+        type: "image/png",
+      });
+      onUsePhoto(file); // envia File para o frontend
+    }, "image/png");
   };
 
   if (!show) {
