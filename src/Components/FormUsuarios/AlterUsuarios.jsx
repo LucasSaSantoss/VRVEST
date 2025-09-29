@@ -197,7 +197,8 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
             >
               <option value="">Selecione uma opção</option>
               <option value="1">OPERADOR</option>
-              <option value="2">SUPERVISOR</option>
+              <option value="2">CONTROLADOR</option>
+              <option value="3">SUPERVISOR</option>
             </select>
           </div>
 

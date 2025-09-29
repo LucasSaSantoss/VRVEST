@@ -8,7 +8,12 @@ import {
   LuQrCode,
   LuUserCog,
 } from "react-icons/lu";
-import { FaHospitalUser, FaArrowRight, FaArrowLeft,FaBusinessTime } from "react-icons/fa";
+import {
+  FaHospitalUser,
+  FaArrowRight,
+  FaArrowLeft,
+  FaBusinessTime,
+} from "react-icons/fa";
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
@@ -139,23 +144,19 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser === 1 ||
-              (levelUser > 2 && (
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+
+            <li
+              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => setSelected("qrcode")}
-                >
-                  <span className="text-xl">
-                    <LuQrCode />
-                  </span>
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    QR Code
-                  </span>
-                </li>
-              ))}
+              onClick={() => setSelected("qrcode")}
+            >
+              <span className="text-xl">
+                <LuQrCode />
+              </span>
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                QR Code
+              </span>
+            </li>
 
             <li
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
