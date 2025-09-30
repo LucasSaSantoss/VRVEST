@@ -38,7 +38,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
-    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     valor = valor.toLowerCase();
     setState(valor);
@@ -69,13 +69,13 @@ export default function CreateUser({ onClose, mostrarPopup }) {
   };
 
   const handleCadastro = async (e) => {
-    
+    e.preventDefault();
+
     if (!validarEmail(email)) {
       setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
       return;
     }
 
-    e.preventDefault();
     if (name && email && sector && position && password && level) {
       const data = await cadastrarUsuario({
         name,

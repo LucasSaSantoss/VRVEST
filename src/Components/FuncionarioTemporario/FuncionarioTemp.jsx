@@ -15,6 +15,7 @@ export default function CreateFuncTemp() {
   const [modality, setModality] = useState("");
   const [obs, setObs] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
+  const [selected, setSelected] = useState("");
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -54,7 +55,7 @@ export default function CreateFuncTemp() {
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
-    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     valor = valor.toLowerCase();
     setState(valor);
@@ -125,6 +126,9 @@ export default function CreateFuncTemp() {
       mensagem: data.message,
       tipo: data.success ? "success" : "error",
     });
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 2000);
 
     if (data.success) {
       setMostarModalSimNao(false);

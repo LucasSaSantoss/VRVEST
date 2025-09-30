@@ -3,7 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { alterarFuncionario } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
 
-export default function AlterForm({ employee, onClose, onUpdate }) {
+export default function AlterForm({
+  employee,
+  onClose,
+  onUpdate,
+  mostrarPopup,
+}) {
   const navigate = useNavigate();
 
   const [name, setName] = useState(employee?.name || "");
@@ -46,30 +51,17 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
-    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     valor = valor.toLowerCase();
     setState(valor);
-  };
-
-  const validarEmail = (email) => {
-    // Regex simples de validação de email
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    setMostarModalSimNao(false);
-    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
-    return re.test(email);
   };
 
   async function handleSubmit(e) {
     e.preventDefault();
 
     if (!employee?.id) {
-      alert("Funcionário não informado");
-      return;
-    }
-
-    if (!validarEmail(email)) {
-      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
+      mostrarPopup("Colaborador não informado", "error");
       return;
     }
 
@@ -92,35 +84,40 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
       !modality ||
       !active
     ) {
-      console.log("Existem dados em branco.");
+      mostrarPopup("Preencha todos os campos obrigatórios.", "error");
+      return;
     }
 
     try {
       const res = await alterarFuncionario(employee.id, payload);
 
-      setPopup({
-        mostrar: true,
-        mensagem: res.message || "Alteração realizada",
-        tipo: res.success ? "success" : "error",
-      });
+      mostrarPopup(
+        res.message || "Alteração realizada",
+        res.success ? "success" : "error"
+      );
 
-      // Fecha automaticamente após 3 segundos
-      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      // setPopup({
+      //   mostrar: true,
+      //   mensagem: res.message || "Alteração realizada",
+      //   tipo: res.success ? "success" : "error",
+      // });
 
       if (res.success) {
+        setMostarModalSimNao(false);
         if (onUpdate) await onUpdate();
+        if (onClose) onClose();
+      } else {
+        setMostarModalSimNao(false);
         if (onClose) onClose();
       }
     } catch (err) {
-      setPopup({
-        mostrar: true,
-        mensagem: "Erro ao atualizar funcionário",
-        tipo: "error",
-      });
-      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+      mostrarPopup(
+        "Não foi possível atualizar o registro do colaborador.",
+        "error"
+      );
+      setMostarModalSimNao(false);
       console.error("Erro no handleSubmit:", err);
     }
-    setMostarModalSimNao(false);
   }
 
   return (
@@ -140,7 +137,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
                 id="nome"
                 value={name}
                 onChange={(e) => {
-                  limparTexto(e, name);
+                  limparTexto(e, setName);
                 }}
                 maxLength={80}
                 placeholder="Digite o nome completo"
@@ -160,7 +157,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
                 type="email"
                 id="email"
                 value={email}
-                onChange={(e) => (limparEmail = (e, setEmail))}
+                onChange={(e) => limparEmail(e, setEmail)}
                 maxLength={80}
                 placeholder="email@email.com.br"
                 required
@@ -199,7 +196,7 @@ export default function AlterForm({ employee, onClose, onUpdate }) {
               id="cargo"
               value={position}
               onChange={(e) => {
-                limparTexto(e, position);
+                limparTexto(e, setPosition);
               }}
               maxLength={50}
               required

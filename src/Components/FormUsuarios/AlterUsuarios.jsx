@@ -46,7 +46,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
-    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     valor = valor.toLowerCase();
     setState(valor);

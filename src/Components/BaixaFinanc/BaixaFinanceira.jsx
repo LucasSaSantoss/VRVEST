@@ -200,7 +200,7 @@ export default function ListaPendencias() {
         <thead>
           <tr className="text-center bg-gray-100 border-t border-gray-300 text-xl font-bold">
             <th className="py-2 px-4"></th>
-            <th className="py-2 px-4">Funcionário</th>
+            <th className="py-2 px-4">Colaborador</th>
             <th className="py-2 px-1">Data</th>
             <th className="py-2 px-1">Data Devolução</th>
             <th className="py-2 px-1">Tamanho Kit</th>

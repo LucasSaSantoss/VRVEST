@@ -46,7 +46,7 @@ export default function CreateFunc({ onClose }) {
     }
     valor = valor.replace(/\s+/g, " ");
     valor = valor.trimStart();
-    valor = valor.replace(/(.)\1{2,}/g, "$1$1");
+    valor = valor.replace(/(.)\1{2,}/g, "$1$1$1");
     valor = valor.replace(/[^a-zA-ZÀ-ú@0-9._ ]/g, "");
     valor = valor.toLowerCase();
     setState(valor);
@@ -105,7 +105,7 @@ export default function CreateFunc({ onClose }) {
       setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
       return;
     }
-    
+
     const data = await cadastrarFuncionario({
       name,
       cpf,
@@ -128,6 +128,12 @@ export default function CreateFunc({ onClose }) {
 
     if (data.success) {
       if (onClose) onClose();
+      setName("");
+      setEmail("");
+      setCpf("");
+      setPosition("");
+      setSector("");
+      setModality("");
     }
     setMostarModalSimNao(false);
   };

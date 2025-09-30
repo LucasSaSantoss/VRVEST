@@ -20,6 +20,10 @@ export const createEmpl = async (req, res) => {
         .json({ message: "Existem dados em branco, favor preencher." });
     }
 
+    const cadUserID = req.user.id;
+    const cadUserName = req.user.name;
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+
     const existingEmpl = await prisma.employee.findUnique({ where: { email } });
     if (existingEmpl) {
       if (existingEmpl.tempEmpl === 1) {
@@ -32,8 +36,7 @@ export const createEmpl = async (req, res) => {
             position,
             modality,
             active: 1,
-            templEmpl: 0,
-            tempEmplObs: obs,
+            tempEmpl: 0,
             tempAlterDate: dateBRNow,
           },
         });
@@ -66,15 +69,13 @@ export const createEmpl = async (req, res) => {
           success: false,
         });
       }
+    } else {
+      const validCpf = await prisma.employee.findUnique({ where: { cpf } });
+      if (validCpf)
+        return res.status(400).json({ message: "CPF já registrado" });
     }
 
-    const validCpf = await prisma.employee.findUnique({ where: { cpf } });
-    if (validCpf) return res.status(400).json({ message: "CPF já registrado" });
-
     // Dados do usuário logado
-    const cadUserID = req.user.id;
-    const cadUserName = req.user.name;
-
     const newEmpl = await prisma.employee.create({
       data: {
         name,
@@ -87,8 +88,6 @@ export const createEmpl = async (req, res) => {
         modality,
       },
     });
-
-    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
 
     // ---------------- LOGS ----------------
     await prisma.userLog.create({
@@ -109,7 +108,11 @@ export const createEmpl = async (req, res) => {
 
     res
       .status(201)
-      .json({ success: true, message: "Funcionário criado", id: newEmpl.id });
+      .json({
+        success: true,
+        message: "Colaborador criado com sucesso.",
+        id: newEmpl.id,
+      });
   } catch (err) {
     if (err.code === "P2002") {
       return res

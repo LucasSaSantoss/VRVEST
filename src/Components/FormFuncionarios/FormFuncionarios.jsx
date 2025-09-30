@@ -20,6 +20,19 @@ export default function ListaFuncionarios() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
 
+  //------------------ popup criação/alteração --------------------
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info", // success / error / info
+  });
+  const mostrarPopup = (mensagem, tipo = "info") => {
+    setPopup({ mostrar: true, mensagem, tipo });
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+  };
+
+  // ---------------------------------------------------------------
+
   // Impressão
   const contentRef = useRef(null);
   const ReactToPrintFn = useReactToPrint({
@@ -144,7 +157,9 @@ export default function ListaFuncionarios() {
                 <td className="py-2 px-4">
                   {employee.active === 1 ? "Sim" : "Não"}
                 </td>
-                <td className={`py-2 px-4 ${employee.tempEmpl === 1? "text-red-600": "text-blue-600"}`}>
+                <td
+                  className={`py-2 px-4 ${employee.tempEmpl === 1 ? "text-red-600" : "text-blue-600"}`}
+                >
                   {employee.tempEmpl === 1 ? "Sim" : "Não"}
                 </td>
                 <td className="py-2 px-4">
@@ -196,7 +211,7 @@ export default function ListaFuncionarios() {
             </div>
             <CreateFunc
               onClose={() => {
-                setshowCreateFunc(false);
+                // setshowCreateFunc(false);
                 listarFuncionarios();
                 setShowPopup("Funcionário criado com sucesso.");
               }}
@@ -212,7 +227,7 @@ export default function ListaFuncionarios() {
             <h2 className="text-2xl font-bold">Alteração de Colaboradores</h2>
             <div className="flex justify-end items-center mb-4 ">
               <button
-                className="text-red-500 font-bold text-xl hover:scale-110 duration-300 ease-in-out"
+                className="text-red-500 font-bold text-xl hover:bg-red-700 hover:scale-110 duration-300 ease-in-out"
                 onClick={() => setMostarAlterFunc(false)}
               >
                 ✖
@@ -226,8 +241,18 @@ export default function ListaFuncionarios() {
                 setMostarAlterFunc(false);
                 setFuncSelecionado(null);
               }}
+              mostrarPopup={mostrarPopup}
             />
           </div>
+        </div>
+      )}
+
+      {popup.mostrar && (
+        <div
+          className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
+      ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+        >
+          {popup.mensagem}
         </div>
       )}
 

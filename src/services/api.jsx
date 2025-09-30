@@ -101,7 +101,7 @@ export async function cadastrarFuncionarioTemporario({
     return {
       success: true,
       data: res.data,
-      message: "Funcionário cadastrado com sucesso!",
+      message: res.message || "Funcionário cadastrado com sucesso!",
     };
   } catch (err) {
     console.log(

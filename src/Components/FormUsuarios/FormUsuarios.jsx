@@ -12,6 +12,8 @@ export default function TabelaUsuarios() {
   const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+
+  //------------------ popup criação/alteração --------------------
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -21,6 +23,8 @@ export default function TabelaUsuarios() {
     setPopup({ mostrar: true, mensagem, tipo });
     setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
   };
+
+  // ---------------------------------------------------------------
 
   useEffect(() => {
     fetch("http://localhost:3000/users")
@@ -189,7 +193,7 @@ export default function TabelaUsuarios() {
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-2xl font-bold">Alterar Usuário</h2>
               <button
-                className="text-red-500 border-2 rounded font-bold text-xl hover:text-red-700 hover:scale-110 bg-red-500 transition duration-200"
+                className="rounded font-bold text-xl hover:text-red-700 hover:scale-110 hover:bg-red-700 transition duration-200"
                 onClick={() => setShowModalAlter(false)} // Fecha manualmente
               >
                 ✖
