@@ -18,7 +18,7 @@ export default function CreateFunc({ onClose }) {
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
-  };
+  }; 
 
   const [popup, setPopup] = useState({
     mostrar: false,

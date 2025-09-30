@@ -158,36 +158,6 @@ export default function Dashboard() {
               </span>
             </li>
 
-            <li
-              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-              onClick={() => setSelected("funcionarioTemp")}
-            >
-              <span className="text-xl ">
-                <FaBusinessTime />
-              </span>
-              <span
-                className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
-              >
-                Cadastro de Colaborador Temporário
-              </span>
-            </li>
-
-            {levelUser >= 2 && (
-              <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("funcionarios")}
-              >
-                <span className="text-xl ">
-                  <FaHospitalUser />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Cadastro de Colaboradores
-                </span>
-              </li>
-            )}
-
             {levelUser >= 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -204,6 +174,37 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
+
+            {levelUser >= 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("funcionarios")}
+              >
+                <span className="text-xl ">
+                  <FaHospitalUser />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Cadastro de Colaboradores
+                </span>
+              </li>
+            )}
+
+            <li
+              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+              onClick={() => setSelected("funcionarioTemp")}
+            >
+              <span className="text-xl ">
+                <FaBusinessTime />
+              </span>
+              <span
+                className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+              >
+                Cadastro de Colaborador Temporário
+              </span>
+            </li>
+
             {levelUser >= 3 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200

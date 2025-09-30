@@ -71,11 +71,6 @@ export default function CreateUser({ onClose, mostrarPopup }) {
   const handleCadastro = async (e) => {
     e.preventDefault();
 
-    if (!validarEmail(email)) {
-      setPopup({ mostrar: true, mensagem: "E-mail inválido.", tipo: "error" });
-      return;
-    }
-
     if (name && email && sector && position && password && level) {
       const data = await cadastrarUsuario({
         name,
@@ -242,9 +237,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               type="button"
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
               onClick={() => {
-                if (temCamposAlterados()) {
-                  setMostarModalSimNao(true);
-                } else {
+                if (!temCamposAlterados()) {
                   setPopup({
                     mostrar: true,
                     mensagem: "Nenhum campo foi preenchido para cadastro",
@@ -254,7 +247,38 @@ export default function CreateUser({ onClose, mostrarPopup }) {
                     () => setPopup((prev) => ({ ...prev, mostrar: false })),
                     3000
                   );
+                  return;
                 }
+
+                // Validações antes de abrir o modal
+                if (!validarEmail(email)) {
+                  setPopup({
+                    mostrar: true,
+                    mensagem: "E-mail inválido.",
+                    tipo: "error",
+                  });
+                  setTimeout(
+                    () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                    3000
+                  );
+                  return;
+                }
+
+                if (password.length < 6) {
+                  setPopup({
+                    mostrar: true,
+                    mensagem: "A senha precisa ter ao menos 6 dígitos.",
+                    tipo: "error",
+                  });
+                  setTimeout(
+                    () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                    3000
+                  );
+                  return;
+                }
+
+                // Só abre o modal se passou nas verificações
+                setMostarModalSimNao(true);
               }}
             >
               Cadastrar
