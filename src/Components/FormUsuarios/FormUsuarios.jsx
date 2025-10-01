@@ -12,7 +12,7 @@ export default function TabelaUsuarios() {
   const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
-  const API_URL= import.meta.env.API_URL || "http://localhost:3000"; 
+  const API_URL= import.meta.env.VITE_API_URL; 
 
   //------------------ popup criação/alteração --------------------
   const [popup, setPopup] = useState({

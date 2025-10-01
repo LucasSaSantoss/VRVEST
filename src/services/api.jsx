@@ -1,8 +1,6 @@
 import axios from "axios";
 
-
-// const API_URL = "http://localhost:3000";
-const API_URL= import.meta.env.VITE_API_URL || "http://localhost:3000"; 
+const API_URL = import.meta.env.VITE_API_URL;
 
 // 🔹 Carregar lista de funcionários
 export default async function carregarFuncionarios() {
@@ -185,6 +183,7 @@ export async function cadastrarUsuario({
 
 // 🔹 Login de usuário com JWT
 export async function loginUsuario({ email, password }) {
+  console.log(API_URL);
   try {
     const res = await axios.post(`${API_URL}/login`, { email, password });
     return { success: true, token: res.data.token, message: res.data.message };
