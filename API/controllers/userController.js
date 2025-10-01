@@ -53,6 +53,7 @@ export const loginUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Erro no login:", err);
+    console.log(err);
     return res
       .status(500)
       .json({ success: false, message: "Erro no servidor" });

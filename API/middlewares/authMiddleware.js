@@ -15,6 +15,7 @@ export const authMiddleware = (req, res, next) => {
       process.env.JWT_SECRET || "segredo_supersecreto"
     );
     req.user = decoded;
+
     next();
   } catch (err) {
     console.error("Erro no authMiddleware:", err);
