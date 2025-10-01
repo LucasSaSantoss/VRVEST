@@ -22,8 +22,9 @@ export default function ListaPendencias() {
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const API_URL= import.meta.env.VITE_API_URL || "http://localhost:3000"; 
 
-  const API_URL = "http://localhost:3000";
+  // const API_URL = "http://localhost:3000";
 
   const cancelarOperacao = () => {
     setMostrarModalSimNao(false);

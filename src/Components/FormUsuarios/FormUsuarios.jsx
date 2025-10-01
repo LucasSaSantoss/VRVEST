@@ -12,6 +12,7 @@ export default function TabelaUsuarios() {
   const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+  const API_URL= import.meta.env.API_URL || "http://localhost:3000"; 
 
   //------------------ popup criação/alteração --------------------
   const [popup, setPopup] = useState({
@@ -27,7 +28,7 @@ export default function TabelaUsuarios() {
   // ---------------------------------------------------------------
 
   useEffect(() => {
-    fetch("http://localhost:3000/users")
+    fetch(`${API_URL}/users`)
       .then((res) => res.json())
       .then((data) => setUsuarios(data))
       .catch((err) => console.error("Erro ao carregar usuários:", err));
@@ -124,7 +125,7 @@ export default function TabelaUsuarios() {
               </div>
               <CreateUser
                 onClose={() => {
-                  fetch("http://localhost:3000/users")
+                  fetch(`${API_URL}/users`)
                     .then((res) => res.json())
                     .then((data) => setUsuarios(data));
                   // setShowModalCreate(false);
@@ -203,7 +204,7 @@ export default function TabelaUsuarios() {
               user={usuarioSelecionado}
               onUpdate={async () => {
                 // Atualiza apenas a lista de usuários sem fechar o modal
-                const res = await fetch("http://localhost:3000/users");
+                const res = await fetch(`${API_URL}/users`);
                 const data = await res.json();
                 setUsuarios(data);
                 setShowModalAlter(false);
