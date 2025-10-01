@@ -2,7 +2,9 @@ import axios from "axios";
 // import { navigate } from "react-router-dom";
 // import jwtDecode from "jwt-decode";
 
-const API_URL = "http://localhost:3000";
+
+// const API_URL = "http://localhost:3000";
+const API_URL= env("API_URL","http://localhost:3000"); 
 
 // 🔹 Carregar lista de funcionários
 export default async function carregarFuncionarios() {

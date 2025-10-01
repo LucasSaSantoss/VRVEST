@@ -17,7 +17,7 @@ import {
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
-import HomeVRVest from "../Components/homeVRVest";
+import HomeVRVest from "../Components/HomeVRVest";
 import Relatorios from "../Components/RelatoriosVRVest";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";

@@ -1,4 +1,4 @@
-import logoRio from "../../assets/LogoRio.png";
+import logoRio from "../../assets/logoRio.png";
 import QrCodeGenerator from "../GeradorQRCode/GeradorQrCodes";
 
 export default function ImpressaoCracha({ cpf, nome }) {
