@@ -31,7 +31,7 @@ export default function Dashboard() {
   const [hovered, setHovered] = useState(false);
   const [selected, setSelected] = useState("qrcode");
   const [locked, setLocked] = useState(false);
-  const [levelUser, setLevelUser] = useState(0);
+  const [levelUser, setLevelUser] = useState(3);
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
 
@@ -55,39 +55,40 @@ export default function Dashboard() {
     setTimeout(() => setShowPopup(false), 3000);
   };
 
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
-    //   const decodedToken = jwtDecode(token);
-    //   setLevelUser(decodedToken.level);
-    // }, [navigate]);
-    try {
-      const decodedToken = jwtDecode(token);
-      const agora = Date.now() / 1000; // em segundos
+  
+  // useEffect(() => {
+  //   const token = localStorage.getItem("token");
+  //   if (!token) {
+  //     navigate("/");
+  //     return;
+  //   }
+  //   //   const decodedToken = jwtDecode(token);
+  //   //   setLevelUser(decodedToken.level);
+  //   // }, [navigate]);
+  //   try {
+  //     const decodedToken = jwtDecode(token);
+  //     const agora = Date.now() / 1000; // em segundos
 
-      if (decodedToken.exp < agora) {
-        // Token expirado
-        localStorage.removeItem("token");
-        showTemporaryPopup("Sua sessão expirou, faça login novamente.");
-        setTimeout(() => {
-          navigate("/");
-        }, 3000);
-      }
-      setLevelUser(decodedToken.level);
-    } catch (err) {
-      console.error("Erro ao verificar token:", err);
-      localStorage.removeItem("token");
-      showTemporaryPopup("Token inválido, faça login novamente.");
-      navigate("/");
-    }
-  }, [selected, navigate]);
+  //     if (decodedToken.exp < agora) {
+  //       // Token expirado
+  //       localStorage.removeItem("token");
+  //       showTemporaryPopup("Sua sessão expirou, faça login novamente.");
+  //       setTimeout(() => {
+  //         navigate("/");
+  //       }, 3000);
+  //     }
+  //     setLevelUser(decodedToken.level);
+  //   } catch (err) {
+  //     console.error("Erro ao verificar token:", err);
+  //     localStorage.removeItem("token");
+  //     showTemporaryPopup("Token inválido, faça login novamente.");
+  //     navigate("/");
+  //   }
+  // }, [selected, navigate]);
   const handleLogoff = () => {
     localStorage.removeItem("token");
-    navigate("/");
-  };
+    navigate("/");}
+  // };
 
   const pages = {
     home: <HomeVRVest />,

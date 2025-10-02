@@ -21,23 +21,20 @@ export default function LoginVR() {
       setError(res.message || "Usuário ou senha incorretos.");
       setPopupTemporario(true);
 
-      // fecha popup depois de 3 segundos
       setTimeout(() => {
         setPopupTemporario(false);
       }, 3000);
     }
   };
+
   return (
     <div className="h-screen w-screen font-sans overflow-hidden flex">
-      <div className="w-[65%] bg-white flex flex-col justify-between p-6">
+      {/* LADO ESQUERDO */}
+      <div className="w-2/3 bg-white flex flex-col justify-between p-8">
         <div className="flex justify-between items-start">
-          <div className="h-32 w-90 flex-1 flex-col items-start mt-10">
-            <div className="flex items-center">
-              <span className="text-6xl px-1 py-0.5 font-bold whitespace-nowrap">
-                e - Vestuário
-              </span>
-            </div>
-            <div className="mt-6 ">
+          <div className="flex flex-col mt-10">
+            <span className="text-6xl font-bold">e - Vestuário</span>
+            <div className="mt-6">
               <h1 className="text-2xl font-bold text-gray-800">
                 Sistema de Gerenciamento de Vestuário
               </h1>
@@ -46,32 +43,36 @@ export default function LoginVR() {
               </p>
             </div>
           </div>
-          <div className="h-50 w-50 flex items-center justify-center">
+          <div className="flex items-center justify-center">
             <img
-              className="imgViva w-[100%] mt-10"
+              className="w-50 mt-10"
               src="https://vrdocs.hmas.com.br/images/Logo_Viva-Rio.png"
               alt="Logo Viva-Rio"
             />
           </div>
         </div>
-        <div className="ml-[10vw] mb-5 w-[20vw] scale-120">
+
+        <div className="flex justify-center mb-5">
           <img
+            className="w-150"
             src="https://vrdocs.hmas.com.br/images/index_giphy.webp"
             alt=""
           />
         </div>
       </div>
 
-      <div className="w-[35%] bg-[#2faed4] flex flex-col items-center text-white p-8">
-        <div className="w-[70%] mt-10 flex items-center justify-center">
+      {/* LADO DIREITO */}
+      <div className="w-1/3 bg-[#2faed4] flex flex-col items-center justify-start text-white p-8 relative">
+        <div className="w-[70%] flex items-center justify-center mt-15 mb-30">
           <img
-            className="w-[30vw] mr-12"
+            className="w-100"
             src="https://vrdocs.hmas.com.br/images/AlbertSchweitzer_Branco.png"
             alt="VR Vest Image"
           />
         </div>
+
         <form
-          className="w-full max-w-md mt-16 flex flex-col gap-4"
+          className="w-full max-w-sm flex flex-col gap-4"
           onSubmit={handleLogin}
         >
           <div className="flex flex-col gap-2">
@@ -89,14 +90,9 @@ export default function LoginVR() {
           </div>
 
           <div className="flex flex-col gap-2">
-            <div className="flex justify-between items-center">
-              <label htmlFor="password" className="text-sm">
-                Senha
-              </label>
-              {/* <a href="#" className="text-sm text-blue-100 hover:underline">
-                Esqueceu a senha?
-              </a> */}
-            </div>
+            <label htmlFor="password" className="text-sm">
+              Senha
+            </label>
             <input
               id="password"
               type="password"
@@ -109,19 +105,19 @@ export default function LoginVR() {
 
           <button
             type="submit"
-            className="w-[20%] py-2 bg-blue-600 rounded-md text-white font-semibold hover:bg-blue-800 transition-colors mt-8"
+            className="py-2 bg-blue-600 rounded-md text-white font-semibold hover:bg-blue-800 transition-colors mt-6"
           >
             Entrar
           </button>
-
-          {/* {error && <p className="text-red-500 mt-2">{error}</p>} */}
         </form>
-        {/* Popup de erro */}
+
+        {/* POPUP DE ERRO */}
         {popupTemporario && (
           <div className="absolute bottom-6 right-6 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
             {error}
           </div>
         )}
+
         <style jsx>{`
           @keyframes fadeInOut {
             0% {

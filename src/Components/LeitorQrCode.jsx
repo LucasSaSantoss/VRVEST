@@ -159,6 +159,27 @@ function LeitorQrCode() {
                   </div>
                 </div>
               </div>
+              
+              {/* Botão Devolução
+              {tipoOperacao === "devolucao" && (
+                <button
+                  onClick={() => {
+                    if (pendenciaSelecionada) {
+                      setMensagem(
+                        "Deseja realmente devolver a pendência selecionada?"
+                      );
+                      setMostrarModalSimNao(true);
+                      setShowPendPopup(false); // fecha o popup antes do modal
+                    } else {
+                      setPendPopupMessage("Nenhuma pendência selecionada.");
+                      setShowPendPopup(true); // mantém o popup aberto com mensagem
+                    }
+                  }}
+                  className="mt-4 bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition"
+                >
+                  Devolução
+                </button>
+              )} */}
             </div>
           </div>
         );
