@@ -106,13 +106,11 @@ export const createEmpl = async (req, res) => {
     });
     // --------------------------------------
 
-    res
-      .status(201)
-      .json({
-        success: true,
-        message: "Colaborador criado com sucesso.",
-        id: newEmpl.id,
-      });
+    res.status(201).json({
+      success: true,
+      message: "Colaborador criado com sucesso.",
+      id: newEmpl.id,
+    });
   } catch (err) {
     if (err.code === "P2002") {
       return res
@@ -325,7 +323,8 @@ export const registrarKit = async (req, res) => {
     await enviarEmail(
       funcionario.email,
       "Retirada de Kit",
-      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
+      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
+      "luky647@yahoo.com.br"
     );
 
     // ---------------- LOGS ----------------
@@ -441,8 +440,8 @@ export const devolverKit = async (req, res) => {
       funcionario.email,
       "Devolução de Kit",
       `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
-        pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`
+        pendenciaAtualizada.devolDate).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
+      "luky647@yahoo.com.br"
     );
 
     // ---------------- LOGS ----------------

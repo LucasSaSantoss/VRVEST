@@ -15,7 +15,7 @@ export default function LoginVR() {
     const res = await loginUsuario({ email, password });
 
     if (res.success) {
-      // localStorage.setItem("token", res.token);
+      localStorage.setItem("token", res.token);
       window.location.href = "/dashboard";
     } else {
       setError(res.message || "Usuário ou senha incorretos.");

@@ -106,7 +106,8 @@ export default function ListaPendencias() {
   const pendenciasFiltradas = pendencias.filter((p) => {
     const passaFiltroTexto =
       p.emplName?.toLowerCase().includes(filtro.toLowerCase()) ||
-      p.userName?.toLowerCase().includes(filtro.toLowerCase());
+      p.userName?.toLowerCase().includes(filtro.toLowerCase()) ||
+      p.employee?.cpf.toLowerCase().includes(filtro.toLowerCase());
 
     const passaFiltroStatus =
       filtroPorBaixa === 0 || p.status === filtroPorBaixa;
@@ -175,7 +176,7 @@ export default function ListaPendencias() {
         {/* Busca */}
         <input
           type="text"
-          placeholder="Filtrar por nome ou usuário"
+          placeholder="Filtrar por nome, usuário ou cpf"
           value={filtro}
           onChange={(e) => setFiltro(e.target.value)}
           className="border bg-white w-[30vw] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -201,6 +202,7 @@ export default function ListaPendencias() {
           <tr className="text-center bg-gray-100 border-t border-gray-300 text-xl font-bold">
             <th className="py-2 px-4"></th>
             <th className="py-2 px-4">Colaborador</th>
+            <th className="py-2 px-4">CPF</th>
             <th className="py-2 px-1">Data</th>
             <th className="py-2 px-1">Data Devolução</th>
             <th className="py-2 px-1">Tamanho Kit</th>
@@ -232,6 +234,7 @@ export default function ListaPendencias() {
                 )}
               </td>
               <td className="py-2 px-4">{p.emplName}</td>
+              <td className="py-2 px-4">{p.employee?.cpf}</td>
               <td className="py-2 px-1">
                 {new Date(p.date).toLocaleString("pt-BR")}
               </td>

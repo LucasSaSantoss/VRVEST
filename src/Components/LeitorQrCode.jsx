@@ -84,7 +84,7 @@ function LeitorQrCode() {
 
     try {
       const pendData = await getOpenPendencies({ cpf });
-      const valorKit = 50;
+      const valorKit = 114.9;
 
       if (pendData.success && pendData.total > 0) {
         const limite = new Date();
@@ -130,15 +130,21 @@ function LeitorQrCode() {
                         {tipoOperacao === "devolucao" && (
                           <td className="border border-gray-300 px-2 py-1 text-center">
                             {podeSelecionar ? (
-                              <input
-                                type="radio"
-                                name="pendencia"
-                                value={p.id}
-                                id={p.id}
-                                onChange={(e) => {
-                                  setPendenciaSelecionada(p.id);
-                                }}
-                              />
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setPendenciaSelecionada(p.id);
+                                    setMensagem(
+                                      "Deseja realmente devolver a pendência selecionada?"
+                                    );
+                                    setMostrarModalSimNao(true);
+                                    setShowPendPopup(false);
+                                  }}
+                                  className="bg-red-600 hover:bg-red-700 px-3 py-1 rounded-lg text-white font-bold"
+                                >
+                                  Devolver
+                                </button>
+                              </>
                             ) : (
                               <span className="text-gray-400 text-sm">
                                 Não selecionável
@@ -155,31 +161,10 @@ function LeitorQrCode() {
                 <div className="flex bg-gray-100 font-bold border border-gray-300">
                   <div className="px-2 py-1 text-right flex-1">Total</div>
                   <div className="px-2 py-1 flex-1">
-                    R$ {pendData.list.length * valorKit}
+                    R$ {Number((pendData.list.length * valorKit).toFixed(2))}
                   </div>
                 </div>
               </div>
-              
-              {/* Botão Devolução
-              {tipoOperacao === "devolucao" && (
-                <button
-                  onClick={() => {
-                    if (pendenciaSelecionada) {
-                      setMensagem(
-                        "Deseja realmente devolver a pendência selecionada?"
-                      );
-                      setMostrarModalSimNao(true);
-                      setShowPendPopup(false); // fecha o popup antes do modal
-                    } else {
-                      setPendPopupMessage("Nenhuma pendência selecionada.");
-                      setShowPendPopup(true); // mantém o popup aberto com mensagem
-                    }
-                  }}
-                  className="mt-4 bg-red-600 hover:bg-red-700 px-6 py-3 rounded-lg font-bold text-white shadow-lg transition"
-                >
-                  Devolução
-                </button>
-              )} */}
             </div>
           </div>
         );
@@ -270,6 +255,21 @@ function LeitorQrCode() {
           case "4":
             setKitSelecionado("GG");
             setMensagem("Tamanho GG selecionado. Deseja prosseguir?");
+            setMostrarModalSimNao(true);
+            break;
+          case "5":
+            setKitSelecionado("XXG");
+            setMensagem("Tamanho XXG selecionado. Deseja prosseguir?");
+            setMostrarModalSimNao(true);
+            break;
+          case "6":
+            setKitSelecionado("EXG");
+            setMensagem("Tamanho EXG selecionado. Deseja prosseguir?");
+            setMostrarModalSimNao(true);
+            break;
+          case "7":
+            setKitSelecionado("G1");
+            setMensagem("Tamanho G1 selecionado. Deseja prosseguir?");
             setMostrarModalSimNao(true);
             break;
           default:
@@ -468,6 +468,9 @@ function LeitorQrCode() {
                 { kit: "M", numero: 2 },
                 { kit: "G", numero: 3 },
                 { kit: "GG", numero: 4 },
+                { kit: "XXG", numero: 5 },
+                { kit: "EXG", numero: 6 },
+                { kit: "G1", numero: 7 },
               ].map(({ kit, numero }) => (
                 <div key={kit} className="flex flex-col items-center">
                   <button

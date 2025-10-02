@@ -6,8 +6,6 @@ import pendencyRoutes from "./routes/pendencyRoutes.js";
 import { authMiddleware } from "./middlewares/authMiddleware.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import { validaFuncTemp } from "./FuncoesAutomaticas/cronJobs.js";
-import dotenv from "dotenv";
-dotenv.config({path: "../.env"});  
 
 const app = express();
 app.use(cors());

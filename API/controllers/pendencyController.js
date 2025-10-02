@@ -7,7 +7,12 @@ const prisma = new PrismaClient();
 export const getRegistros = async (req, res) => {
   try {
     const registros = await prisma.pendency.findMany({
-      orderBy: { date: "desc" }, // opcional, ordena pela data mais recente
+      orderBy: { date: "desc" }, // Ordena pela data mais recente
+      include: {
+        employee: {
+          select: { cpf: true, name: true }, // traz só o CPF e nome, se quiser
+        },
+      },
     });
 
     return res.json({
