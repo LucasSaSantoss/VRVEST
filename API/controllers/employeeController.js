@@ -137,7 +137,7 @@ export const createTempEmpl = async (req, res) => {
     if (!avatarFile) {
       return res
         .status(400)
-        .json({ message: "Favor capturar a foto do colocaborador." });
+        .json({ message: "Favor capturar a foto do colaborador." });
     }
 
     // Dados do usuário logado
@@ -267,18 +267,45 @@ export const getCpf = async (req, res) => {
     if (!empl) {
       return res
         .status(404)
-        .json({ success: false, message: "Funcionário não encontrado." });
+        .json({ success: false, message: "Colaborador não encontrado." });
     }
 
     if (empl.active !== 1) {
       return res
         .status(400)
-        .json({ success: false, message: "Funcionário inativo." });
+        .json({ success: false, message: "Colaborador inativo." });
     }
 
     return res.status(200).json({ success: true, data: empl });
   } catch (err) {
-    console.error("Erro ao buscar funcionário:", err);
+    console.error("Erro ao buscar Colaborador:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro interno no servidor." });
+  }
+};
+
+export const carregaCpfCampos = async (req, res) => {
+  try {
+    const { cpf } = req.params; // vem da URL
+
+    const empl = await prisma.employee.findUnique({
+      where: { cpf },
+    });
+
+    if (!empl) {
+      return;
+    }
+    if (empl.tempEmpl !== 1) {
+      return res.status(404).json({
+        success: false,
+        message: "Colaborador já cadastrado no sistema.",
+      });
+    }
+
+    return res.status(200).json({ success: true, data: empl });
+  } catch (err) {
+    console.error("Erro ao buscar Colaborador:", err);
     return res
       .status(500)
       .json({ success: false, message: "Erro interno no servidor." });
@@ -440,7 +467,8 @@ export const devolverKit = async (req, res) => {
       funcionario.email,
       "Devolução de Kit",
       `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
-        pendenciaAtualizada.devolDate).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
+        pendenciaAtualizada.devolDate
+      ).toLocaleString("pt-BR")} pelo usuário ${usuarioName}.`,
       "luky647@yahoo.com.br"
     );
 

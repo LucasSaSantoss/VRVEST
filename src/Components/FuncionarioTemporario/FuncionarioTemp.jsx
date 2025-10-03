@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { cadastrarFuncionarioTemporario } from "../../services/api";
-import { useNavigate } from "react-router-dom";
+import { data, useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 import SelfieWebcam from "../WebCam/SelfieWebCam";
 
@@ -23,6 +23,63 @@ export default function CreateFuncTemp() {
   });
   const [showWebcamModal, setShowWebcamModal] = useState(false);
   const [avatarImage, setAvatarImage] = useState(null);
+  const [dados, setDados] = useState("");
+  const cpfInputRef = useRef(null);
+  const API_URL = import.meta.env.VITE_API_URL;
+  const token = localStorage.getItem("token");
+
+  const carregaCpf = async () => {
+    if (!cpf) {
+      return;
+    }
+
+    try {
+      const res = await fetch(`${API_URL}/empl/carregacampos/${cpf}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      const result = await res.json();
+
+      if (result.success && result.data) {
+        const d = result.data; // dados do funcionário
+
+        setName(d.name || "");
+        setEmail(d.email || "");
+        setSector(d.sector || "");
+        setPosition(d.position || "");
+        setModality(d.modality || "");
+        setDados(d);
+      } else {
+        setPopup({
+          mostrar: true,
+          mensagem: result.message,
+          tipo: "error",
+        });
+        setCpf("");
+        cpfInputRef.current?.focus();
+        setTimeout(
+          () => setPopup((prev) => ({ ...prev, mostrar: false })),
+          3000
+        );
+      }
+    } catch (err) {
+      console.error("Erro ao carregar dados:", err);
+    }
+  };
+
+  function passarCampos(e) {
+    if (e.key === "Enter") {
+      e.preventDefault(); // impede o submit do form
+
+      const form = e.target.form; // pega o form do input atual
+      const index = Array.prototype.indexOf.call(form, e.target);
+      const next = form.elements[index + 1]; // próximo campo
+
+      if (next) {
+        next.focus(); // move o foco
+      }
+    }
+  }
 
   const handleOpenWebcam = () => setShowWebcamModal(true);
   const handleCloseWebcam = () => setShowWebcamModal(false);
@@ -63,11 +120,11 @@ export default function CreateFuncTemp() {
 
   const temCamposAlterados = () => {
     return (
-      name.trim() ||
-      email.trim() ||
-      cpf.trim() ||
-      position.trim() ||
-      sector.trim() ||
+      name.trim() &&
+      email.trim() &&
+      cpf.trim() &&
+      position.trim() &&
+      sector.trim() &&
       modality.trim()
     ); /*|| avatarImage;*/
   };
@@ -179,11 +236,29 @@ export default function CreateFuncTemp() {
 
           {/* Campos do formulário */}
           <div className="flex flex-wrap w-full gap-2">
+            {/* CPF */}
+            <div className="flex-1 min-w-[200px] w-full">
+              <label className="block text-sm font-semibold mb-1">CPF:</label>
+              <input
+                type="text"
+                onKeyDown={passarCampos}
+                ref={cpfInputRef}
+                value={cpf}
+                onChange={(e) => setCpf(e.target.value.replace(/\D/g, ""))}
+                maxLength={11}
+                placeholder="Digite o CPF"
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+                onBlur={carregaCpf}
+              />
+            </div>
+
             {/* Nome */}
             <div className="flex-1 min-w-[425px]">
               <label className="block text-sm font-semibold mb-1">Nome:</label>
               <input
                 type="text"
+                onKeyDown={passarCampos}
                 value={name}
                 onChange={(e) => limparTexto(e, setName)}
                 maxLength={80}
@@ -200,6 +275,7 @@ export default function CreateFuncTemp() {
               </label>
               <input
                 type="email"
+                onKeyDown={passarCampos}
                 value={email}
                 onChange={(e) => limparEmail(e, setEmail)}
                 maxLength={80}
@@ -210,25 +286,12 @@ export default function CreateFuncTemp() {
             </div>
           </div>
 
-          {/* CPF */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label className="block text-sm font-semibold mb-1">CPF:</label>
-            <input
-              type="text"
-              value={cpf}
-              onChange={(e) => setCpf(e.target.value.replace(/\D/g, ""))}
-              maxLength={11}
-              placeholder="Digite o CPF"
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
-            />
-          </div>
-
           {/* Cargo */}
           <div className="flex-1 min-w-[200px] w-full">
             <label className="block text-sm font-semibold mb-1">Cargo:</label>
             <input
               type="text"
+              onKeyDown={passarCampos}
               value={position}
               onChange={(e) => limparTexto(e, setPosition)}
               maxLength={50}
@@ -242,6 +305,7 @@ export default function CreateFuncTemp() {
             <label className="block text-sm font-semibold mb-1">Setor:</label>
             <select
               value={sector}
+              onKeyDown={passarCampos}
               onChange={(e) => setSector(e.target.value)}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
@@ -276,6 +340,7 @@ export default function CreateFuncTemp() {
             </label>
             <select
               value={modality}
+              onKeyDown={passarCampos}
               onChange={(e) => setModality(e.target.value)}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
@@ -294,6 +359,7 @@ export default function CreateFuncTemp() {
             </label>
             <input
               type="text"
+              onKeyDown={passarCampos}
               value={obs}
               onChange={(e) => setObs(e.target.value)}
               maxLength={200}
@@ -309,7 +375,17 @@ export default function CreateFuncTemp() {
               onClick={() =>
                 temCamposAlterados()
                   ? setMostarModalSimNao(true)
-                  : alert("Preencha algum campo")
+                  : setPopup(
+                      {
+                        mostrar: true,
+                        mensagem: "Preencha todos os campos para prosseguir.",
+                        tipo: "error",
+                      },
+                      setTimeout(
+                        () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                        3000
+                      )
+                    )
               }
               className="px-6 py-2 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition"
             >

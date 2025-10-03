@@ -7,6 +7,7 @@ import { authMiddleware } from "./middlewares/authMiddleware.js";
 import emailRoutes from "./routes/emailRoutes.js";
 import { validaFuncTemp } from "./FuncoesAutomaticas/cronJobs.js";
 
+
 const app = express();
 app.use(cors());
 app.use(express.json());

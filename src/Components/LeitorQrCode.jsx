@@ -49,7 +49,7 @@ function LeitorQrCode() {
         message: "Digite um CPF válido com exatamente 11 números.",
       };
     }
-
+    
     try {
       const resposta = await verificarCpf(cpf);
       if (!resposta.success || !resposta.data) {
@@ -416,7 +416,7 @@ function LeitorQrCode() {
         ${
           tipoOperacao === "retirada"
             ? "bg-blue-600 text-white shadow-lg hover:bg-blue-700"
-            : "bg-blue-300 text-white shadow-md hover:bg-blue-400"
+            : "bg-blue-100 text-white shadow-md hover:bg-blue-400"
         }`}
         >
           Retirada
@@ -428,7 +428,7 @@ function LeitorQrCode() {
         ${
           tipoOperacao === "devolucao"
             ? "bg-red-600 text-white shadow-lg hover:bg-red-700"
-            : "bg-red-300 text-white shadow-md hover:bg-red-400"
+            : "bg-red-100 text-white shadow-md hover:bg-red-400"
         }`}
         >
           Devolução

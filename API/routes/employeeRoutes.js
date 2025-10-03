@@ -8,6 +8,7 @@ import {
   getCpf,
   devolverKit,
   createTempEmpl,
+  carregaCpfCampos,
 } from "../controllers/employeeController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import multer from "multer";
@@ -23,6 +24,7 @@ router.post("/registrarKit", registrarKit); // Registra Pendência através do c
 router.post("/pendencias", getOpenPendencies);
 router.post("/devolver", devolverKit); //Devolução de kits
 router.get("/verificar-cpf/:cpf", getCpf);
+router.get("/carregacampos/:cpf", carregaCpfCampos);
 router.put("/:id", updateEmpl); // Alterar Funcionários
 
 export default router;
