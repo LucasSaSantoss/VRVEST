@@ -12,7 +12,7 @@ export const authMiddleware = (req, res, next) => {
   try {
     const decoded = jwt.verify(
       token,
-      process.env.JWT_SECRET || "segredo_supersecreto"
+      process.env.JWT_SECRET /*|| "segredo_supersecreto"*/
     );
     req.user = decoded;
 

@@ -42,9 +42,11 @@ export const loginUser = async (req, res) => {
         position: user.position,
         level: user.level,
       },
-      process.env.JWT_SECRET || "segredo_supersecreto",
+      process.env.JWT_SECRET, /*|| "segredo_supersecreto",*/
       { expiresIn: "4h" } // expira em 4 horas
     );
+
+    console.log(token);
 
     return res.status(200).json({
       success: true,

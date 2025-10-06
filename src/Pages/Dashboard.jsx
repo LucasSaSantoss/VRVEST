@@ -61,11 +61,11 @@ export default function Dashboard() {
       navigate("/");
       return;
     }
-    
+
     try {
       const decodedToken = jwtDecode(token);
       const agora = Date.now() / 1000; // em segundos
-
+      
       if (decodedToken.exp < agora) {
         // Token expirado
         localStorage.removeItem("token");
