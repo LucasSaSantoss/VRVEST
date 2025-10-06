@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 
 import dotenv from "dotenv";
-dotenv.config({ path: "../.env" });
+dotenv.config();
 
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
@@ -10,10 +10,11 @@ const transporter = nodemailer.createTransport({
   host: "sandbox.smtp.mailtrap.io",
   port: 587,
   auth: {
-    user: process.env.VITE_EMAIL_USER,
-    pass: process.env.VITE_EMAIL_PASS,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
   },
 });
+
 
 /**
  * Envia email para funcionário
@@ -30,7 +31,7 @@ export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
       Array.isArray(emails) ? emails.join(", ") : emails;
 
     await transporter.sendMail({
-      from: `"Equipe e-Vestuário" <${process.env.VITE_EMAIL_USER}>`,
+      from: `"Equipe e-Vestuário" <${process.env.EMAIL_USER}>`,
       to,
       subject,
       text,

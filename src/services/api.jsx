@@ -2,6 +2,8 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+// ------------------------------ Funções de API ----------------------------
+
 // 🔹 Carregar lista de funcionários
 export default async function carregarFuncionarios() {
   const token = localStorage.getItem("token");
@@ -183,11 +185,12 @@ export async function cadastrarUsuario({
 
 // 🔹 Login de usuário com JWT
 export async function loginUsuario({ email, password }) {
-  console.log(API_URL);
+  console.log(import.meta.env); // deve listar todas as variáveis com prefixo VITE_
+  console.log(import.meta.env.VITE_API_URL); // deve mostrar http://localhost:3000/api
   try {
     const res = await axios.post(`${API_URL}/login`, { email, password });
     return { success: true, token: res.data.token, message: res.data.message };
-  } catch (err) {
+  } catch (err) {s
     return {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
