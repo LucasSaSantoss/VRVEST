@@ -185,12 +185,14 @@ export async function cadastrarUsuario({
 
 // 🔹 Login de usuário com JWT
 export async function loginUsuario({ email, password }) {
-  console.log(import.meta.env); // deve listar todas as variáveis com prefixo VITE_
-  console.log(import.meta.env.VITE_API_URL); // deve mostrar http://localhost:3000/api
   try {
-    const res = await axios.post(`${API_URL}/login`, { email, password });
+    const res = await axios.post(
+      `${API_URL}/login`,
+      { email, password },
+      { headers: { "Content-Type": "application/json" } }
+    );
     return { success: true, token: res.data.token, message: res.data.message };
-  } catch (err) {s
+  } catch (err) {
     return {
       success: false,
       message: err.response?.data?.message || "Erro no servidor",
