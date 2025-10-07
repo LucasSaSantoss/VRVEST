@@ -191,6 +191,13 @@ export async function loginUsuario({ email, password }) {
       { email, password },
       { headers: { "Content-Type": "application/json" } }
     );
+
+    console.log("=== LOGIN DEBUG FRONT ===");
+    console.log("URL chamada:", `${API_URL}/login`);
+    console.log("Status:", res.status);
+    console.log("Headers:", res.headers["content-type"]);
+    console.log("Resposta completa:", res.data);
+
     return { success: true, token: res.data.token, message: res.data.message };
   } catch (err) {
     return {

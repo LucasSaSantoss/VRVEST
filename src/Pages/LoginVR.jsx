@@ -14,6 +14,10 @@ export default function LoginVR() {
 
     const res = await loginUsuario({ email, password });
 
+    console.log("=== LOGIN DEBUG FINAL ===");
+    console.log("Token recebido no front:", res.token);
+    console.log("Tamanho:", res.token?.length || "indefinido");
+
     if (res.success) {
       localStorage.setItem("token", res.token);
       window.location.href = "/dashboard";
