@@ -18,5 +18,4 @@ app.use("/api/empl", authMiddleware, employeeRoutes);
 app.use("/api/pend", pendencyRoutes);
 app.use("/api/email", emailRoutes);
 
-
 app.listen(3000, () => console.log("Server rodando na porta 3000"));
