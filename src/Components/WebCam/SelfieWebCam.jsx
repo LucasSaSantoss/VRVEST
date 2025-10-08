@@ -7,7 +7,6 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
   const cameraRef = useRef(null);
   const canvasRef = useRef(null);
 
-  // Efeito para gerenciar o stream da câmera
   useEffect(() => {
     if (show) {
       setIsCameraOpen(true);
@@ -18,19 +17,14 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
       setIsPhotoTaken(false);
     }
 
-    return () => {
-      stopCameraStream();
-    };
+    return () => stopCameraStream();
   }, [show]);
 
-  // Lógica para iniciar o stream da câmera
   const createCameraElement = async () => {
     setIsLoading(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (cameraRef.current) {
-        cameraRef.current.srcObject = stream;
-      }
+      if (cameraRef.current) cameraRef.current.srcObject = stream;
     } catch (error) {
       console.error("Erro ao acessar a câmera:", error);
       alert("O navegador não suporta a câmera ou houve um erro ao acessá-la.");
@@ -39,90 +33,89 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
     }
   };
 
-  // Lógica para parar o stream da câmera
   const stopCameraStream = () => {
     if (cameraRef.current && cameraRef.current.srcObject) {
       cameraRef.current.srcObject.getTracks().forEach((track) => track.stop());
     }
   };
 
-  // Lógica para tirar a foto
   const takePhoto = () => {
-    if (!isPhotoTaken) {
-      const canvas = canvasRef.current;
-      const context = canvas.getContext("2d");
-      const video = cameraRef.current;
+    const canvas = canvasRef.current;
+    const context = canvas.getContext("2d");
+    const video = cameraRef.current;
 
-      // Redimensiona o canvas para 384x384
+    if (!isPhotoTaken) {
       canvas.width = 550;
       canvas.height = 420;
-
-      // Desenha a imagem da webcam no canvas
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
     }
+
     setIsPhotoTaken(!isPhotoTaken);
   };
 
-  // Lógica para usar a foto tirada
   const usePhoto = () => {
     const canvas = canvasRef.current;
     canvas.toBlob((blob) => {
       if (!blob) return;
-      const file = new File([blob], `avatar_${Date.now()}.png`, {
-        type: "image/png",
-      });
-      onUsePhoto(file); // envia File para o frontend
+      const file = new File([blob], `avatar_${Date.now()}.png`, { type: "image/png" });
+      onUsePhoto(file);
     }, "image/png");
   };
 
-  if (!show) {
-    return null;
-  }
+  if (!show) return null;
 
   return (
-    <div className="modal">
-      <div className="modal-content">
-        <div className="modal-header text-2xl">
-          <h2>Captura de Imagem WebCam</h2>
-          {/* <button onClick={onClose}>Fechar</button> */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+      <div className="bg-white rounded-xl shadow-xl w-[600px] max-w-full overflow-hidden">
+        {/* Header */}
+        <div className="flex justify-between items-center p-4 border-b border-gray-200">
+          <h2 className="text-xl font-semibold text-gray-800">Captura de Imagem</h2>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700 transition"
+          >
+            ✕
+          </button>
         </div>
-        <div className="modal-body">
+
+        {/* Body */}
+        <div className="p-4 flex flex-col items-center">
           {isLoading && (
-            <div className="camera-loading">
-              <div className="loader"></div>
-              <p>Carregando câmera...</p>
+            <div className="flex flex-col items-center justify-center mb-4">
+              <div className="w-12 h-12 border-4 border-cyan-600 border-t-transparent rounded-full animate-spin mb-2"></div>
+              <p className="text-gray-600">Carregando câmera...</p>
             </div>
           )}
-          <div className="camera-container">
+          <div className="bg-gray-100 rounded-lg shadow-md overflow-hidden">
             <video
               ref={cameraRef}
-              style={{ display: isPhotoTaken ? "none" : "block" }}
               autoPlay
+              className={`w-[550px] h-[420px] object-cover ${isPhotoTaken ? "hidden" : "block"}`}
             />
             <canvas
               ref={canvasRef}
-              style={{ display: isPhotoTaken ? "block" : "none" }}
+              className={`w-[550px] h-[420px] object-cover ${isPhotoTaken ? "block" : "hidden"}`}
             />
           </div>
         </div>
-        <div className="modal-footer">
+
+        {/* Footer */}
+        <div className="flex justify-end gap-4 p-4 border-t border-gray-200">
           {isPhotoTaken && (
             <button
-              className="px-4 py-2 rounded-md font-semibold text-white shadow-md transition bg-cyan-700 hover:bg-cyan-800 ml-[8vw] mr-[2vw]"
               onClick={usePhoto}
+              className="px-4 py-2 bg-cyan-700 hover:bg-cyan-800 text-white font-semibold rounded-md shadow-md transition"
             >
               Usar Foto
             </button>
           )}
           <button
             onClick={takePhoto}
-            className={`px-4 py-2 rounded-md font-semibold text-white shadow-md transition ${
-              isPhotoTaken
-                ? "bg-red-600 hover:bg-red-700 "
-                : "bg-cyan-600 hover:bg-cyan-700 ml-[12vw]"
+            className={`px-4 py-2 font-semibold rounded-md shadow-md transition ${
+              isPhotoTaken ? "bg-red-600 hover:bg-red-700 text-white" : "bg-cyan-600 hover:bg-cyan-700 text-white"
             }`}
           >
-            {isPhotoTaken ? "Descartar" : "Capturar!"}
+            {isPhotoTaken ? "Descartar" : "Capturar"}
           </button>
         </div>
       </div>

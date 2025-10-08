@@ -8,7 +8,7 @@ function QrCodeGenerator({cpf}) {
     <div className="flex justify-center items-center">
       <h1></h1>
       {value && ( // Only render QR code if there's a value
-        <div style={{ background: "white", padding: "16px" }}>
+        <div style={{ background: "white", padding: "5px" }}>
           <QRCode
             value={cpf}
             size={80} // Size of the QR code

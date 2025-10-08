@@ -21,6 +21,7 @@ function LeitorQrCode() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
+  const [simNaoComNumero,setSimNaoComNumero] = useState(true); 
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -515,6 +516,7 @@ function LeitorQrCode() {
         btnNaoRef={btnNaoRef}
         isProcessing={isProcessing}
         mensagem={mensagem}
+        simNaoComNumero={simNaoComNumero}
       />
 
       <style jsx>{`

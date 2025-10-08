@@ -51,7 +51,7 @@ export async function cadastrarFuncionario({
     return {
       success: true,
       data: res.data,
-      message: "Funcionário cadastrado com sucesso!",
+      message: res.data.message || "Funcionário cadastrado com sucesso!",
     };
   } catch (err) {
     console.log(
@@ -98,10 +98,12 @@ export async function cadastrarFuncionarioTemporario({
       },
     });
 
+    console.log(res.data.message);
+   
     return {
       success: true,
       data: res.data,
-      message: res.message || "Funcionário cadastrado com sucesso!",
+      message: res.data.message || "Funcionário cadastrado com sucesso!",
     };
   } catch (err) {
     console.log(

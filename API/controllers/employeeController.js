@@ -60,7 +60,7 @@ export const createEmpl = async (req, res) => {
 
         return res.status(201).json({
           message:
-            "Email já registrado anteriormente. Usuário Temporário Reativado.",
+            "E-mail já registrado anteriormente. Colaborador Temporário alterado para Permanente.",
           success: true,
         });
       } else {
@@ -72,7 +72,7 @@ export const createEmpl = async (req, res) => {
     } else {
       const validCpf = await prisma.employee.findUnique({ where: { cpf } });
       if (validCpf)
-        return res.status(400).json({ message: "CPF já registrado" });
+        return res.status(400).json({ message: "CPF já vinculado a outro E-mail." });
     }
 
     // Dados do usuário logado

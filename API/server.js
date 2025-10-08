@@ -8,7 +8,7 @@ import emailRoutes from "./routes/emailRoutes.js";
 import { validaFuncTemp } from "./FuncoesAutomaticas/cronJobs.js";
 import dotenv from "dotenv";
 dotenv.config();
-
+validaFuncTemp(); // Executa na inicialização
 const app = express();
 app.use(cors());
 app.use(express.json());

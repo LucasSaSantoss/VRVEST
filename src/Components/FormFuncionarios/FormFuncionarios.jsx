@@ -259,7 +259,7 @@ export default function ListaFuncionarios() {
       {/* Modal de Impressão de Crachá */}
       {showModalCracha && funcSelecionado && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm ">
-          <div className="bg-[rgb(23,110,150)] p-6 rounded-lg shadow-lg w-[35vw] max-h-[100vh] overflow-y-auto text-center border-2 border-gray-200">
+          <div className="bg-[rgb(23,110,150)] p-3 rounded-lg shadow-lg w-[25vw] max-h-[100vh] overflow-y-auto text-center border-2 border-gray-200">
             <div className="flex justify-end items-center ">
               <button
                 className="text-red-500 font-bold text-xl hover:scale-110 transition duration-200 "
@@ -276,7 +276,7 @@ export default function ListaFuncionarios() {
             </div>
 
             <button
-              className="bg-green-500 text-white rounded-xl w-40 h-13 font-bold hover:text-green-700 hover:scale-110 transition duration-200 mt-4"
+              className="bg-green-500 text-white rounded-xl w-40 h-13 font-bold hover:text-green-700 hover:scale-110 transition duration-200 mt-4 mb-4"
               onClick={() => {
                 ReactToPrintFn();
                 setShowModalCracha(false);

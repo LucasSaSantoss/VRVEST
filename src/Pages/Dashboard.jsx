@@ -251,7 +251,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[200px]">
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[170px]">
           {pages[selected]}
         </main>
 

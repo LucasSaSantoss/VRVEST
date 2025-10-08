@@ -41,7 +41,7 @@ export default function CreateFuncTemp() {
       const result = await res.json();
 
       if (result.success && result.data) {
-        const d = result.data; // dados do funcionário
+        const d = result.data; // dados do funcionário - preenchimento automático
 
         setName(d.name || "");
         setEmail(d.email || "");

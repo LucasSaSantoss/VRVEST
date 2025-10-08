@@ -54,7 +54,7 @@ export const validaFuncTemp = async () => {
 };
 
 // Agenda para rodar de 1 em 1 hora
-cron.schedule("0 0 * * *", () => {
+cron.schedule("0 * * * *", () => {
   console.log("[CRON] Rodando validação automática...");
   validaFuncTemp();
 });
