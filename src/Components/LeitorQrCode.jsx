@@ -21,7 +21,7 @@ function LeitorQrCode() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
-  const [simNaoComNumero,setSimNaoComNumero] = useState(true); 
+  const [simNaoComNumero, setSimNaoComNumero] = useState(true);
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -40,6 +40,32 @@ function LeitorQrCode() {
 
   // Valida CPF
   const validateCpf = async () => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      navigate("/");
+      return;
+    }
+
+    // try {
+    //   const decodedToken = jwtDecode(token);
+    //   const agora = Date.now() / 1000; // em segundos
+
+    //   if (decodedToken.exp < agora) {
+    //     // Token expirado
+    //     localStorage.removeItem("token");
+    //     showTemporaryPopup("Sua sessão expirou, faça login novamente.");
+    //     setTimeout(() => {
+    //       navigate("/");
+    //     }, 3000);
+    //   }
+    //   setLevelUser(decodedToken.level);
+    // } catch (err) {
+    //   console.error("Erro ao verificar token:", err);
+    //   localStorage.removeItem("token");
+    //   showTemporaryPopup("Token inválido, faça login novamente.");
+    //   navigate("/");
+    // }
+
     const regex = /^\d{11}$/;
     if (!regex.test(cpf)) {
       setCpf("");
@@ -50,9 +76,10 @@ function LeitorQrCode() {
         message: "Digite um CPF válido com exatamente 11 números.",
       };
     }
-    
+
     try {
       const resposta = await verificarCpf(cpf);
+
       if (!resposta.success || !resposta.data) {
         setCpf("");
         cpfInputRef.current?.focus();

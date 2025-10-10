@@ -17,7 +17,8 @@ import {
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 
-import HomeVRVest from "../Components/HomeVRVest";
+// import HomeVRVest from "../Components/HomeVRVest";
+import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import Relatorios from "../Components/RelatoriosVRVest";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
@@ -65,7 +66,7 @@ export default function Dashboard() {
     try {
       const decodedToken = jwtDecode(token);
       const agora = Date.now() / 1000; // em segundos
-      
+
       if (decodedToken.exp < agora) {
         // Token expirado
         localStorage.removeItem("token");
@@ -88,7 +89,7 @@ export default function Dashboard() {
   };
 
   const pages = {
-    home: <HomeVRVest />,
+    home: <DashBoardVRVest />,
     relatorios: <Relatorios />,
     qrcode: <QrCodeVRVest />,
     funcionarioTemp: <CreateFuncTemp />,
@@ -138,7 +139,7 @@ export default function Dashboard() {
                   <LuLayoutGrid />
                 </span>
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Home
+                  Dashboard
                 </span>
               </li>
             )}
@@ -251,7 +252,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[170px]">
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[185px]">
           {pages[selected]}
         </main>
 

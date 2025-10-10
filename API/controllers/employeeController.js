@@ -72,7 +72,9 @@ export const createEmpl = async (req, res) => {
     } else {
       const validCpf = await prisma.employee.findUnique({ where: { cpf } });
       if (validCpf)
-        return res.status(400).json({ message: "CPF já vinculado a outro E-mail." });
+        return res
+          .status(400)
+          .json({ message: "CPF já vinculado a outro E-mail." });
     }
 
     // Dados do usuário logado
@@ -258,27 +260,19 @@ export const getEmpl = async (req, res) => {
 
 export const getCpf = async (req, res) => {
   try {
-    const { cpf } = req.params; // vem da URL
-
+    const { cpf } = req.params;
     const empl = await prisma.employee.findUnique({
       where: { cpf },
     });
 
-    if (!empl) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Colaborador não encontrado." });
-    }
-
     if (empl.active !== 1) {
       return res
-        .status(400)
+        .status(200)
         .json({ success: false, message: "Colaborador inativo." });
     }
 
     return res.status(200).json({ success: true, data: empl });
   } catch (err) {
-    console.error("Erro ao buscar Colaborador:", err);
     return res
       .status(500)
       .json({ success: false, message: "Erro interno no servidor." });
@@ -403,12 +397,12 @@ export const devolverKit = async (req, res) => {
     });
     if (!pendenciaSelecionada) {
       return res
-        .status(404)
+        .status(204)
         .json({ success: false, message: "Erro ao Devolver Kit." });
     }
 
     if (pendenciaSelecionada.emplID !== funcionario.id) {
-      return res.status(400).json({
+      return res.status(200).json({
         success: false,
         message: "Essa pendência não pertence a este funcionário.",
       });
