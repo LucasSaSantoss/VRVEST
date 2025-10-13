@@ -36,14 +36,14 @@ export default function TabelaPendencias({
         )}
       </div>
 
-      <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
+      <div className="max-h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
         <table className="w-[100%] text-left border-t border-gray-200 ">
           <thead>
             <tr className="text-gray-700 border-b text-xl">
               <th className="py-2 px-3">Colaborador</th>
               <th className="py-2 px-3">Kit</th>
               <th className="py-2 px-3">Retirado em</th>
-              <th className="py-2 px-3">Status</th>
+              <th className="py-2 px-10 ">Status</th>
               <th className="py-2 px-3">Tempo</th>
             </tr>
           </thead>
@@ -52,14 +52,14 @@ export default function TabelaPendencias({
               pendencias.map((p, i) => (
                 <tr
                   key={i}
-                  className="border-b hover:bg-gray-50 transition border-gray-200"
+                  className="border-b hover:bg-gray-50 transition border-gray-200 text-sm"
                 >
                   <td className="py-2 px-3">{p.colaborador}</td>
-                  <td className="py-2 px-3">{p.kit}</td>
+                  <td className="py-2 ">{p.kit}</td>
                   <td className="py-2 px-3">{p.data}</td>
-                  <td className="py-2 px-3">
+                  <td className="py-2 px-10">
                     <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusCor(
+                      className={`px-2 py-1 rounded-full text-xs ${getStatusCor(
                         p.status
                       )}`}
                     >

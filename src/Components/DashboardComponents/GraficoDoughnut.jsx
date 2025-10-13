@@ -22,10 +22,10 @@ export default function GraficoDoughnut({ values }) {
         label: "Status dos Kits",
         data: dataValues,
         backgroundColor: [
-          "rgb(255, 205, 86)", // amarelo
+          "rgba(63, 66, 218, 1)", // azul
+          "rgba(19, 179, 40, 1)", // verde
+          "rgba(211, 198, 23, 1)", // amarelo
           "rgb(255, 99, 132)", // vermelho
-          "rgb(75, 192, 192)", // verde
-          "rgba(63, 66, 218, 1)", // amarelo
         ],
         borderWidth: 2,
         hoverOffset: 25,

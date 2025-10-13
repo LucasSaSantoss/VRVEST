@@ -99,7 +99,7 @@ export async function cadastrarFuncionarioTemporario({
     });
 
     console.log(res.data.message);
-   
+
     return {
       success: true,
       data: res.data,
