@@ -10,7 +10,7 @@ export const getRegistros = async (req, res) => {
       orderBy: { date: "desc" }, // Ordena pela data mais recente
       include: {
         employee: {
-          select: { cpf: true, name: true }, // traz só o CPF e nome, se quiser
+          select: { cpf: true, name: true, sector: true }, //Cpf e nome do Colaborador
         },
       },
     });

@@ -1,7 +1,13 @@
 // src/components/TabelaPendencias.jsx
-export default function TabelaPendencias({ pendencias }) {
+export default function TabelaPendencias({
+  pendencias,
+  filtroStatus,
+  onLimparFiltro,
+}) {
   const getStatusCor = (status) => {
     switch (status) {
+      case "Retirados Hoje":
+        return "text-blue-600 bg-blue-100";
       case "Pendente":
         return "text-yellow-600 bg-yellow-100";
       case "Atrasado":
@@ -14,38 +20,65 @@ export default function TabelaPendencias({ pendencias }) {
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 mt-6">
-      <h3 className="text-lg font-semibold mb-3">Pendências de Kits</h3>
-      <table className="min-w-full text-sm text-left border-t">
-        <thead>
-          <tr className="text-gray-700 border-b">
-            <th className="py-2 px-3">Colaborador</th>
-            <th className="py-2 px-3">Kit</th>
-            <th className="py-2 px-3">Retirado em</th>
-            <th className="py-2 px-3">Status</th>
-            <th className="py-2 px-3">Tempo</th>
-          </tr>
-        </thead>
-        <tbody>
-          {pendencias.map((p, i) => (
-            <tr key={i} className="border-b hover:bg-gray-50">
-              <td className="py-2 px-3">{p.colaborador}</td>
-              <td className="py-2 px-3">{p.kit}</td>
-              <td className="py-2 px-3">{p.data}</td>
-              <td className="py-2 px-3">
-                <span
-                  className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusCor(
-                    p.status
-                  )}`}
-                >
-                  {p.status}
-                </span>
-              </td>
-              <td className="py-2 px-3">{p.tempo}</td>
+    <div className="bg-white rounded-xl shadow-md p-4 mt-6 w-[50%] ">
+      {/* Cabeçalho da tabela */}
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-lg font-semibold">Pendências de Kits</h3>
+
+        {/* Botão só aparece quando há um filtro */}
+        {filtroStatus && (
+          <button
+            onClick={onLimparFiltro}
+            className="px-3 py-1 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition"
+          >
+            Mostrar todos
+          </button>
+        )}
+      </div>
+
+      <div className="max-h-64 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
+        <table className="w-[100%] text-left border-t border-gray-200 ">
+          <thead>
+            <tr className="text-gray-700 border-b text-xl">
+              <th className="py-2 px-3">Colaborador</th>
+              <th className="py-2 px-3">Kit</th>
+              <th className="py-2 px-3">Retirado em</th>
+              <th className="py-2 px-3">Status</th>
+              <th className="py-2 px-3">Tempo</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {pendencias.length > 0 ? (
+              pendencias.map((p, i) => (
+                <tr
+                  key={i}
+                  className="border-b hover:bg-gray-50 transition border-gray-200"
+                >
+                  <td className="py-2 px-3">{p.colaborador}</td>
+                  <td className="py-2 px-3">{p.kit}</td>
+                  <td className="py-2 px-3">{p.data}</td>
+                  <td className="py-2 px-3">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusCor(
+                        p.status
+                      )}`}
+                    >
+                      {p.status}
+                    </span>
+                  </td>
+                  <td className="py-2 px-3">{p.tempo}</td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="5" className="text-center py-4 text-gray-500">
+                  Nenhuma pendência encontrada.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
