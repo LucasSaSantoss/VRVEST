@@ -24,7 +24,6 @@ export default function GraficoDoughnut({ values }) {
         backgroundColor: [
           "rgba(63, 66, 218, 1)", // azul
           "rgba(19, 179, 40, 1)", // verde
-          "rgba(211, 198, 23, 1)", // amarelo
           "rgb(255, 99, 132)", // vermelho
         ],
         borderWidth: 2,

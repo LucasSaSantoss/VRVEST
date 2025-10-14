@@ -6,10 +6,8 @@ export default function TabelaPendencias({
 }) {
   const getStatusCor = (status) => {
     switch (status) {
-      case "Retirados Hoje":
+      case "Em aberto":
         return "text-blue-600 bg-blue-100";
-      case "Pendente":
-        return "text-yellow-600 bg-yellow-100";
       case "Atrasado":
         return "text-red-600 bg-red-100";
       case "Devolvido":

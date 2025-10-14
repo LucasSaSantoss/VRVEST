@@ -12,47 +12,45 @@ export default function Dashboard() {
   const agora = new Date();
   const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
 
-  // 🔹 Carregar pendências da API
+  // -------------------   Define o status da Pendência  -------------------
+  const definirStatus = (item) => {
+    const minutos = differenceInMinutes(dataBR, new Date(item.date));
+
+    if (item.status === 1) {
+      if (minutos <= 36 * 60) return "Em aberto";
+      return "Atrasado";
+    }
+
+    if (item.status === 2) {
+      return "Devolvido";
+    }
+    return "Desconhecido";
+  };
+
+  // ----------------- Formata o tempo em horas e minutos -----------------
+  const formatarTempo = (minutos) => {
+    if (minutos < 60) return `${minutos} min`;
+    const horas = Math.floor(minutos / 60);
+    const restoMin = minutos % 60;
+    return `${horas}h ${restoMin > 0 ? restoMin + "min" : ""}`;
+  };
+
+  // ------------------- Carrega as pendências -------------------
+
   const listarPendencias = async () => {
     try {
       const dados = await carregarPendencias();
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
-          let statusFinal = "";
-          const intervaloHoras = differenceInMinutes(
-            dataBR,
-            new Date(item.date)
-          );
-          // 🔹 Status = 1 → Em aberto
-          if (item.status === 1) {
-            if (intervaloHoras < 24) {
-              statusFinal = "Retirados Hoje";
-            } else if (intervaloHoras >= 24 && intervaloHoras <= 36) {
-              statusFinal = "Pendente";
-            } else if (intervaloHoras > 36) {
-              statusFinal = "Atrasado";
-            }
-          }
-          // 🔹 Status = 2 → Devolvido
-          else if (item.status === 2) {
-            if (intervaloHoras < 24) {
-              statusFinal = "Devolvido Hoje";
-            } else {
-              statusFinal = "Devolvido";
-            }
-          }
+          const minutos = differenceInMinutes(dataBR, new Date(item.date));
           return {
             colaborador: item.emplName,
             kit: item.employee.sector,
             data: new Date(item.date).toLocaleString("pt-BR"),
-            status: statusFinal,
-            tempo:
-              intervaloHoras < 60
-                ? intervaloHoras + " min"
-                : Math.floor(intervaloHoras / 60) + " hrs",
+            status: definirStatus(item),
+            tempo: formatarTempo(minutos),
           };
         });
-
         setPendencias(formatadas);
       } else {
         console.warn("Formato inesperado de dados:", dados);
@@ -62,14 +60,19 @@ export default function Dashboard() {
     }
   };
 
+  // ----------------- Inicializa a tela com as Pendências -----------------
+
   useEffect(() => {
     listarPendencias();
   }, []);
 
-  const formatadas = filtroStatus
+  // ----------------- Filtra as pendências para a tabela -----------------
+
+  const statusPendencias = filtroStatus
     ? pendencias.filter((p) => p.status === filtroStatus)
     : pendencias;
 
+  // ----------------- Seleciona o card do resumo -----------------
   const handleSelecionarCard = (status) => {
     setFiltroStatus((prev) => (prev === status ? null : status));
   };
@@ -83,13 +86,13 @@ export default function Dashboard() {
       </div>
 
       {/* 🔹 Cards de resumo */}
-      <div className="grid grid-cols-4 gap-6 w-full">
+      <div className="grid grid-cols-3 gap-3 w-full">
         <CardResumo
-          titulo="Retirados Hoje"
-          valor={pendencias.filter((p) => p.status === ("Pendente" && "Devolvido")).length}
+          titulo="Em aberto"
+          valor={pendencias.filter((p) => p.status === "Em aberto").length}
           cor="bg-blue-500"
-          ativo={filtroStatus === "Retirados Hoje"}
-          onClick={() => handleSelecionarCard("Pendente")}
+          ativo={filtroStatus === "Em aberto"}
+          onClick={() => handleSelecionarCard("Em aberto")}
         />
         <CardResumo
           titulo="Devolvidos"
@@ -98,13 +101,7 @@ export default function Dashboard() {
           ativo={filtroStatus === "Devolvido"}
           onClick={() => handleSelecionarCard("Devolvido")}
         />
-        <CardResumo
-          titulo="Pendente"
-          valor={pendencias.filter((p) => p.status === "Pendente").length}
-          cor="bg-yellow-500"
-          ativo={filtroStatus === "Pendente"}
-          onClick={() => handleSelecionarCard("Pendente")}
-        />
+
         <CardResumo
           titulo="Atrasado"
           valor={pendencias.filter((p) => p.status === "Atrasado").length}
@@ -114,14 +111,15 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* 🔹 Gráfico + tabela */}
       <div className="flex flex-col md:flex-row gap-2 w-full items-start">
         <TabelaPendencias
-          pendencias={formatadas}
+          pendencias={statusPendencias}
           filtroStatus={filtroStatus}
           onLimparFiltro={() => setFiltroStatus(null)}
         />
-        <GraficoDoughnut values={filtroStatus ? formatadas : pendencias} />
+        <GraficoDoughnut
+          values={filtroStatus ? statusPendencias : pendencias}
+        />
       </div>
     </div>
   );
