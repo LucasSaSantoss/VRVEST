@@ -223,7 +223,7 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               value={level}
               onChange={(e) => setLevel(e.target.value)}
               required
-              className="w-[20] p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">Selecione uma opção</option>
               <option value="1">OPERADOR</option>
