@@ -16,10 +16,10 @@ export default function GraficoDoughnut({ values }) {
   const dataValues = Object.values(contagens);
 
   const cores = {
-    "Em aberto": "rgba(26, 93, 236, 0.6)",
-    "Atrasado": "rgba(255, 99, 132, 0.6)",
-    "Devolvido": "rgba(27, 216, 36, 0.6)",
-    "Desconhecido": "rgba(201, 203, 207, 0.6)",
+    "Em aberto": "rgba(8, 78, 230, 0.69)",
+    Atrasado: "rgba(252, 5, 5, 0.84)",
+    Devolvido: "rgba(18, 218, 28, 0.69)",
+    Desconhecido: "rgba(201, 203, 207, 0.6)",
   };
 
   const data = {
@@ -57,8 +57,8 @@ export default function GraficoDoughnut({ values }) {
   };
 
   return (
-    <div className="w-[15.5vw] h-[15.5vw] bg-white rounded-xl shadow-xl flex flex-col justify-center mt-6">
-      <h2 className="text-center font-bold mb-1 mt-5">Distribuição dos Kits</h2>
+    <div className="grid grid-auto-rows h-[296px] bg-white rounded-xl shadow-xl mt-6">
+      <p className="text-center font-bold mt-5">Distribuição dos Kits</p>
       <div className="flex-1">
         <Doughnut data={data} options={options} />
       </div>

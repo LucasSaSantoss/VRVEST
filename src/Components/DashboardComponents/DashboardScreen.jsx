@@ -29,6 +29,19 @@ export default function Dashboard() {
     return "Desconhecido";
   };
 
+  // ------------------- Ajusta a data inicial para o começo do dia e final para o fim do dia -------------------
+  const ajustarDataFinal = (data) => {
+    const d = new Date(data);
+    d.setDate(d.getDate() + 1);
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
+
+  const ajustarDataInicial = (data) => {
+    const d = new Date(data);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
   // ----------------- Formata o tempo em horas e minutos -----------------
   const formatarTempo = (minutos) => {
     if (minutos < 60) return `${minutos} min`;
@@ -41,7 +54,11 @@ export default function Dashboard() {
 
   const listarPendencias = async (inicio, fim) => {
     try {
-      const dados = await carregarPendencias(inicio, fim);
+      const dataInicio = new Date(inicio);
+      const dataFim = new Date(fim);
+      dataFim.setHours(23, 59, 59, 999);
+
+      const dados = await carregarPendencias(dataInicio, dataFim);
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
           const minutos = differenceInMinutes(dataBR, new Date(item.date));
@@ -65,11 +82,12 @@ export default function Dashboard() {
   // ----------------- Inicializa a tela com as Pendências -----------------
 
   useEffect(() => {
-    listarPendencias(dataBR, dataBR);
-    setInicio(dataBR.toISOString().split("T")[0]);
+    const ontem = new Date(dataBR);
+    ontem.setDate(ontem.getDate() - 1);
+    setInicio(ontem.toISOString().split("T")[0]);
     setFim(dataBR.toISOString().split("T")[0]);
+    listarPendencias(ajustarDataInicial(ontem), ajustarDataFinal(dataBR));
   }, []);
-
   // ----------------- Filtra as pendências para a tabela -----------------
 
   const statusPendencias = filtroStatus
@@ -82,26 +100,36 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="flex flex-col w-full">
-      <div>
-        <h1 className="text-2xl text-center font-bold mb-6">
-          Dashboard da Rouparia
-        </h1>
-      </div>
-      <div className="filtros-data">
-        <input
-          type="date"
-          value={inicio}
-          onChange={(e) => setInicio(e.target.value)}
-        />
-        <input
-          type="date"
-          value={fim}
-          onChange={(e) => setFim(e.target.value)}
-        />
+    <div className="flex flex-col w-full mt-6 px-5">
+      {/* 🔹 Filtros de data */}
+      <div className="flex justify-center items-end gap-3 mb-6 mt-2">
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold mb-1">Data inicial</label>
+          <input
+            type="date"
+            className="border border-gray-300 rounded px-3 py-2"
+            value={inicio}
+            max={fim}
+            onChange={(e) => setInicio(e.target.value)}
+          />
+        </div>
+
+        <div className="flex flex-col">
+          <label className="text-sm font-semibold mb-1">Data final</label>
+          <input
+            type="date"
+            className="border border-gray-300 rounded px-3 py-2"
+            value={fim}
+            min={inicio}
+            onChange={(e) => setFim(e.target.value)}
+          />
+        </div>
+
         <button
-          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition' "
-          onClick={() => listarPendencias(inicio, fim)}
+          className="bg-blue-500 text-white py-2 px-5 rounded-md hover:bg-blue-600 transition"
+          onClick={() =>
+            listarPendencias(new Date(inicio), ajustarDataFinal(fim))
+          }
         >
           Buscar
         </button>
