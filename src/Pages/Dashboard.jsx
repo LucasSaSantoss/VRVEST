@@ -106,7 +106,7 @@ export default function Dashboard() {
       <div className="flex w-full h-screen bg-gray-100">
         <aside
           className={`shadow-lg transition-all duration-300 rounded-xl text-white hover:shadow-xl flex flex-col justify-between items-center 
-          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[21vh]`}
+          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh]`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{ backgroundColor: "#16607a" }}
@@ -252,7 +252,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[185px]">
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[130px]">
           {pages[selected]}
         </main>
 

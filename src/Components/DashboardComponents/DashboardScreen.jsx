@@ -8,6 +8,8 @@ import { differenceInMinutes } from "date-fns";
 export default function Dashboard() {
   const [filtroStatus, setFiltroStatus] = useState(null);
   const [pendencias, setPendencias] = useState([]);
+  const [inicio, setInicio] = useState("");
+  const [fim, setFim] = useState("");
 
   const agora = new Date();
   const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
@@ -37,9 +39,9 @@ export default function Dashboard() {
 
   // ------------------- Carrega as pendências -------------------
 
-  const listarPendencias = async () => {
+  const listarPendencias = async (inicio, fim) => {
     try {
-      const dados = await carregarPendencias();
+      const dados = await carregarPendencias(inicio, fim);
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
           const minutos = differenceInMinutes(dataBR, new Date(item.date));
@@ -63,7 +65,9 @@ export default function Dashboard() {
   // ----------------- Inicializa a tela com as Pendências -----------------
 
   useEffect(() => {
-    listarPendencias();
+    listarPendencias(dataBR, dataBR);
+    setInicio(dataBR.toISOString().split("T")[0]);
+    setFim(dataBR.toISOString().split("T")[0]);
   }, []);
 
   // ----------------- Filtra as pendências para a tabela -----------------
@@ -84,9 +88,26 @@ export default function Dashboard() {
           Dashboard da Rouparia
         </h1>
       </div>
-
+      <div className="filtros-data">
+        <input
+          type="date"
+          value={inicio}
+          onChange={(e) => setInicio(e.target.value)}
+        />
+        <input
+          type="date"
+          value={fim}
+          onChange={(e) => setFim(e.target.value)}
+        />
+        <button
+          className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 transition' "
+          onClick={() => listarPendencias(inicio, fim)}
+        >
+          Buscar
+        </button>
+      </div>
       {/* 🔹 Cards de resumo */}
-      <div className="grid grid-cols-3 gap-3 w-full">
+      <div className="grid grid-cols-3 gap-6 w-full">
         <CardResumo
           titulo="Em aberto"
           valor={pendencias.filter((p) => p.status === "Em aberto").length}
@@ -118,6 +139,7 @@ export default function Dashboard() {
           onLimparFiltro={() => setFiltroStatus(null)}
         />
         <GraficoDoughnut
+          className="flex-1"
           values={filtroStatus ? statusPendencias : pendencias}
         />
       </div>

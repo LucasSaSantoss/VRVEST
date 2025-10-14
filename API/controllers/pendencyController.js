@@ -4,13 +4,34 @@ import { enviarEmail } from "../emailService/emailService.js";
 const prisma = new PrismaClient();
 
 // Buscar todos os registros
+// controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
   try {
+    const { inicio, fim } = req.query;
+    let filtroData = {};
+
+    if (inicio && fim) {
+      filtroData = {
+        date: {
+          gte: new Date(inicio),
+          lte: new Date(fim),
+        },
+      };
+    } else {
+      const hoje = new Date();
+      const inicioAnoPassado = new Date(hoje.getFullYear() - 1, 0, 1);
+      const fimDia = new Date(hoje.setHours(23, 59, 59, 999));
+      filtroData = {
+        date: { gte: inicioAnoPassado, lte: fimDia },
+      };
+    }
+
     const registros = await prisma.pendency.findMany({
-      orderBy: { date: "desc" }, // Ordena pela data mais recente
+      where: filtroData,
+      orderBy: { date: "desc" },
       include: {
         employee: {
-          select: { cpf: true, name: true, sector: true }, //Cpf e nome do Colaborador
+          select: { cpf: true, name: true, sector: true },
         },
       },
     });
@@ -22,9 +43,10 @@ export const getRegistros = async (req, res) => {
     });
   } catch (err) {
     console.error("Erro ao buscar registros:", err);
-    return res
-      .status(500)
-      .json({ success: false, message: "Erro no servidor" });
+    return res.status(500).json({
+      success: false,
+      message: "Erro no servidor",
+    });
   }
 };
 

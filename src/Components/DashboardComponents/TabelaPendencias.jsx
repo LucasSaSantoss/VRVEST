@@ -34,7 +34,7 @@ export default function TabelaPendencias({
         )}
       </div>
 
-      <div className="max-h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
+      <div className="h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
         <table className="w-[100%] text-left border-t border-gray-200 ">
           <thead>
             <tr className="text-gray-700 border-b text-xl">

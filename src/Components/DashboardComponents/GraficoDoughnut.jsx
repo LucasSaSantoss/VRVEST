@@ -15,19 +15,25 @@ export default function GraficoDoughnut({ values }) {
   const labels = Object.keys(contagens);
   const dataValues = Object.values(contagens);
 
+  const cores = {
+    "Em aberto": "rgba(26, 93, 236, 0.6)",
+    "Atrasado": "rgba(255, 99, 132, 0.6)",
+    "Devolvido": "rgba(27, 216, 36, 0.6)",
+    "Desconhecido": "rgba(201, 203, 207, 0.6)",
+  };
+
   const data = {
     labels: labels,
     datasets: [
       {
         label: "Status dos Kits",
         data: dataValues,
-        backgroundColor: [
-          "rgba(63, 66, 218, 1)", // azul
-          "rgba(19, 179, 40, 1)", // verde
-          "rgb(255, 99, 132)", // vermelho
-        ],
+        backgroundColor: labels.map(
+          (label) => cores[label] || "rgba(150,150,150,0.5)"
+        ),
+        borderColor: labels.map(() => "rgba(255,255,255,1)"),
         borderWidth: 2,
-        hoverOffset: 25,
+        hoverOffset: 10,
       },
     ],
   };
@@ -37,7 +43,7 @@ export default function GraficoDoughnut({ values }) {
     maintainAspectRatio: false, // <- permite adaptar ao container
     plugins: {
       legend: {
-        position: "bottom",
+        position: "right",
         labels: {
           color: "#333",
           font: { size: 12 },
@@ -51,10 +57,8 @@ export default function GraficoDoughnut({ values }) {
   };
 
   return (
-    <div className="w-full md:w-[50%] md:h-140 bg-transparent rounded-xl shadow-xl flex flex-col justify-center ml-5 mt-5">
-      <h3 className="text-lg mt-3 p-2 font-bold text-center mb-2">
-        Distribuição de Kits
-      </h3>
+    <div className="w-[15.5vw] h-[15.5vw] bg-white rounded-xl shadow-xl flex flex-col justify-center mt-6">
+      <h2 className="text-center font-bold mb-1 mt-5">Distribuição dos Kits</h2>
       <div className="flex-1">
         <Doughnut data={data} options={options} />
       </div>
