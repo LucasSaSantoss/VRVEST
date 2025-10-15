@@ -18,7 +18,7 @@ export default function TabelaPendencias({
   };
 
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 mt-6 w-[50%] ">
+    <div className="bg-white rounded-xl shadow-md p-4 mt-6 w-[40%] ">
       {/* Cabeçalho da tabela */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Pendências de Kits</h3>
@@ -34,7 +34,7 @@ export default function TabelaPendencias({
         )}
       </div>
 
-      <div className="h-56 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
+      <div className="h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
         <table className="w-[100%] text-left border-t border-gray-200 ">
           <thead>
             <tr className="text-gray-700 border-b text-xl">

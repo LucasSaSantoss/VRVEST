@@ -22,8 +22,7 @@ export default function ListaPendencias() {
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
-  const API_URL= import.meta.env.VITE_API_URL ; 
-
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const cancelarOperacao = () => {
     setMostrarModalSimNao(false);
@@ -116,6 +115,7 @@ export default function ListaPendencias() {
 
   // Paginação
   const totalPaginas = Math.ceil(pendenciasFiltradas.length / regPorPagina);
+  totalPaginas === 0 ? totalPaginas === 1 : totalPaginas;
   const indiceUltimoRegistro = paginaAtual * regPorPagina;
   const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
   const registrosFiltrados = pendenciasFiltradas.slice(

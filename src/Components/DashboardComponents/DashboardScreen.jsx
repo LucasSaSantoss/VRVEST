@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import CardResumo from "./CardResumo";
 import TabelaPendencias from "./TabelaPendencias";
 import GraficoDoughnut from "./GraficoDoughnut";
+import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 
@@ -10,6 +11,7 @@ export default function Dashboard() {
   const [pendencias, setPendencias] = useState([]);
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
+  const [dadosGrafico, setDadosGrafico] = useState([]); // ✅ agora é array, não string
 
   const agora = new Date();
   const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
@@ -29,7 +31,7 @@ export default function Dashboard() {
     return "Desconhecido";
   };
 
-  // ------------------- Ajusta a data inicial para o começo do dia e final para o fim do dia -------------------
+  // ------------------- Ajusta a data inicial e final -------------------
   const ajustarDataFinal = (data) => {
     const d = new Date(data);
     d.setDate(d.getDate() + 1);
@@ -42,6 +44,7 @@ export default function Dashboard() {
     d.setHours(0, 0, 0, 0);
     return d;
   };
+
   // ----------------- Formata o tempo em horas e minutos -----------------
   const formatarTempo = (minutos) => {
     if (minutos < 60) return `${minutos} min`;
@@ -51,8 +54,7 @@ export default function Dashboard() {
   };
 
   // ------------------- Carrega as pendências -------------------
-
-  const listarPendencias = async (inicio, fim) => {
+  async function listarPendencias(inicio, fim) {
     try {
       const dataInicio = new Date(inicio);
       const dataFim = new Date(fim);
@@ -77,28 +79,64 @@ export default function Dashboard() {
     } catch (err) {
       console.error("Erro ao carregar pendências:", err);
     }
+  }
+
+  // ------------------- Carrega os dados do gráfico -------------------
+  const listarRetiradosDevolvidos = async (inicio, fim) => {
+    try {
+      const dataInicio = new Date(inicio);
+      const dataFim = new Date(fim);
+      dataFim.setHours(23, 59, 59, 999);
+
+      const dados = await carregarPendencias(dataInicio, dataFim);
+      if (dados?.success && Array.isArray(dados.data)) {
+        const formatadas = dados.data.map((item) => {
+          const minutos = differenceInMinutes(dataBR, new Date(item.date));
+          return {
+            colaborador: item.emplName,
+            kit: item.employee.sector,
+            data: new Date(item.date) /*.toLocaleString("pt-BR"),*/,
+            status: definirStatus(item),
+            tempo: formatarTempo(minutos),
+          };
+        });
+        setDadosGrafico(formatadas);
+      } else {
+        console.warn("Formato inesperado de dados:", dados);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar pendências:", err);
+    }
   };
 
-  // ----------------- Inicializa a tela com as Pendências -----------------
-
+  // ----------------- Inicializa a tela -----------------
   useEffect(() => {
     const ontem = new Date(dataBR);
     ontem.setDate(ontem.getDate() - 1);
     setInicio(ontem.toISOString().split("T")[0]);
     setFim(dataBR.toISOString().split("T")[0]);
-    listarPendencias(ajustarDataInicial(ontem), ajustarDataFinal(dataBR));
-  }, []);
-  // ----------------- Filtra as pendências para a tabela -----------------
 
+    listarPendencias(ajustarDataInicial(ontem), ajustarDataFinal(dataBR));
+
+    const seisMesesAtras = new Date();
+    seisMesesAtras.setMonth(new Date().getMonth() - 5);
+    listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(dataBR));
+  }, []);
+
+  // ----------------- Filtro e resumo -----------------
   const statusPendencias = filtroStatus
     ? pendencias.filter((p) => p.status === filtroStatus)
     : pendencias;
 
-  // ----------------- Seleciona o card do resumo -----------------
   const handleSelecionarCard = (status) => {
     setFiltroStatus((prev) => (prev === status ? null : status));
   };
 
+  // ----------------- Data para gráfico -----------------
+  const seisMesesAtras = new Date();
+  seisMesesAtras.setMonth(new Date().getMonth() - 5);
+
+  // ----------------- Renderização -----------------
   return (
     <div className="flex flex-col w-full mt-6 px-5">
       {/* 🔹 Filtros de data */}
@@ -127,13 +165,15 @@ export default function Dashboard() {
 
         <button
           className="bg-blue-500 text-white py-2 px-5 rounded-md hover:bg-blue-600 transition"
-          onClick={() =>
-            listarPendencias(new Date(inicio), ajustarDataFinal(fim))
-          }
+          onClick={() => {
+            listarPendencias(new Date(inicio), ajustarDataFinal(fim));
+            listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(dataBR));
+          }}
         >
           Buscar
         </button>
       </div>
+
       {/* 🔹 Cards de resumo */}
       <div className="grid grid-cols-3 gap-6 w-full">
         <CardResumo
@@ -150,7 +190,6 @@ export default function Dashboard() {
           ativo={filtroStatus === "Devolvido"}
           onClick={() => handleSelecionarCard("Devolvido")}
         />
-
         <CardResumo
           titulo="Atrasado"
           valor={pendencias.filter((p) => p.status === "Atrasado").length}
@@ -160,16 +199,23 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-2 w-full items-start">
+      {/* 🔹 Tabela e Gráficos */}
+      <div className="flex flex-col md:flex-row gap-3 w-full mt-4">
         <TabelaPendencias
           pendencias={statusPendencias}
           filtroStatus={filtroStatus}
           onLimparFiltro={() => setFiltroStatus(null)}
         />
-        <GraficoDoughnut
-          className="flex-1"
-          values={filtroStatus ? statusPendencias : pendencias}
-        />
+        <div className="flex flex-col md:flex-row justify-center items-stretch gap-4 flex-1">
+          <GraficoDoughnut
+            className="flex-1 flex items-center justify-center"
+            values={filtroStatus ? statusPendencias : pendencias}
+          />
+          <GraficoRetiradosXDevolvidos
+            className="flex-1 flex items-center justify-center"
+            values={dadosGrafico}
+          />
+        </div>
       </div>
     </div>
   );
