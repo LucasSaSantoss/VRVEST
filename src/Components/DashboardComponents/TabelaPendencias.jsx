@@ -23,13 +23,10 @@ export default function TabelaPendencias({
     if (!data) return "-";
 
     try {
-      // Garante que a string ISO seja interpretada corretamente
       const dataObj = parseISO(data);
 
-      // Adiciona o offset de horas
       const dataAjustada = addHours(dataObj, horas);
 
-      // Formata para o padrão brasileiro
       return format(dataAjustada, "dd/MM/yyyy HH:mm", { locale: ptBR });
     } catch (erro) {
       console.error("Erro ao formatar data:", erro);
