@@ -1,17 +1,19 @@
 import { useState, useEffect } from "react";
 import CardResumo from "./CardResumo";
-import TabelaPendencias from "./TabelaPendencias";
+import TabelaPendencias from "./tabelaPendencias";
 import GraficoDoughnut from "./GraficoDoughnut";
 import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
+import MovPorHora from "./GraficoMovPorHora";
+import GraficoLinha from "./graficoTeste";
 
 export default function Dashboard() {
   const [filtroStatus, setFiltroStatus] = useState(null);
   const [pendencias, setPendencias] = useState([]);
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
-  const [dadosGrafico, setDadosGrafico] = useState([]); // ✅ agora é array, não string
+  const [dadosGrafico, setDadosGrafico] = useState([]);
 
   const agora = new Date();
   const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
@@ -61,13 +63,17 @@ export default function Dashboard() {
       dataFim.setHours(23, 59, 59, 999);
 
       const dados = await carregarPendencias(dataInicio, dataFim);
+
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
           const minutos = differenceInMinutes(dataBR, new Date(item.date));
           return {
             colaborador: item.emplName,
             kit: item.employee.sector,
-            data: new Date(item.date).toLocaleString("pt-BR"),
+            data: item.date.toLocaleString("pt-BR"),
+            dataDevolucao: item.devolDate
+              ? item.devolDate.toLocaleString("pt-BR")
+              : null,
             status: definirStatus(item),
             tempo: formatarTempo(minutos),
           };
@@ -81,12 +87,13 @@ export default function Dashboard() {
     }
   }
 
-  // ------------------- Carrega os dados do gráfico -------------------
+  // ------------------- Carrega os dados do gráfico / últimos 6 meses + últimas 24 hrs -------------------
   const listarRetiradosDevolvidos = async (inicio, fim) => {
     try {
-      const dataInicio = new Date(inicio);
-      const dataFim = new Date(fim);
+      const dataInicio = inicio;
+      const dataFim = fim;
       dataFim.setHours(23, 59, 59, 999);
+      console.log(inicio, fim);
 
       const dados = await carregarPendencias(dataInicio, dataFim);
       if (dados?.success && Array.isArray(dados.data)) {
@@ -95,7 +102,8 @@ export default function Dashboard() {
           return {
             colaborador: item.emplName,
             kit: item.employee.sector,
-            data: new Date(item.date) /*.toLocaleString("pt-BR"),*/,
+            data: item.date,
+            dataDevolucao: item.devolDate ? item.devolDate : null,
             status: definirStatus(item),
             tempo: formatarTempo(minutos),
           };
@@ -138,9 +146,9 @@ export default function Dashboard() {
 
   // ----------------- Renderização -----------------
   return (
-    <div className="flex flex-col w-full mt-6 px-5">
+    <div className="flex flex-col w-full mt-4 px-5">
       {/* 🔹 Filtros de data */}
-      <div className="flex justify-center items-end gap-3 mb-6 mt-2">
+      <div className="flex justify-center items-end gap-3 mb-2 mt-2">
         <div className="flex flex-col">
           <label className="text-sm font-semibold mb-1">Data inicial</label>
           <input
@@ -200,7 +208,7 @@ export default function Dashboard() {
       </div>
 
       {/* 🔹 Tabela e Gráficos */}
-      <div className="flex flex-col md:flex-row gap-3 w-full mt-4">
+      <div className="flex flex-col md:flex-row gap-3 w-full mt-1">
         <TabelaPendencias
           pendencias={statusPendencias}
           filtroStatus={filtroStatus}
@@ -216,6 +224,9 @@ export default function Dashboard() {
             values={dadosGrafico}
           />
         </div>
+      </div>
+      <div>
+        <MovPorHora className="w-full mt-2" values={dadosGrafico} />
       </div>
     </div>
   );

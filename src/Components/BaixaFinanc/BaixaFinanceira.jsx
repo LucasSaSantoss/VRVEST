@@ -205,6 +205,7 @@ export default function ListaPendencias() {
             <th className="py-2 px-4">CPF</th>
             <th className="py-2 px-1">Data</th>
             <th className="py-2 px-1">Data Devolução</th>
+            <th className="py-2 px-1">Baixa Realizada Por</th>
             <th className="py-2 px-1">Tamanho Kit</th>
             <th className="py-2 px-1">Baixa Financeira</th>
           </tr>
@@ -243,6 +244,7 @@ export default function ListaPendencias() {
                   ? new Date(p.devolDate).toLocaleString("pt-BR")
                   : ""}
               </td>
+              <td className="py-2 px-1">{p.devolUserName}</td>
               <td className="py-2 px-1">{p.kitSize}</td>
               <td className="py-2 px-1">
                 {p.status === 1 ? (

@@ -439,7 +439,9 @@ function LeitorQrCode() {
       {/* Botões de operação */}
       <div className="flex gap-4 mt-6 w-full justify-center">
         <button
-          onClick={() => setTipoOperacao("retirada")}
+          onClick={() => {
+            (setTipoOperacao("retirada"), cpfInputRef.current?.focus());
+          }}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
           tipoOperacao === "retirada"
@@ -451,7 +453,9 @@ function LeitorQrCode() {
         </button>
 
         <button
-          onClick={() => setTipoOperacao("devolucao")}
+          onClick={() => {
+            (setTipoOperacao("devolucao"), cpfInputRef.current?.focus());
+          }}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
           tipoOperacao === "devolucao"

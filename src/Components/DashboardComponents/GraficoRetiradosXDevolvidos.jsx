@@ -20,8 +20,7 @@ ChartJS.register(
   Legend
 );
 
-export default function RetiradosEDevolvidos({ pendencias = [] }) {
-  console.log(pendencias);
+export default function RetiradosEDevolvidos({ values = [] }) {
   const chartRef = useRef(null);
 
   const carregaMeses = (qtd) => {
@@ -36,10 +35,10 @@ export default function RetiradosEDevolvidos({ pendencias = [] }) {
     return meses;
   };
 
-  const labels = carregaMeses(6);
+  const labels = carregaMeses(5);
 
   useEffect(() => {
-    if (!Array.isArray(pendencias) || pendencias.length === 0) return;
+    if (!Array.isArray(values) || values.length === 0) return;
 
     const hoje = new Date();
 
@@ -47,7 +46,7 @@ export default function RetiradosEDevolvidos({ pendencias = [] }) {
     const retiradosPorMes = Array(6).fill(0);
     const devolvidosPorMes = Array(6).fill(0);
 
-    pendencias.forEach((item) => {
+    values.forEach((item) => {
       let dataRetirada = null;
       let dataDevolucao = null;
       if (
@@ -102,7 +101,7 @@ export default function RetiradosEDevolvidos({ pendencias = [] }) {
         },
       ],
     });
-  }, [pendencias]);
+  }, [values]);
 
   // Dados iniciais
   const [data, setData] = useState({
@@ -161,12 +160,12 @@ export default function RetiradosEDevolvidos({ pendencias = [] }) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl p-3 w-full h-[350px] flex flex-col justify-center mt-6">
+    <div className="bg-white shadow-lg rounded-2xl w-full h-[370px] flex flex-col mt-2">
       <h2 className="text-xl font-bold text-gray-800 mb-3 text-center">
-        Retirados e Devolvidos
+        Retirados e Devolvidos (Últimos 6 Meses)
       </h2>
 
-      <div className="h-70">
+      <div className="h-full w-full">
         <Bar ref={chartRef} data={data} options={options} />
       </div>
     </div>

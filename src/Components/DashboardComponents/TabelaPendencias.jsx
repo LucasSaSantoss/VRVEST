@@ -1,4 +1,6 @@
 // src/components/TabelaPendencias.jsx
+import { addHours, format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
 export default function TabelaPendencias({
   pendencias,
   filtroStatus,
@@ -17,8 +19,26 @@ export default function TabelaPendencias({
     }
   };
 
+  function formatarData(data, horas = 3) {
+    if (!data) return "-";
+
+    try {
+      // Garante que a string ISO seja interpretada corretamente
+      const dataObj = parseISO(data);
+
+      // Adiciona o offset de horas
+      const dataAjustada = addHours(dataObj, horas);
+
+      // Formata para o padrão brasileiro
+      return format(dataAjustada, "dd/MM/yyyy HH:mm", { locale: ptBR });
+    } catch (erro) {
+      console.error("Erro ao formatar data:", erro);
+      return "-";
+    }
+  }
+
   return (
-    <div className="bg-white rounded-xl shadow-md p-4 mt-6 w-[40%] ">
+    <div className="bg-white rounded-xl shadow-md p-4 mt-2 w-[45%] ">
       {/* Cabeçalho da tabela */}
       <div className="flex items-center justify-between mb-3">
         <h3 className="text-lg font-semibold">Pendências de Kits</h3>
@@ -34,10 +54,10 @@ export default function TabelaPendencias({
         )}
       </div>
 
-      <div className="h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
+      <div className="h-[280px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-100 rounded-lg">
         <table className="w-[100%] text-left border-t border-gray-200 ">
           <thead>
-            <tr className="text-gray-700 border-b text-xl">
+            <tr className="text-gray-700 border-b text-xl items-center">
               <th className="py-2 px-3">Colaborador</th>
               <th className="py-2 px-3">Kit</th>
               <th className="py-2 px-3">Retirado em</th>
@@ -50,11 +70,11 @@ export default function TabelaPendencias({
               pendencias.map((p, i) => (
                 <tr
                   key={i}
-                  className="border-b hover:bg-gray-50 transition border-gray-200 text-sm"
+                  className="border-b hover:bg-gray-50 transition border-gray-200 text-sm items-center"
                 >
                   <td className="py-2 px-3">{p.colaborador}</td>
                   <td className="py-2 ">{p.kit}</td>
-                  <td className="py-2 px-3">{p.data}</td>
+                  <td className="py-2 px-3">{formatarData(p.data)}</td>
                   <td className="py-2 px-10">
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusCor(

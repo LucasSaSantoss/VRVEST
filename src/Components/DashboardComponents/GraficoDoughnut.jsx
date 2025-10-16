@@ -57,7 +57,7 @@ export default function GraficoDoughnut({ values }) {
   };
 
   return (
-    <div className="grid grid-auto-rows h-[350px] bg-white rounded-xl shadow-xl mt-6">
+    <div className="grid grid-auto-rows h-[370px] bg-white rounded-xl shadow-xl mt-2">
       <p className="text-center font-bold mt-5">Distribuição dos Kits</p>
       <div className="flex-1">
         <Doughnut data={data} options={options} />
