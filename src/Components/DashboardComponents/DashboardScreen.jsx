@@ -6,6 +6,11 @@ import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 import MovPorHora from "./GraficoMovPorHora";
+import { DateRange } from "react-date-range";
+import { ptBR } from "date-fns/locale";
+import "react-date-range/dist/styles.css";
+import "react-date-range/dist/theme/default.css";
+import FiltroDatas from "./ComponenteData/DateInput";
 
 export default function Dashboard() {
   const [filtroStatus, setFiltroStatus] = useState(null);
@@ -92,7 +97,6 @@ export default function Dashboard() {
       const dataInicio = inicio;
       const dataFim = fim;
       dataFim.setHours(23, 59, 59, 999);
-      console.log(inicio, fim);
 
       const dados = await carregarPendencias(dataInicio, dataFim);
       if (dados?.success && Array.isArray(dados.data)) {
@@ -146,40 +150,16 @@ export default function Dashboard() {
   // ----------------- Renderização -----------------
   return (
     <div className="flex flex-col w-full mt-4 px-5">
-      {/* 🔹 Filtros de data */}
-      <div className="flex justify-center items-end gap-3 mb-2 mt-2">
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold mb-1">Data inicial</label>
-          <input
-            type="date"
-            className="border border-gray-300 rounded px-3 py-2"
-            value={inicio}
-            max={fim}
-            onChange={(e) => setInicio(e.target.value)}
-          />
-        </div>
-
-        <div className="flex flex-col">
-          <label className="text-sm font-semibold mb-1">Data final</label>
-          <input
-            type="date"
-            className="border border-gray-300 rounded px-3 py-2"
-            value={fim}
-            min={inicio}
-            onChange={(e) => setFim(e.target.value)}
-          />
-        </div>
-
-        <button
-          className="bg-blue-500 text-white py-2 px-5 rounded-md hover:bg-blue-600 transition"
-          onClick={() => {
-            listarPendencias(new Date(inicio), ajustarDataFinal(fim));
-            listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(dataBR));
-          }}
-        >
-          Buscar
-        </button>
-      </div>
+      <FiltroDatas
+        inicio={inicio}
+        fim={fim}
+        setInicio={setInicio}
+        setFim={setFim}
+        onBuscar={() => {
+          listarPendencias(ajustarDataInicial(inicio), ajustarDataFinal(fim));
+          listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(fim));
+        }}
+      />
 
       {/* 🔹 Cards de resumo */}
       <div className="grid grid-cols-3 gap-6 w-full">
@@ -207,7 +187,7 @@ export default function Dashboard() {
       </div>
 
       {/* 🔹 Tabela e Gráficos */}
-      <div className="flex flex-col md:flex-row gap-3 w-full mt-1">
+      <div className="flex flex-col md:flex-row gap-3 w-full">
         <TabelaPendencias
           pendencias={statusPendencias}
           filtroStatus={filtroStatus}

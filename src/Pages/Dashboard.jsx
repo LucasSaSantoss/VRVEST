@@ -36,6 +36,7 @@ export default function Dashboard() {
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [instantClose, setInstantClose] = useState(false);
+  const [submenuOpen, setSubmenuOpen] = useState(false);
 
   let timeoutId;
 
@@ -120,7 +121,7 @@ export default function Dashboard() {
       <div className="flex w-full h-screen bg-gray-100">
         <aside
           className={`shadow-lg ${!instantClose ? "transition-all duration-300" : "transition-all duration-200"} rounded-xl text-white hover:shadow-xl flex flex-col justify-center items-center 
-          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh]`}
+          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh] `}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{ backgroundColor: "#16607a" }}
@@ -137,7 +138,9 @@ export default function Dashboard() {
               <span className="text-md rounded-full">
                 {locked ? <FaArrowLeft /> : <FaArrowRight />}
               </span>
-              <span className={`ml-3 ${hovered ? "opacity-100 mr-8" : "hidden"}`}>
+              <span
+                className={`ml-3 ${hovered ? "opacity-100 mr-8" : "hidden"}`}
+              >
                 {locked ? "Ocultar menu lateral" : "Manter menu lateral"}
               </span>
             </button>
@@ -147,6 +150,7 @@ export default function Dashboard() {
           <ul className="p-3 space-y-3 h-[60vh] ">
             {levelUser === 4 && (
               <li
+                data-testid="homeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "home" ? "bg-white text-gray-800 rounded" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("home")}
@@ -161,6 +165,7 @@ export default function Dashboard() {
             )}
 
             <li
+              data-testid="qrCodeSelection"
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("qrcode")}
@@ -175,6 +180,7 @@ export default function Dashboard() {
 
             {levelUser >= 2 && (
               <li
+                data-testid="userSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "usuarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("usuarios")}
@@ -192,6 +198,7 @@ export default function Dashboard() {
 
             {levelUser >= 2 && (
               <li
+                data-testid="employeeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("funcionarios")}
@@ -206,6 +213,7 @@ export default function Dashboard() {
             )}
 
             <li
+              data-testid="tempEmployeeSelection"
               className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
               onClick={() => setSelected("funcionarioTemp")}
@@ -222,6 +230,7 @@ export default function Dashboard() {
 
             {levelUser >= 3 && (
               <li
+                data-testid="baixaSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("baixa")}
@@ -234,18 +243,86 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
+            {/* === DROPCOMBO DE RELATÓRIOS === */}
             {levelUser === 4 && (
-              <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "relatorios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("relatorios")}
-              >
-                <span className="text-xl">
-                  <LuClipboardList />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Relatórios
-                </span>
+              <li 
+              data-testid="relatorioSelection" className="px-3">
+                <div
+                  className={`flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 ${
+                    submenuOpen
+                      ? "bg-white text-gray-800"
+                      : "hover:bg-white hover:text-gray-800"
+                  }`}
+                  onClick={() => setSubmenuOpen(!submenuOpen)}
+                >
+                  <div className="flex items-center">
+                    <LuClipboardList className="text-xl" />
+                    <span
+                      className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                    >
+                      Relatórios
+                    </span>
+                  </div>
+                  {hovered && (
+                    <span className="text-sm mr-2">
+                      {submenuOpen ? "▲" : "▼"}
+                    </span>
+                  )}
+                </div>
+
+                {/* SUBMENU */}
+                {submenuOpen && hovered && (
+                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto max-h-35">
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("relatorios")}
+                    >
+                      Relatório Financeiro
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("usuarios")}
+                    >
+                      Relatório de Usuários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                    <li
+                      className="cursor-pointer hover:text-gray-300"
+                      onClick={() => setSelected("funcionarios")}
+                    >
+                      Relatório de Funcionários
+                    </li>
+                  </ul>
+                )}
               </li>
             )}
           </ul>

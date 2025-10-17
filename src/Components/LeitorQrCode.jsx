@@ -22,6 +22,7 @@ function LeitorQrCode() {
   const [mensagem, setMensagem] = useState("");
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
   const [simNaoComNumero, setSimNaoComNumero] = useState(true);
+  const [doubleClick, setDoubleClick] = useState(false);
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -442,6 +443,10 @@ function LeitorQrCode() {
           onClick={() => {
             (setTipoOperacao("retirada"), cpfInputRef.current?.focus());
           }}
+          onDoubleClick={(e) => {
+            const simulaEnter = { key: "Enter" };
+            handleCpfEnter(simulaEnter);
+          }}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
           tipoOperacao === "retirada"
@@ -455,6 +460,10 @@ function LeitorQrCode() {
         <button
           onClick={() => {
             (setTipoOperacao("devolucao"), cpfInputRef.current?.focus());
+          }}
+          onDoubleClick={(e) => {
+            const simulaEnter = { key: "Enter" };
+            handleCpfEnter(simulaEnter);
           }}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
