@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import CardResumo from "./CardResumo";
-import TabelaPendencias from "./tabelaPendencias";
+import TabelaPendencias from "./TabelaPendencias";
 import GraficoDoughnut from "./GraficoDoughnut";
 import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
