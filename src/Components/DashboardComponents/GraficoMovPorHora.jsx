@@ -25,7 +25,7 @@ ChartJS.register(
 export default function MovPorHora({ values = [] }) {
   const chartRef = useRef(null);
   const hoje = new Date();
-
+  console.log(values);
   const carregaHoras = () => {
     const horas = [];
 
@@ -65,7 +65,6 @@ export default function MovPorHora({ values = [] }) {
   useEffect(() => {
     if (!Array.isArray(values) || values.length === 0) return;
 
-    // Mapeia cada mês dos últimos 6 meses
     const retiradosPorHora = Array(24).fill(0);
     const devolvidosPorHora = Array(24).fill(0);
 
@@ -77,9 +76,9 @@ export default function MovPorHora({ values = [] }) {
       ) {
         const dataMov = item.data ? addHours(new Date(item.data), 3) : null;
         if (!dataMov) return;
-
+        console.log(dataMov);
         const diffHoras = Math.floor((hoje - dataMov) / (1000 * 60 * 60));
-        if (diffHoras < 24 && diffHoras > 0) {
+        if (diffHoras < 24 && diffHoras >= 0) {
           const index = 23 - diffHoras;
 
           retiradosPorHora[index]++;
@@ -93,11 +92,11 @@ export default function MovPorHora({ values = [] }) {
 
         const diffHoras = Math.floor((hoje - dataMov) / (1000 * 60 * 60)); //Cálculo da hora em que foi retirado
         const diffHorasDevol = Math.floor((hoje - dataMov) / (1000 * 60 * 60)); //Cálculo da hora em que foi devolvido
-        if (diffHorasDevol < 24 && diffHorasDevol > 0) {
+        if (diffHorasDevol < 24 && diffHorasDevol >= 0) {
           const index = 23 - diffHorasDevol;
           devolvidosPorHora[index]++;
         }
-        if (diffHoras < 24 && diffHoras > 0) {
+        if (diffHoras < 24 && diffHoras >= 0) {
           //Toda devolução foi retirada inicialmente, então preciso adicionar uma retirada também em cada devolução caso os parâmetros sejam satisfeitos;
           const index = 23 - diffHoras;
 
@@ -106,22 +105,24 @@ export default function MovPorHora({ values = [] }) {
       }
     });
 
+    console.log(retiradosPorHora);
+    console.log(devolvidosPorHora);
     setData({
       labels,
       datasets: [
         {
           label: "Retirados",
           data: retiradosPorHora,
-          borderColor: "rgba(226, 195, 20, 1)",
-          backgroundColor: "rgba(219, 216, 15, 0.74)",
+          borderColor: "rgba(240, 236, 32, 0.74)",
+          backgroundColor: "rgba(231, 228, 32, 0.91)",
           tension: 0.3,
           fill: true,
         },
         {
           label: "Devolvidos",
           data: devolvidosPorHora,
-          borderColor: "rgba(20, 214, 52, 1)",
-          backgroundColor: "rgba(10, 197, 19, 0.83)",
+          borderColor: "rgba(42, 228, 73, 1)",
+          backgroundColor: "rgba(34, 228, 44, 0.86)",
           tension: 0.3,
           fill: true,
         },

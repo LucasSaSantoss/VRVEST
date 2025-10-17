@@ -35,6 +35,7 @@ export default function Dashboard() {
   const [levelUser, setLevelUser] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
+  const [instantClose, setInstantClose] = useState(false);
 
   let timeoutId;
 
@@ -47,6 +48,19 @@ export default function Dashboard() {
     if (!locked) {
       clearTimeout(timeoutId);
       timeoutId = setTimeout(() => setHovered(false), 200);
+    }
+  };
+
+  const handleToggleLock = () => {
+    if (locked) {
+      setInstantClose(true);
+      setLocked(false);
+      setHovered(false);
+
+      // reativa a transição depois de fechar
+      setTimeout(() => setInstantClose(false), 50);
+    } else {
+      setLocked(true);
     }
   };
 
@@ -105,23 +119,25 @@ export default function Dashboard() {
       </div>
       <div className="flex w-full h-screen bg-gray-100">
         <aside
-          className={`shadow-lg transition-all duration-300 rounded-xl text-white hover:shadow-xl flex flex-col justify-between items-center 
+          className={`shadow-lg ${!instantClose ? "transition-all duration-300" : "transition-all duration-200"} rounded-xl text-white hover:shadow-xl flex flex-col justify-center items-center 
           focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh]`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{ backgroundColor: "#16607a" }}
         >
-          <div className="p-4 flex justify-between items-center border-b">
+          <div className="p-4 flex justify-center items-center border-b">
             <span
               className={`font-bold text-xl transition-opacity duration-300 
-              ${hovered ? "opacity-100" : "opacity-0 absolute"}`}
+              ${hovered ? "opacity-100 " : "opacity-0 absolute"}`}
             ></span>
             <button
-              className=" hover:opacity-70"
-              onClick={() => setLocked(!locked)}
+              className={`flex items-center hover:opacity-70`}
+              onClick={handleToggleLock}
             >
-              {locked ? <FaArrowLeft /> : <FaArrowRight />}
-              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+              <span className="text-md rounded-full">
+                {locked ? <FaArrowLeft /> : <FaArrowRight />}
+              </span>
+              <span className={`ml-3 ${hovered ? "opacity-100 mr-8" : "hidden"}`}>
                 {locked ? "Ocultar menu lateral" : "Manter menu lateral"}
               </span>
             </button>
@@ -252,7 +268,7 @@ export default function Dashboard() {
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[130px]">
+        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[14vh]">
           {pages[selected]}
         </main>
 

@@ -253,7 +253,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
           <div className="w-full flex justify-center">
             <button
               type="button"
-              className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
+              className="px-5 w-[150px] py-3 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
               onClick={() => setMostarModalSimNao(true)}
             >
               Salvar Alterações

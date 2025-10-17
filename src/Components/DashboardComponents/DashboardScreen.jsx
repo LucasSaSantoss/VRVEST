@@ -6,7 +6,6 @@ import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 import MovPorHora from "./GraficoMovPorHora";
-import GraficoLinha from "./graficoTeste";
 
 export default function Dashboard() {
   const [filtroStatus, setFiltroStatus] = useState(null);

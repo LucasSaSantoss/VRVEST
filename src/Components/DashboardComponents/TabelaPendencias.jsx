@@ -24,7 +24,6 @@ export default function TabelaPendencias({
 
     try {
       const dataObj = parseISO(data);
-
       const dataAjustada = addHours(dataObj, horas);
 
       return format(dataAjustada, "dd/MM/yyyy HH:mm", { locale: ptBR });
