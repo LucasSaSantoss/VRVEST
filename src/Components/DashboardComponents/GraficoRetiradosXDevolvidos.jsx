@@ -79,6 +79,7 @@ export default function RetiradosEDevolvidos({ values = [] }) {
           dataDevolucao.getMonth() === mesRef.getMonth() &&
           dataDevolucao.getFullYear() === mesRef.getFullYear()
         ) {
+          retiradosPorMes[i]++; 
           devolvidosPorMes[i]++;
         }
       }
