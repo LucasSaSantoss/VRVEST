@@ -134,6 +134,14 @@ export default function Dashboard() {
     listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(dataBR));
   }, []);
 
+  useEffect(() => {
+    if (inicio && fim) {
+      // Atualiza dados sempre que as datas mudarem
+      listarPendencias(ajustarDataInicial(inicio), ajustarDataFinal(fim));
+      listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(fim));
+    }
+  }, [inicio, fim]);
+
   // ----------------- Filtro e resumo -----------------
   const statusPendencias = filtroStatus
     ? pendencias.filter((p) => p.status === filtroStatus)
@@ -149,20 +157,24 @@ export default function Dashboard() {
 
   // ----------------- Renderização -----------------
   return (
-    <div className="flex flex-col w-full mt-4 px-5">
-      <FiltroDatas
-        inicio={inicio}
-        fim={fim}
-        setInicio={setInicio}
-        setFim={setFim}
-        onBuscar={() => {
-          listarPendencias(ajustarDataInicial(inicio), ajustarDataFinal(fim));
-          listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(fim));
-        }}
-      />
-
+    <div className="flex flex-col w-full mt-6 ">
       {/* 🔹 Cards de resumo */}
-      <div className="grid grid-cols-3 gap-6 w-full">
+      <div className="grid grid-cols-[10rem_auto_auto_auto] justify-stretch gap-6 w-full">
+        <div className="grid grid-col-2 ">
+          <label
+            id="labelIntervalo"
+            htmlFor="labelIntervalo"
+            className="text-lg sm:text-xl font-semibold text-gray-700 flex items-center gap-2 border-l-4 border-blue-500 pl-3"
+          >
+            Selecionar Intervalo
+          </label>
+          <FiltroDatas
+            inicio={inicio}
+            fim={fim}
+            setInicio={setInicio}
+            setFim={setFim}
+          />
+        </div>
         <CardResumo
           titulo="Em aberto"
           valor={pendencias.filter((p) => p.status === "Em aberto").length}

@@ -225,7 +225,7 @@ function LeitorQrCode() {
   const showTemporaryPopup = (message) => {
     setPopupMessage(message);
     setShowPopup(true);
-    setTimeout(() => setShowPopup(false), 3000);
+    setTimeout(() => setShowPopup(false), 2000);
   };
 
   // Listener do teclado
@@ -407,7 +407,7 @@ function LeitorQrCode() {
     } finally {
       setIsProcessing(false);
       setMostrarModalSimNao(false);
-      setTimeout(() => setShowPopup(false), 3000);
+      setTimeout(() => setShowPopup(false), 2000);
       cpfInputRef.current?.focus();
     }
   };

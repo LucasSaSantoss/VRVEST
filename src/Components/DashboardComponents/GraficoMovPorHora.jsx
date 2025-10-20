@@ -25,7 +25,6 @@ ChartJS.register(
 export default function MovPorHora({ values = [] }) {
   const chartRef = useRef(null);
   const hoje = new Date();
-  console.log(values);
   const carregaHoras = () => {
     const horas = [];
 
@@ -76,7 +75,6 @@ export default function MovPorHora({ values = [] }) {
       ) {
         const dataMov = item.data ? addHours(new Date(item.data), 3) : null;
         if (!dataMov) return;
-        console.log(dataMov);
         const diffHoras = Math.floor((hoje - dataMov) / (1000 * 60 * 60));
         if (diffHoras < 24 && diffHoras >= 0) {
           const index = 23 - diffHoras;
@@ -87,10 +85,10 @@ export default function MovPorHora({ values = [] }) {
 
       if (item.dataDevolucao) {
         const dataMov = addHours(new Date(item.dataDevolucao), 3);
-
+        const dataMovRetirada = addHours(new Date(item.data), 3);
         if (!dataMov) return;
 
-        const diffHoras = Math.floor((hoje - dataMov) / (1000 * 60 * 60)); //Cálculo da hora em que foi retirado
+        const diffHoras = Math.floor((hoje - dataMovRetirada) / (1000 * 60 * 60)); //Cálculo da hora em que foi retirado
         const diffHorasDevol = Math.floor((hoje - dataMov) / (1000 * 60 * 60)); //Cálculo da hora em que foi devolvido
         if (diffHorasDevol < 24 && diffHorasDevol >= 0) {
           const index = 23 - diffHorasDevol;
@@ -105,8 +103,6 @@ export default function MovPorHora({ values = [] }) {
       }
     });
 
-    console.log(retiradosPorHora);
-    console.log(devolvidosPorHora);
     setData({
       labels,
       datasets: [
@@ -159,12 +155,12 @@ export default function MovPorHora({ values = [] }) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl w-full h-[204px] p-2 mt-1">
+    <div className="bg-white shadow-lg rounded-2xl w-full h-[250px] p-2 mt-1">
       <p className="text-md font-bold text-gray-800 mb-2 text-center">
         Retirados e Devolvidos (Últimas 24 hrs)
       </p>
 
-      <div className="w-full h-[160px]">
+      <div className="w-full h-[213px]">
         <Line ref={chartRef} data={data} options={options} />
       </div>
     </div>

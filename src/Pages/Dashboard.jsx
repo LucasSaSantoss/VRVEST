@@ -121,7 +121,7 @@ export default function Dashboard() {
       <div className="flex w-full h-screen bg-gray-100">
         <aside
           className={`shadow-lg ${!instantClose ? "transition-all duration-300" : "transition-all duration-200"} rounded-xl text-white hover:shadow-xl flex flex-col justify-center items-center 
-          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh] `}
+          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh] h-[82%]`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{ backgroundColor: "#16607a" }}
