@@ -22,6 +22,7 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, []);
 
+  
   // Estado temporário para seleção
   const [intervaloTemp, setIntervaloTemp] = useState([
     {
@@ -30,7 +31,6 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
       key: "selection",
     },
   ]);
-
   // Atualiza intervaloTemp quando inicio/fim mudam externamente
   useEffect(() => {
     setIntervaloTemp([
@@ -90,13 +90,14 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
         <div className="absolute z-50 mt-2 bg-white border border-gray-200 rounded-xl shadow-lg p-3">
           <DateRange
             editableDateInputs={true}
-            onChange={(item) => setIntervaloTemp([item.selection])}
+            onChange={(item) => {
+              setIntervaloTemp([item.selection]);
+            }}
             moveRangeOnFirstSelection={false}
             ranges={intervaloTemp}
             locale={ptBR}
             rangeColors={["#3b82f6"]}
           />
-
           <div className="flex justify-end gap-2 mt-3">
             <button
               onClick={() => setMostrarCalendario(false)}

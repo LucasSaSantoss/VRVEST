@@ -68,7 +68,7 @@ export default function TabelaUsuarios() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 mt-8">
       {/* Título + Campo de busca */}
       <div className="flex flex-col items-start mb-4">
         <h1 className="text-4xl font-bold">Usuários Cadastrados</h1>

@@ -84,7 +84,7 @@ export default function ListaFuncionarios() {
 
   return (
     <>
-      <div className="p-4">
+      <div className="p-4 mt-6">
         <div className="flex flex-col items-start mb-4">
           <h1 className="text-4xl font-bold">Colaboradores Cadastrados</h1>
 

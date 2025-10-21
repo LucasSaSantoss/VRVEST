@@ -6,8 +6,6 @@ import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import { carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 import MovPorHora from "./GraficoMovPorHora";
-import { DateRange } from "react-date-range";
-import { ptBR } from "date-fns/locale";
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";
 import FiltroDatas from "./ComponenteData/DateInput";
@@ -20,7 +18,7 @@ export default function Dashboard() {
   const [dadosGrafico, setDadosGrafico] = useState([]);
 
   const agora = new Date();
-  const dataBR = new Date(agora.getTime() - 3 * 60 * 60 * 1000);
+  const dataBR = new Date(agora.getTime() - 3 * 58 * 60 * 1000);
 
   // -------------------   Define o status da Pendência  -------------------
   const definirStatus = (item) => {
@@ -40,7 +38,7 @@ export default function Dashboard() {
   // ------------------- Ajusta a data inicial e final -------------------
   const ajustarDataFinal = (data) => {
     const d = new Date(data);
-    d.setDate(d.getDate() + 1);
+    d.setDate(d.getDate());
     d.setHours(23, 59, 59, 999);
     return d;
   };
@@ -63,10 +61,12 @@ export default function Dashboard() {
   async function listarPendencias(inicio, fim) {
     try {
       const dataInicio = new Date(inicio);
-      const dataFim = new Date(fim);
-      dataFim.setHours(23, 59, 59, 999);
+      const dataFim = ajustarDataFinal(fim);
 
-      const dados = await carregarPendencias(dataInicio, dataFim);
+      const dados = await carregarPendencias(
+        ajustarDataInicial(dataInicio),
+        ajustarDataFinal(dataFim)
+      );
 
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
@@ -95,10 +95,12 @@ export default function Dashboard() {
   const listarRetiradosDevolvidos = async (inicio, fim) => {
     try {
       const dataInicio = inicio;
-      const dataFim = fim;
-      dataFim.setHours(23, 59, 59, 999);
+      const dataFim = ajustarDataFinal(fim);
 
-      const dados = await carregarPendencias(dataInicio, dataFim);
+      const dados = await carregarPendencias(
+        ajustarDataInicial(dataInicio),
+        ajustarDataFinal(dataFim)
+      );
       if (dados?.success && Array.isArray(dados.data)) {
         const formatadas = dados.data.map((item) => {
           const minutos = differenceInMinutes(dataBR, new Date(item.date));
@@ -137,8 +139,9 @@ export default function Dashboard() {
   useEffect(() => {
     if (inicio && fim) {
       // Atualiza dados sempre que as datas mudarem
+      const seisMesesAtras = new Date();
+      seisMesesAtras.setMonth(new Date().getMonth() - 5);
       listarPendencias(ajustarDataInicial(inicio), ajustarDataFinal(fim));
-      listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(fim));
     }
   }, [inicio, fim]);
 
@@ -150,10 +153,6 @@ export default function Dashboard() {
   const handleSelecionarCard = (status) => {
     setFiltroStatus((prev) => (prev === status ? null : status));
   };
-
-  // ----------------- Data para gráfico -----------------
-  const seisMesesAtras = new Date();
-  seisMesesAtras.setMonth(new Date().getMonth() - 5);
 
   // ----------------- Renderização -----------------
   return (

@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
   try {
-    const { inicio, fim } = req.query;
+    const { inicio, fim } = req.query; 
     let filtroData = {};
 
     if (inicio && fim) {

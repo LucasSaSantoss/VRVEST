@@ -30,7 +30,7 @@ import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp"
 export default function Dashboard() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
-  const [selected, setSelected] = useState("qrcode");
+  const [selected, setSelected] = useState("");
   const [locked, setLocked] = useState(false);
   const [levelUser, setLevelUser] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
@@ -90,14 +90,31 @@ export default function Dashboard() {
           navigate("/");
         }, 3000);
       }
-      setLevelUser(decodedToken.level);
+
+      const nivel = decodedToken.level;
+      setLevelUser(nivel);
+
+      switch (nivel) {
+        case 4:
+          setSelected("home");
+          break;
+        case 3:
+          setSelected("home");
+          break;
+        case 2:
+          setSelected("usuarios");
+          break;
+        case 1:
+          setSelected("qrcode");
+          break;
+      }
     } catch (err) {
       console.error("Erro ao verificar token:", err);
       localStorage.removeItem("token");
       showTemporaryPopup("Token inválido, faça login novamente.");
       navigate("/");
     }
-  }, [selected, navigate]);
+  }, [navigate]);
   const handleLogoff = () => {
     localStorage.removeItem("token");
     navigate("/");
@@ -141,14 +158,14 @@ export default function Dashboard() {
               <span
                 className={`ml-3 ${hovered ? "opacity-100 mr-8" : "hidden"}`}
               >
-                {locked ? "Ocultar menu lateral" : "Manter menu lateral"}
+                {locked ? "Ocultar Menu Lateral" : "Fixar Menu Lateral"}
               </span>
             </button>
           </div>
 
           {/* Menu */}
-          <ul className="p-3 space-y-3 h-[60vh] ">
-            {levelUser === 4 && (
+          <ul className="p-3 space-y-auto h-[60vh] ">
+            {levelUser >= 3 && (
               <li
                 data-testid="homeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -164,20 +181,21 @@ export default function Dashboard() {
               </li>
             )}
 
-            <li
-              data-testid="qrCodeSelection"
-              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+            {levelUser !== 2 && (
+              <li
+                data-testid="qrCodeSelection"
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
               ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-              onClick={() => setSelected("qrcode")}
-            >
-              <span className="text-xl">
-                <LuQrCode />
-              </span>
-              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                QR Code
-              </span>
-            </li>
-
+                onClick={() => setSelected("qrcode")}
+              >
+                <span className="text-xl">
+                  <LuQrCode />
+                </span>
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  QR Code
+                </span>
+              </li>
+            )}
             {levelUser >= 2 && (
               <li
                 data-testid="userSelection"
@@ -245,8 +263,7 @@ export default function Dashboard() {
             )}
             {/* === DROPCOMBO DE RELATÓRIOS === */}
             {levelUser === 4 && (
-              <li 
-              data-testid="relatorioSelection" className="px-3">
+              <li data-testid="relatorioSelection" className="px-3 mt-2">
                 <div
                   className={`flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 ${
                     submenuOpen
@@ -272,7 +289,7 @@ export default function Dashboard() {
 
                 {/* SUBMENU */}
                 {submenuOpen && hovered && (
-                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto max-h-35">
+                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto max-h-[12vh]">
                     <li
                       className="cursor-pointer hover:text-gray-300"
                       onClick={() => setSelected("relatorios")}

@@ -132,7 +132,7 @@ export default function ListaPendencias() {
   };
 
   return (
-    <div className="p-4">
+    <div className="p-4 mt-10">
       <div className="flex justify-between">
         <label className="font-bold text-4xl mb-3">Baixa Financeira</label>
       </div>
