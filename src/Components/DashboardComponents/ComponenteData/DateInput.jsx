@@ -21,8 +21,31 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
     document.addEventListener("mousedown", handleClickFora);
     return () => document.removeEventListener("mousedown", handleClickFora);
   }, []);
+  const ajustarDataInicial = (data) => {
+    if (!data) return null; // se não houver data, retorna null
+    const d = new Date(data);
+    d.setDate(d.getDate() + 1);
+    // Verifica se a data é válida
+    if (isNaN(d.getTime())) {
+      console.warn("Data inicial inválida:", data);
+      return null;
+    }
+    d.setHours(0, 0, 0, 0);
+    return d;
+  };
 
-  
+  const ajustarDataFinal = (data) => {
+    if (!data) return null; // se não houver data, retorna null
+    const d = new Date(data);
+    d.setDate(d.getDate() + 1);
+    // Verifica se a data é válida
+    if (isNaN(d.getTime())) {
+      console.warn("Data final inválida:", data);
+      return null;
+    }
+    d.setHours(23, 59, 59, 999);
+    return d;
+  };
   // Estado temporário para seleção
   const [intervaloTemp, setIntervaloTemp] = useState([
     {
@@ -30,13 +53,15 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
       endDate: fim ? new Date(fim) : new Date(),
       key: "selection",
     },
+    ,
+    [inicio, fim],
   ]);
   // Atualiza intervaloTemp quando inicio/fim mudam externamente
   useEffect(() => {
     setIntervaloTemp([
       {
-        startDate: inicio ? new Date(inicio) : new Date(),
-        endDate: fim ? new Date(fim) : new Date(),
+        startDate: inicio ? ajustarDataInicial(inicio) : new Date(),
+        endDate: fim ? ajustarDataFinal(fim) : new Date(),
         key: "selection",
       },
     ]);

@@ -72,49 +72,65 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
+    const validarToken = () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        navigate("/");
+        return;
+      }
 
-    try {
-      const decodedToken = jwtDecode(token);
-      const agora = Date.now() / 1000; // em segundos
+      try {
+        const decodedToken = jwtDecode(token);
+        const agora = Date.now() / 1000; // em segundos
 
-      if (decodedToken.exp < agora) {
-        // Token expirado
+        if (decodedToken.exp < agora) {
+          // Token expirado
+          localStorage.removeItem("token");
+          showTemporaryPopup("Sua sessão expirou, faça login novamente.");
+          setTimeout(() => {
+            navigate("/");
+          }, 3000);
+        } else {
+          // Token válido → define nível de usuário
+          const nivel = decodedToken.level;
+          setLevelUser(nivel);
+
+          // Só define tela se nenhuma estiver selecionada
+          setSelected((atual) => {
+            if (!atual) {
+              switch (nivel) {
+                case 4:
+                case 3:
+                  return "home";
+                case 2:
+                  return "usuarios";
+                case 1:
+                  return "qrcode";
+                default:
+                  return "home";
+              }
+            }
+            return atual; // mantém a tela atual
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao verificar token:", err);
         localStorage.removeItem("token");
-        showTemporaryPopup("Sua sessão expirou, faça login novamente.");
-        setTimeout(() => {
-          navigate("/");
-        }, 3000);
+        showTemporaryPopup("Token inválido, faça login novamente.");
+        navigate("/");
       }
+    };
 
-      const nivel = decodedToken.level;
-      setLevelUser(nivel);
+    // Verifica o token imediatamente ao montar
+    validarToken();
 
-      switch (nivel) {
-        case 4:
-          setSelected("home");
-          break;
-        case 3:
-          setSelected("home");
-          break;
-        case 2:
-          setSelected("usuarios");
-          break;
-        case 1:
-          setSelected("qrcode");
-          break;
-      }
-    } catch (err) {
-      console.error("Erro ao verificar token:", err);
-      localStorage.removeItem("token");
-      showTemporaryPopup("Token inválido, faça login novamente.");
-      navigate("/");
-    }
-  }, [navigate]);
+    // Repete a validação a cada 1 minuto
+    const intervalo = setInterval(validarToken, 60 * 1000);
+
+    // Limpa o intervalo ao desmontar o componente
+    return () => clearInterval(intervalo);
+  }, [navigate, setLevelUser, setSelected]);
+
   const handleLogoff = () => {
     localStorage.removeItem("token");
     navigate("/");

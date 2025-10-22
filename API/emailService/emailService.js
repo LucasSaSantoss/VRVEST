@@ -7,14 +7,14 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 const transporter = nodemailer.createTransport({
-  host: "sandbox.smtp.mailtrap.io",
-  port: 587,
+  host: "smtp.gmail.com",
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
   },
 });
-
 
 /**
  * Envia email para funcionário
@@ -25,7 +25,9 @@ const transporter = nodemailer.createTransport({
  * @param {string|string[]}[bcc] - E-mails em cópia oculta
  */
 export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
-  const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+  const dateBRNow = new Date().toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+  });
   try {
     const formatEmails = (emails) =>
       Array.isArray(emails) ? emails.join(", ") : emails;
@@ -49,7 +51,7 @@ export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
           action: "Erro ao enviar email",
           newData: JSON.stringify(error, Object.getOwnPropertyNames(error)),
           createdAt: dateBRNow,
-          userId:1,
+          userId: 1,
         },
       });
     } catch (logErr) {

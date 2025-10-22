@@ -276,15 +276,13 @@ export async function devolucaoKit({ cpf, id }) {
 }
 
 export async function carregarPendencias(inicio, fim) {
+
   const token = localStorage.getItem("token");
   try {
-    const res = await axios.get(
-      `${API_URL}/pend`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-        params: { inicio, fim },
-      }
-    );
+    const res = await axios.get(`${API_URL}/pend`, {
+      headers: { Authorization: `Bearer ${token}` },
+      params: { inicio, fim },
+    });
     return res.data;
   } catch (err) {
     console.error("Erro ao carregar pendências:", err);

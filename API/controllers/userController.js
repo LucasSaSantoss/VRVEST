@@ -10,10 +10,6 @@ const prisma = new PrismaClient();
 export const loginUser = async (req, res) => {
   const { email, password } = req.body;
 
-  console.log("\n=== LOGIN DEBUG BACKEND ===");
-  console.log("Body recebido:", req.body);
-  console.log("JWT_SECRET:", process.env.JWT_SECRET);
-
   try {
     const user = await prisma.user.findUnique({ where: { email } });
 
@@ -50,9 +46,6 @@ export const loginUser = async (req, res) => {
       { expiresIn: "4h" } // expira em 4 horas
     );
 
-    console.log("Token gerado (primeiros 50 caracteres):", token.slice(0, 50));
-    console.log("Partes do token:", token.split(".").length); // deve ser 3
-
     return res.status(200).json({
       success: true,
       message: "Login bem-sucedido",
@@ -60,7 +53,6 @@ export const loginUser = async (req, res) => {
     });
   } catch (err) {
     console.error("Erro no login:", err);
-    console.log(err);
     return res
       .status(500)
       .json({ success: false, message: "Erro no servidor" });

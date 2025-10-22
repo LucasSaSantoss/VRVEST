@@ -94,14 +94,18 @@ export const baixarPendencias = async (req, res) => {
     // --------------------------------------
 
     // Envia e-mail automaticamente
+    const limiteVenc = new Date();
+    limiteVenc.setHours(limiteVenc.getHours() + 36);
+
+    const dataParaDevol = limiteVenc.toLocaleString("pt-BR");
     await enviarEmail(
       funcionario.email,
       "Devolução de Kit",
-      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido em ${new Date(
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date(
         pendenciaAtualizada.devolDate
       ).toLocaleString(
         "pt-BR"
-      )} pelo usuário ${usuarioName}, através da baixa de pendências.`
+      )}, através da baixa de pendências.`
     );
 
     return res.json({

@@ -36,16 +36,30 @@ export default function Dashboard() {
   };
 
   // ------------------- Ajusta a data inicial e final -------------------
-  const ajustarDataFinal = (data) => {
+
+  const ajustarDataInicial = (data) => {
+    if (!data) return null; // se não houver data, retorna null
     const d = new Date(data);
-    d.setDate(d.getDate());
-    d.setHours(23, 59, 59, 999);
+    d.setDate(d.getDate() + 1);
+    // Verifica se a data é válida
+    if (isNaN(d.getTime())) {
+      console.warn("Data inicial inválida:", data);
+      return null;
+    }
+    d.setHours(0, 0, 0, 0);
     return d;
   };
 
-  const ajustarDataInicial = (data) => {
+  const ajustarDataFinal = (data) => {
+    if (!data) return null; // se não houver data, retorna null
     const d = new Date(data);
-    d.setHours(0, 0, 0, 0);
+    d.setDate(d.getDate() + 1);
+    // Verifica se a data é válida
+    if (isNaN(d.getTime())) {
+      console.warn("Data final inválida:", data);
+      return null;
+    }
+    d.setHours(23, 59, 59, 999);
     return d;
   };
 
@@ -60,8 +74,8 @@ export default function Dashboard() {
   // ------------------- Carrega as pendências -------------------
   async function listarPendencias(inicio, fim) {
     try {
-      const dataInicio = new Date(inicio);
-      const dataFim = ajustarDataFinal(fim);
+      const dataInicio = inicio;
+      const dataFim = fim;
 
       const dados = await carregarPendencias(
         ajustarDataInicial(dataInicio),
@@ -95,7 +109,7 @@ export default function Dashboard() {
   const listarRetiradosDevolvidos = async (inicio, fim) => {
     try {
       const dataInicio = inicio;
-      const dataFim = ajustarDataFinal(fim);
+      const dataFim = fim;
 
       const dados = await carregarPendencias(
         ajustarDataInicial(dataInicio),
@@ -129,19 +143,17 @@ export default function Dashboard() {
     setInicio(ontem.toISOString().split("T")[0]);
     setFim(dataBR.toISOString().split("T")[0]);
 
-    listarPendencias(ajustarDataInicial(ontem), ajustarDataFinal(dataBR));
+    listarPendencias(ontem, dataBR);
 
     const seisMesesAtras = new Date();
     seisMesesAtras.setMonth(new Date().getMonth() - 5);
-    listarRetiradosDevolvidos(seisMesesAtras, ajustarDataFinal(dataBR));
+    listarRetiradosDevolvidos(seisMesesAtras, dataBR);
   }, []);
 
   useEffect(() => {
     if (inicio && fim) {
       // Atualiza dados sempre que as datas mudarem
-      const seisMesesAtras = new Date();
-      seisMesesAtras.setMonth(new Date().getMonth() - 5);
-      listarPendencias(ajustarDataInicial(inicio), ajustarDataFinal(fim));
+      listarPendencias(inicio, fim);
     }
   }, [inicio, fim]);
 
