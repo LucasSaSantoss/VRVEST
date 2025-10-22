@@ -56,9 +56,9 @@ export default function LoginVR() {
           </div>
         </div>
 
-        <div className="flex justify-center mb-5">
+        <div className="flex justify-center items-center mb-5">
           <img
-            className="w-150"
+            className="w-[70vh]"
             src="https://vrdocs.hmas.com.br/images/index_giphy.webp"
             alt=""
           />
