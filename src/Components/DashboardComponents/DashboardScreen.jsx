@@ -127,6 +127,7 @@ export default function Dashboard() {
             tempo: formatarTempo(minutos),
           };
         });
+        console.log(formatadas);
         setDadosGrafico(formatadas);
       } else {
         console.warn("Formato inesperado de dados:", dados);
