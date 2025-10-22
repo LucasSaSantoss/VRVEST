@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [dadosGrafico, setDadosGrafico] = useState([]);
 
   const agora = new Date();
-  const dataBR = new Date(agora.getTime() - 3 * 58 * 60 * 1000);
+  const dataBR = new Date(agora.getTime() - 3 * 59 * 60 * 1000);
 
   // -------------------   Define o status da Pendência  -------------------
   const definirStatus = (item) => {
