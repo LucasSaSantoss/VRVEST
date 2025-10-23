@@ -28,7 +28,7 @@ export default function ListaFuncionarios() {
   });
   const mostrarPopup = (mensagem, tipo = "info") => {
     setPopup({ mostrar: true, mensagem, tipo });
-    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 2000);
   };
 
   // ---------------------------------------------------------------
@@ -259,7 +259,7 @@ export default function ListaFuncionarios() {
       {/* Modal de Impressão de Crachá */}
       {showModalCracha && funcSelecionado && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm ">
-          <div className="bg-[rgb(23,110,150)] p-3 rounded-lg shadow-lg w-[25vw] max-h-[100vh] overflow-y-auto text-center border-2 border-gray-200">
+          <div className="bg-[rgb(23,110,150)] p-3 rounded-lg shadow-lg w-[320px] max-h-[100vh] overflow-y-auto text-center border-2 border-gray-200">
             <div className="flex justify-end items-center ">
               <button
                 className="text-red-500 font-bold text-xl hover:scale-110 transition duration-200 "

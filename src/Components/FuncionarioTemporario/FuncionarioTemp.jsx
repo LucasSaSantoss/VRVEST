@@ -13,6 +13,7 @@ export default function CreateFuncTemp() {
   const [position, setPosition] = useState("");
   const [sector, setSector] = useState("");
   const [modality, setModality] = useState("");
+  const [matricula, setMatricula] = useState("");
   const [obs, setObs] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [selected, setSelected] = useState("");
@@ -159,7 +160,7 @@ export default function CreateFuncTemp() {
     if (!avatarImage) {
       setPopup({
         mostrar: true,
-        mensagem: "Favor preencher o campo imagem.",
+        mensagem: "Favor capturar a foto do colaborador.",
         tipo: "error",
       });
       setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
@@ -286,6 +287,22 @@ export default function CreateFuncTemp() {
             </div>
           </div>
 
+          <div className="flex-1 max-w-[450px]">
+            <label htmlFor="email" className="block text-sm font-semibold mb-1">
+              Matrícula:
+            </label>
+            <input
+              type="text"
+              id="matricula"
+              value={matricula}
+              onChange={(e) => {
+                const somenteNumeros = e.target.value.replace(/\D/g, "");
+                setMatricula(somenteNumeros);
+              }}
+              maxLength={20}
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
           {/* Cargo */}
           <div className="flex-1 min-w-[200px] w-full">
             <label className="block text-sm font-semibold mb-1">Cargo:</label>
@@ -330,6 +347,7 @@ export default function CreateFuncTemp() {
               <option value="UTI NEONATAL">UTI NEONATAL</option>
               <option value="PEDIATRIA">PEDIATRIA</option>
               <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
+              <option value="OUTROS">OUTROS</option>
             </select>
           </div>
 
@@ -349,6 +367,7 @@ export default function CreateFuncTemp() {
               <option value="PJ">PJ</option>
               <option value="CLT">CLT</option>
               <option value="RPA">RPA</option>
+              <option value="POS">PÓS GRADUANDO/ RESIDENTE</option>
             </select>
           </div>
 
@@ -372,21 +391,30 @@ export default function CreateFuncTemp() {
           <div className="w-full flex justify-center gap-4">
             <button
               type="button"
-              onClick={() =>
-                temCamposAlterados()
-                  ? setMostarModalSimNao(true)
-                  : setPopup(
-                      {
-                        mostrar: true,
-                        mensagem: "Preencha todos os campos para prosseguir.",
-                        tipo: "error",
-                      },
-                      setTimeout(
-                        () => setPopup((prev) => ({ ...prev, mostrar: false })),
-                        3000
-                      )
-                    )
-              }
+              onClick={() => {
+                if (temCamposAlterados()) {
+                  if (!matricula && modality === "CLT") {
+                    setPopup({
+                      mostrar: true,
+                      mensagem:
+                        "Para funcionários CLT, a matrícula é obrigatória.",
+                      tipo: "error",
+                    });
+                  } else {
+                    setMostarModalSimNao(true);
+                  }
+                } else {
+                  setPopup({
+                    mostrar: true,
+                    mensagem: "Nenhum campo foi preenchido para cadastro",
+                    tipo: "error",
+                  });
+                }
+                setTimeout(
+                  () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                  3000
+                );
+              }}
               className="px-6 py-2 text-white bg-cyan-600 rounded-lg hover:bg-cyan-700 transition"
             >
               Cadastrar

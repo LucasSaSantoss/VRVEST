@@ -85,7 +85,7 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
 
   const textoBotao =
     inicio && fim
-      ? `${inicio.split("-").reverse().join("/")} - ${fim.split("-").reverse().join("/")}`
+      ? `${inicio.split("-").reverse().join("/")}  ${fim.split("-").reverse().join("/")}`
       : "Selecione um intervalo";
 
   return (

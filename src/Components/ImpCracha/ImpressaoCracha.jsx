@@ -8,7 +8,7 @@ export default function ImpressaoCracha({ cpf, nome }) {
         Impressão de Crachá
       </h2>
 
-      <div className="flex justify-center h-[35vh] items-center">
+      <div className="flex justify-center h-[350px] items-center">
         <section
           className="flex flex-col border-4 border-gray-300 rounded-lg p-0 
           w-[189px] h-[302px] bg-white shadow-lg gap-1"

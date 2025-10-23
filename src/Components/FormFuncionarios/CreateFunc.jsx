@@ -12,13 +12,14 @@ export default function CreateFunc({ onClose }) {
   const [position, setPosition] = useState("");
   const [sector, setSector] = useState("");
   const [modality, setModality] = useState("");
+  const [matricula, setMatricula] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
-  }; 
+  };
 
   const [popup, setPopup] = useState({
     mostrar: false,
@@ -113,6 +114,7 @@ export default function CreateFunc({ onClose }) {
       sector,
       position,
       modality,
+      matricula,
     });
 
     setMensagem(data.message);
@@ -124,7 +126,7 @@ export default function CreateFunc({ onClose }) {
     });
 
     // Fecha o popup automaticamente depois de 3 segundos
-    setTimeout(() => setPopup({ ...popup, mostrar: false }), 3000);
+    setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
 
     if (data.success) {
       if (onClose) onClose();
@@ -134,6 +136,7 @@ export default function CreateFunc({ onClose }) {
       setPosition("");
       setSector("");
       setModality("");
+      setMatricula("");
     }
     setMostarModalSimNao(false);
   };
@@ -181,7 +184,22 @@ export default function CreateFunc({ onClose }) {
               />
             </div>
           </div>
-
+          <div className="flex-1 min-w-[450px]">
+            <label htmlFor="email" className="block text-sm font-semibold mb-1">
+              Matrícula:
+            </label>
+            <input
+              type="text"
+              id="matricula"
+              value={matricula}
+              onChange={(e) => {
+                const somenteNumeros = e.target.value.replace(/\D/g, "");
+                setMatricula(somenteNumeros);
+              }}
+              maxLength={20}
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            />
+          </div>
           {/* CPF */}
           <div className="flex-1 min-w-[200px] w-full">
             <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
@@ -250,6 +268,7 @@ export default function CreateFunc({ onClose }) {
               <option value="UTI NEONATAL">UTI NEONATAL</option>
               <option value="PEDIATRIA">PEDIATRIA</option>
               <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
+              <option value="OUTROS">OUTROS</option>
             </select>
           </div>
 
@@ -272,6 +291,7 @@ export default function CreateFunc({ onClose }) {
               <option value="PJ">PJ</option>
               <option value="CLT">CLT</option>
               <option value="RPA">RPA</option>
+              <option value="POS">PÓS GRADUANDO/ RESIDENTE</option>
             </select>
           </div>
 
@@ -281,18 +301,27 @@ export default function CreateFunc({ onClose }) {
               className="px-5 w-30 py-2 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
               onClick={() => {
                 if (temCamposAlterados()) {
-                  setMostarModalSimNao(true);
+                  if (!matricula && modality === "CLT") {
+                    setPopup({
+                      mostrar: true,
+                      mensagem:
+                        "Para funcionários CLT, a matrícula é obrigatória.",
+                      tipo: "error",
+                    });
+                  } else {
+                    setMostarModalSimNao(true);
+                  }
                 } else {
                   setPopup({
                     mostrar: true,
                     mensagem: "Nenhum campo foi preenchido para cadastro",
                     tipo: "error",
                   });
-                  setTimeout(
-                    () => setPopup((prev) => ({ ...prev, mostrar: false })),
-                    3000
-                  );
                 }
+                setTimeout(
+                  () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                  3000
+                );
               }}
             >
               Cadastrar
@@ -301,6 +330,7 @@ export default function CreateFunc({ onClose }) {
               mostrar={MostrarModalSimNao}
               onConfirmar={handleCadastro}
               onCancelar={cancelarOperacao}
+              mensagem={`Deseja finalizar o cadastro do usuário ${name}?`}
             />
           </div>
         </form>

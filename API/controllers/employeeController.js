@@ -1,10 +1,6 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
-import { differenceInHours } from "date-fns";
-import fs from "fs";
-import path from "path";
-import { upload } from "../uploadConfig/uploadConfig.js";
 
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
@@ -12,7 +8,8 @@ const prisma = new PrismaClient();
 
 export const createEmpl = async (req, res) => {
   try {
-    const { name, cpf, email, sector, position, modality } = req.body;
+    const { name, cpf, email, sector, position, modality, matricula } =
+      req.body;
 
     if (!name || !cpf || !email || !sector || !position || !modality) {
       return res
@@ -35,6 +32,7 @@ export const createEmpl = async (req, res) => {
             sector,
             position,
             modality,
+            matricula,
             active: 1,
             tempEmpl: 0,
             tempAlterDate: dateBRNow,
@@ -88,6 +86,7 @@ export const createEmpl = async (req, res) => {
         cadUserID,
         cadUserName,
         modality,
+        matricula,
       },
     });
 
@@ -102,6 +101,7 @@ export const createEmpl = async (req, res) => {
           sector: newEmpl.sector,
           position: newEmpl.position,
           modality: newEmpl.modality,
+          matricula: newEmpl.matricula,
         },
         createdAt: dateBRNow,
       },
@@ -126,7 +126,8 @@ export const createEmpl = async (req, res) => {
 
 export const createTempEmpl = async (req, res) => {
   try {
-    const { name, cpf, email, sector, position, modality, obs } = req.body;
+    const { name, cpf, email, sector, position, modality, matricula, obs } =
+      req.body;
     const avatarFile = req.file; // vem do multer
 
     // Validação mínima
@@ -159,6 +160,7 @@ export const createTempEmpl = async (req, res) => {
             sector,
             position,
             modality,
+            matricula,
             active: 1,
             tempEmplObs: obs,
             tempAlterDate: dateBRNow,
@@ -207,6 +209,7 @@ export const createTempEmpl = async (req, res) => {
         cadUserID,
         cadUserName,
         modality,
+        matricula,
         tempCreatedDate: dateBRNow,
         tempAlterDate: dateBRNow,
         tempEmpl: 1,
@@ -226,6 +229,7 @@ export const createTempEmpl = async (req, res) => {
           sector: newEmplTemp.sector,
           position: newEmplTemp.position,
           modality: newEmplTemp.modality,
+          matricula: newEmplTemp.matricula,
           tempCreatedDate: newEmplTemp.tempCreatedDate,
           tempEmpl: newEmplTemp.tempEmpl,
           tempEmplObs: newEmplTemp.tempEmplObs,
@@ -341,7 +345,7 @@ export const registrarKit = async (req, res) => {
     });
 
     // Enviar e-mail automaticamente
-    const limiteVenc = new Date();
+    const limiteVenc = dateBRNow;
     limiteVenc.setHours(limiteVenc.getHours() + 36);
 
     const dataParaDevol = limiteVenc.toLocaleString("pt-BR");
@@ -437,7 +441,7 @@ export const devolverKit = async (req, res) => {
     // }
 
     // Valida prazo de 24h
-    const limite = new Date();
+    const limite = dateBRNow;
     limite.setHours(limite.getHours() - 36);
 
     if (pendenciaSelecionada.date < limite) {
@@ -545,7 +549,8 @@ export const getOpenPendencies = async (req, res) => {
 export const updateEmpl = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, cpf, email, sector, position, modality, active } = req.body;
+    const { name, cpf, email, sector, position, modality, matricula, active } =
+      req.body;
 
     const idUsuario = req.params.id;
 
@@ -587,6 +592,8 @@ export const updateEmpl = async (req, res) => {
       camposAlterados.modality = modality;
     if (active != null && Number(active) !== funcionario.active)
       camposAlterados.active = Number(active);
+    if (matricula && matricula !== funcionario.matricula)
+      camposAlterados.matricula = matricula;
 
     if (Object.keys(camposAlterados).length === 0) {
       return res.status(400).json({

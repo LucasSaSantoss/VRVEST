@@ -39,12 +39,13 @@ export async function cadastrarFuncionario({
   sector,
   position,
   modality,
+  matricula,
 }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl`,
-      { name, cpf, email, sector, position, modality },
+      { name, cpf, email, sector, position, modality, matricula },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -127,7 +128,7 @@ export async function alterarFuncionario(id, dados) {
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
-    return { success: false, message: "Não foi possível alterar o registro." };
+    return { success: false, message: "Registro sem alteração." };
   }
 }
 
@@ -276,7 +277,6 @@ export async function devolucaoKit({ cpf, id }) {
 }
 
 export async function carregarPendencias(inicio, fim) {
-
   const token = localStorage.getItem("token");
   try {
     const res = await axios.get(`${API_URL}/pend`, {

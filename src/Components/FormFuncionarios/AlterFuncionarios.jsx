@@ -17,6 +17,7 @@ export default function AlterForm({
   const [position, setPosition] = useState(employee?.position || "");
   const [sector, setSector] = useState(employee?.sector || "");
   const [modality, setModality] = useState(employee?.modality || "");
+  const [matricula, setMatricula] = useState(employee?.matricula || "");
   const [active, setActive] = useState(employee?.active || 1);
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
 
@@ -72,6 +73,7 @@ export default function AlterForm({
       sector,
       position,
       modality,
+      matricula,
       active: Number(active),
     };
 
@@ -84,6 +86,13 @@ export default function AlterForm({
       !modality ||
       !active
     ) {
+      setMostarModalSimNao(false);
+      setPopup({
+        mostrar: true,
+        mensagem: "Preencha todos os campos obrigatórios.",
+        tipo: "error",
+      });
+      setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 2000);
       mostrarPopup("Preencha todos os campos obrigatórios.", "error");
       return;
     }
@@ -95,12 +104,6 @@ export default function AlterForm({
         res.message || "Alteração realizada",
         res.success ? "success" : "error"
       );
-
-      // setPopup({
-      //   mostrar: true,
-      //   mensagem: res.message || "Alteração realizada",
-      //   tipo: res.success ? "success" : "error",
-      // });
 
       if (res.success) {
         setMostarModalSimNao(false);
@@ -146,7 +149,7 @@ export default function AlterForm({
               />
             </div>
 
-            <div className="flex-1 min-w-[450px]">
+            <div className="flex-1 max-w-[450px]">
               <label
                 htmlFor="email"
                 className="block text-sm font-semibold mb-1"
@@ -164,118 +167,144 @@ export default function AlterForm({
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
               />
             </div>
+            {/* CPF */}
+            <div className="flex-1 max-w-[200px]">
+              <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
+                CPF:
+              </label>
+              <input
+                type="text"
+                id="cpf"
+                value={cpf}
+                onChange={(e) => {
+                  const somenteNumeros = e.target.value.replace(/\D/g, "");
+                  setCpf(somenteNumeros);
+                }}
+                maxLength={11}
+                placeholder="Digite o CPF"
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
           </div>
+          <div className="flex flex-wrap gap-5">
+            <div className="flex-1 min-w-[200px] w-full">
+              <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
+                Matrícula:
+              </label>
+              <input
+                type="text"
+                id="matricula"
+                value={matricula}
+                onChange={(e) => {
+                  const somenteNumeros = e.target.value.replace(/\D/g, "");
+                  setMatricula(somenteNumeros);
+                }}
+                maxLength={20}
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
 
-          {/* CPF */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
-              CPF:
-            </label>
-            <input
-              type="text"
-              id="cpf"
-              value={cpf}
-              onChange={(e) => {
-                const somenteNumeros = e.target.value.replace(/\D/g, "");
-                setCpf(somenteNumeros);
-              }}
-              maxLength={11}
-              placeholder="Digite o CPF"
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
+            {/* Cargo */}
+            <div className="flex-1 min-w-[200px] w-full">
+              <label
+                htmlFor="cargo"
+                className="block text-sm font-semibold mb-1"
+              >
+                Cargo:
+              </label>
+              <input
+                type="text"
+                id="cargo"
+                value={position}
+                onChange={(e) => {
+                  limparTexto(e, setPosition);
+                }}
+                maxLength={50}
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              />
+            </div>
 
-          {/* Cargo */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
-              Cargo:
-            </label>
-            <input
-              type="text"
-              id="cargo"
-              value={position}
-              onChange={(e) => {
-                limparTexto(e, setPosition);
-              }}
-              maxLength={50}
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            />
-          </div>
-
-          {/* Setor */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label htmlFor="setor" className="block text-sm font-semibold mb-1">
-              Setor:
-            </label>
-            <select
-              id="setor"
-              value={sector}
-              onChange={(e) => setSector(e.target.value)}
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="">Selecione o setor</option>
-              <option value="SALA AMARELA">SALA AMARELA</option>
-              <option value="SALA VERMELHA">SALA VERMELHA</option>
-              <option value="TRAUMA">TRAUMA</option>
-              <option value="EMERGÊNCIA PEDIÁTRICA">
-                EMERGÊNCIA PEDIÁTRICA
-              </option>
-              <option value="OBSERVAÇÃO PEDIÁTRICA">
-                OBSERVAÇÃO PEDIÁTRICA
-              </option>
-              <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
-              <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
-              <option value="UI ADULTO">UI ADULTO</option>
-              <option value="UTI ADULTO">UTI ADULTO</option>
-              <option value="ORTOPEDIA">ORTOPEDIA</option>
-              <option value="CIRURGIA GERAL">CIRURGIA GERAL</option>
-              <option value="CETIPE">CETIPE</option>
-              <option value="UTI NEONATAL">UTI NEONATAL</option>
-              <option value="PEDIATRIA">PEDIATRIA</option>
-              <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
-            </select>
-          </div>
-
-          {/* Modalidade */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label
-              htmlFor="modalidade"
-              className="block text-sm font-semibold mb-1"
-            >
-              Modalidade:
-            </label>
-            <select
-              id="modalidade"
-              value={modality}
-              onChange={(e) => setModality(e.target.value)}
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="">Selecione a modalidade</option>
-              <option value="PJ">PJ</option>
-              <option value="CLT">CLT</option>
-              <option value="RPA">RPA</option>
-            </select>
-          </div>
-
-          {/* Ativo */}
-          <div className="flex-1 max-w-[200px] w-full">
-            <label htmlFor="ativo" className="block text-sm font-semibold mb-1">
-              Ativo:
-            </label>
-            <select
-              id="ativo"
-              value={active}
-              onChange={(e) => setActive(e.target.value)}
-              required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="1">Ativo</option>
-              <option value="2">Inativo</option>
-            </select>
+            {/* Setor */}
+            <div className="flex-1 min-w-[200px] w-full">
+              <label
+                htmlFor="setor"
+                className="block text-sm font-semibold mb-1"
+              >
+                Setor:
+              </label>
+              <select
+                id="setor"
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Selecione o setor</option>
+                <option value="SALA AMARELA">SALA AMARELA</option>
+                <option value="SALA VERMELHA">SALA VERMELHA</option>
+                <option value="TRAUMA">TRAUMA</option>
+                <option value="EMERGÊNCIA PEDIÁTRICA">
+                  EMERGÊNCIA PEDIÁTRICA
+                </option>
+                <option value="OBSERVAÇÃO PEDIÁTRICA">
+                  OBSERVAÇÃO PEDIÁTRICA
+                </option>
+                <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
+                <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
+                <option value="UI ADULTO">UI ADULTO</option>
+                <option value="UTI ADULTO">UTI ADULTO</option>
+                <option value="ORTOPEDIA">ORTOPEDIA</option>
+                <option value="CIRURGIA GERAL">CIRURGIA GERAL</option>
+                <option value="CETIPE">CETIPE</option>
+                <option value="UTI NEONATAL">UTI NEONATAL</option>
+                <option value="PEDIATRIA">PEDIATRIA</option>
+                <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
+                <option value="OUTROS">OUTROS</option>
+              </select>
+            </div>
+            {/* Modalidade */}
+            <div className="flex-1 min-w-[200px]">
+              <label
+                htmlFor="modalidade"
+                className="block text-sm font-semibold mb-1"
+              >
+                Modalidade:
+              </label>
+              <select
+                id="modalidade"
+                value={modality}
+                onChange={(e) => setModality(e.target.value)}
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="">Selecione a modalidade</option>
+                <option value="PJ">PJ</option>
+                <option value="CLT">CLT</option>
+                <option value="RPA">RPA</option>
+                <option value="POS">PÓS GRADUANDO/ RESIDENTE</option>
+              </select>
+            </div>
+            {/* Ativo */}
+            <div className="flex-1 max-w-[200px] w-full">
+              <label
+                htmlFor="ativo"
+                className="block text-sm font-semibold mb-1"
+              >
+                Ativo:
+              </label>
+              <select
+                id="ativo"
+                value={active}
+                onChange={(e) => setActive(e.target.value)}
+                required
+                className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="1">Ativo</option>
+                <option value="2">Inativo</option>
+              </select>
+            </div>
           </div>
 
           {/* Botão */}
@@ -283,7 +312,22 @@ export default function AlterForm({
             <button
               type="button"
               className="px-5 w-[150px] py-3 mt-2 text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition text-sm"
-              onClick={() => setMostarModalSimNao(true)}
+              onClick={() => {
+                if (!matricula && modality === "CLT") {
+                  setPopup({
+                    mostrar: true,
+                    mensagem:
+                      "Para funcionários CLT, a matrícula é obrigatória.",
+                    tipo: "error",
+                  });
+                } else {
+                  setMostarModalSimNao(true);
+                }
+                setTimeout(
+                  () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                  3000
+                );
+              }}
             >
               Salvar Alterações
             </button>
@@ -291,6 +335,11 @@ export default function AlterForm({
               mostrar={MostrarModalSimNao}
               onConfirmar={handleSubmit}
               onCancelar={cancelarOperacao}
+              mensagem={
+                name
+                  ? `Deseja finalizar as alterações no cadastro do colaborador ${name}?`
+                  : "Deseja finalizar as alterações no cadastro do colaborador?"
+              }
             />
           </div>
         </form>
