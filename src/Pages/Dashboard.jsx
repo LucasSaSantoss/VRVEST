@@ -19,7 +19,7 @@ import { CgLogOff } from "react-icons/cg";
 
 // import HomeVRVest from "../Components/HomeVRVest";
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
-import Relatorios from "../Components/RelatoriosVRVest";
+import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -138,7 +138,7 @@ export default function Dashboard() {
 
   const pages = {
     home: <DashBoardVRVest />,
-    relatorios: <Relatorios />,
+    relatorios: <RelatorioFinanceiroAtrasados />,
     qrcode: <QrCodeVRVest />,
     funcionarioTemp: <CreateFuncTemp />,
     usuarios: <TabelaUsuarios />,
@@ -154,7 +154,7 @@ export default function Dashboard() {
       <div className="flex w-full h-screen bg-gray-100">
         <aside
           className={`shadow-lg ${!instantClose ? "transition-all duration-300" : "transition-all duration-200"} rounded-xl text-white hover:shadow-xl flex flex-col justify-center items-center 
-          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[18vh] h-[82%]`}
+          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[15vh] h-[85%] max-h-[100%]`}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
           style={{ backgroundColor: "#16607a" }}
@@ -305,7 +305,7 @@ export default function Dashboard() {
 
                 {/* SUBMENU */}
                 {submenuOpen && hovered && (
-                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto max-h-[12vh]">
+                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
                     <li
                       className="cursor-pointer hover:text-gray-300"
                       onClick={() => setSelected("relatorios")}
@@ -317,36 +317,6 @@ export default function Dashboard() {
                       onClick={() => setSelected("usuarios")}
                     >
                       Relatório de Usuários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
                     </li>
                     <li
                       className="cursor-pointer hover:text-gray-300"

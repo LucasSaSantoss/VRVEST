@@ -155,12 +155,12 @@ export default function MovPorHora({ values = [] }) {
   };
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl w-full h-[250px] p-2 mt-1">
+    <div className="bg-white shadow-lg rounded-2xl w-full h-[251px] p-2 mt-1">
       <p className="text-md font-bold text-gray-800 mb-2 text-center">
         Retirados e Devolvidos (Últimas 24 hrs)
       </p>
 
-      <div className="w-full h-[213px]">
+      <div className="w-full h-[210px]">
         <Line ref={chartRef} data={data} options={options} />
       </div>
     </div>

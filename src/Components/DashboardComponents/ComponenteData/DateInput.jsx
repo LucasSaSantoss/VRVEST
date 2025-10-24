@@ -82,7 +82,7 @@ export default function FiltroDatas({ inicio, fim, setInicio, setFim }) {
     setFim(formatarDataLocal(novaData.endDate));
     setMostrarCalendario(false);
   };
-
+  
   const textoBotao =
     inicio && fim
       ? `${inicio.split("-").reverse().join("/")}  ${fim.split("-").reverse().join("/")}`

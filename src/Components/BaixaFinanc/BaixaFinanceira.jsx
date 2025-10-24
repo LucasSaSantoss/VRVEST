@@ -63,10 +63,8 @@ export default function ListaPendencias() {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         }
       );
-
       if (resposta.data.success) {
         const pendenciaAtualizada = resposta.data.updatedPendencias[0];
-
         // Atualiza a tabela
         setPendencias((prev) =>
           prev.map((p) =>
@@ -75,7 +73,6 @@ export default function ListaPendencias() {
               : p
           )
         );
-
         // Mensagem de sucesso
         showTemporaryPopup(
           `Pendência do funcionário ${pendenciaAtualizada.emplName} baixada em ${new Date(
