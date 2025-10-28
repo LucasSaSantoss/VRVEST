@@ -146,7 +146,7 @@ export default function RelatoriosPendencias() {
     const margemTopo = 15;
     const larguraPagina = 200;
 
-    // -------------------- Cabeçalho --------------------
+    // ----------------------- Cabeçalho ------------------------
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
     doc.text("Relatório de Pendências", margemEsq, margemTopo);
@@ -167,7 +167,7 @@ export default function RelatoriosPendencias() {
       margemTopo + 13
     );
 
-    // Linha de separação
+    // -------------------- Linha de separação ---------------------
     doc.setLineWidth(0.5);
     doc.line(
       margemEsq,
@@ -317,7 +317,6 @@ export default function RelatoriosPendencias() {
             onChange={(e) => setFiltro(e.target.value)}
             className="border bg-white w-[30vw] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
-
           <FiltroDatas
             inicio={inicio}
             fim={fim}

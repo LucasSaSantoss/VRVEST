@@ -12,7 +12,7 @@ export default function TabelaUsuarios() {
   const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
   const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
-  const API_URL= import.meta.env.VITE_API_URL; 
+  const API_URL = import.meta.env.VITE_API_URL;
 
   //------------------ popup criação/alteração --------------------
   const [popup, setPopup] = useState({
@@ -165,7 +165,9 @@ export default function TabelaUsuarios() {
                   ? "OPERADOR"
                   : user.level === 2
                     ? "CONTROLADOR"
-                    : "SUPERVISOR"}
+                    : user.level === 3
+                      ? "DP"
+                      : "SUPERVISOR"}
               </td>
               <td className="py-2 px-4">{user.active === 1 ? "Sim" : "Não"}</td>
               <td className="py-2 px-4">

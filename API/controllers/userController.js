@@ -119,7 +119,7 @@ export const getUsers = async (req, res) => {
     const users = await prisma.user.findMany({
       where: {
         level: {
-          not: 4,
+          not: 5,
         },
       },
     });

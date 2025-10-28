@@ -101,9 +101,9 @@ export default function Dashboard() {
               switch (nivel) {
                 case 4:
                 case 3:
-                  return "home";
+                  return "funcionarios";
                 case 2:
-                  return "usuarios";
+                  return "funcionarios";
                 case 1:
                   return "qrcode";
                 default:
@@ -181,7 +181,7 @@ export default function Dashboard() {
 
           {/* Menu */}
           <ul className="p-3 space-y-auto h-[60vh] ">
-            {levelUser >= 3 && (
+            {levelUser >= 4 && (
               <li
                 data-testid="homeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -197,7 +197,7 @@ export default function Dashboard() {
               </li>
             )}
 
-            {levelUser !== 2 && (
+            {(levelUser === 1 || levelUser >= 4) && (
               <li
                 data-testid="qrCodeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -246,22 +246,23 @@ export default function Dashboard() {
               </li>
             )}
 
-            <li
-              data-testid="tempEmployeeSelection"
-              className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+            {levelUser >= 2 && (
+              <li
+                data-testid="tempEmployeeSelection"
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-              onClick={() => setSelected("funcionarioTemp")}
-            >
-              <span className="text-xl ">
-                <FaBusinessTime />
-              </span>
-              <span
-                className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+                onClick={() => setSelected("funcionarioTemp")}
               >
-                Cadastro de Colaborador Temporário
-              </span>
-            </li>
-
+                <span className="text-xl ">
+                  <FaBusinessTime />
+                </span>
+                <span
+                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
+                >
+                  Cadastro de Colaborador Temporário
+                </span>
+              </li>
+            )}
             {levelUser >= 3 && (
               <li
                 data-testid="baixaSelection"
@@ -278,7 +279,7 @@ export default function Dashboard() {
               </li>
             )}
             {/* === DROPCOMBO DE RELATÓRIOS === */}
-            {levelUser === 4 && (
+            {levelUser >= 3 && (
               <li data-testid="relatorioSelection" className="px-3 mt-2">
                 <div
                   className={`flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 ${
@@ -311,18 +312,6 @@ export default function Dashboard() {
                       onClick={() => setSelected("relatorios")}
                     >
                       Relatório Financeiro
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("usuarios")}
-                    >
-                      Relatório de Usuários
-                    </li>
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("funcionarios")}
-                    >
-                      Relatório de Funcionários
                     </li>
                   </ul>
                 )}

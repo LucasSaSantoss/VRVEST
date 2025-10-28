@@ -111,8 +111,10 @@ export default function ListaPendencias() {
   });
 
   // Paginação
-  const totalPaginas = Math.ceil(pendenciasFiltradas.length / regPorPagina);
-  totalPaginas === 0 ? totalPaginas === 1 : totalPaginas;
+  const totalPaginas = Math.max(
+    1,
+    Math.ceil(pendenciasFiltradas.length / regPorPagina)
+  );
   const indiceUltimoRegistro = paginaAtual * regPorPagina;
   const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
   const registrosFiltrados = pendenciasFiltradas.slice(

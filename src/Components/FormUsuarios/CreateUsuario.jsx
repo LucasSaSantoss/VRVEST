@@ -209,7 +209,12 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">Selecione o setor</option>
+              <option value="DP">D.P</option>
+              <option value="RH">R.H</option>
               <option value="ROUPARIA">ROUPARIA</option>
+              <option value="CENTRO DE ESTUDOS">CENTRO DE ESTUDOS</option>
+              <option value="COORDENACAO ADMIN">COORD. ADMIN</option>
+              <option value="DIRECAO">DIREÇÃO</option>
             </select>
           </div>
 
@@ -228,7 +233,8 @@ export default function CreateUser({ onClose, mostrarPopup }) {
               <option value="">Selecione uma opção</option>
               <option value="1">OPERADOR</option>
               <option value="2">CONTROLADOR</option>
-              <option value="3">SUPERVISOR</option>
+              <option value="3">DP</option>
+              <option value="4">SUPERVISOR</option>
             </select>
           </div>
 
