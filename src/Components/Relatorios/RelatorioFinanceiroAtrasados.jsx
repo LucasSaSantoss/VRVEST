@@ -140,72 +140,132 @@ export default function RelatoriosPendencias() {
 
   // -------------------- Exportação PDF / Excel ---------------------------
   const gerarPDF = () => {
-    const doc = new jsPDF();
+    let numPag = 1;
+    const doc = new jsPDF("p", "mm", "a4");
+    const margemEsq = 10;
+    const margemTopo = 15;
+    const larguraPagina = 200;
 
-    // Título
-    doc.setFontSize(14);
-    doc.text("Relatório de Pendências", 14, 15);
+    // -------------------- Cabeçalho --------------------
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(16);
+    doc.text("Relatório de Pendências", margemEsq, margemTopo);
 
-    // Cabeçalho da tabela
-    const headers = [
-      "CPF",
-      "Matrícula",
-      "Kit Cirúrgico",
-      "Data Retirada",
-      "Data Baixa",
-      "Status",
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(
+      `Período: ${inicio ? new Date(ajustarDataInicial(inicio)).toLocaleDateString("pt-BR") : "-"} a ${
+        fim ? new Date(ajustarDataFinal(fim)).toLocaleDateString("pt-BR") : "-"
+      }`,
+      margemEsq,
+      margemTopo + 8
+    );
+
+    doc.text(
+      `Gerado em: ${new Date().toLocaleString("pt-BR")}`,
+      margemEsq,
+      margemTopo + 13
+    );
+
+    // Linha de separação
+    doc.setLineWidth(0.5);
+    doc.line(
+      margemEsq,
+      margemTopo + 17,
+      margemEsq + larguraPagina,
+      margemTopo + 17
+    );
+
+    let y = margemTopo + 25;
+
+    // -------------------- Cabeçalho da tabela --------------------
+    const colunas = [
+      { titulo: "CPF", largura: 28 },
+      { titulo: "Matrícula", largura: 40 },
+      { titulo: "Kit Cirúrgico", largura: 25 },
+      { titulo: "Data Retirada", largura: 37 },
+      { titulo: "Data Baixa", largura: 37 },
+      { titulo: "Status", largura: 25 },
     ];
 
-    // Dados de exemplo (substitua pelos seus dados)
-    const dados = Object.entries(pendenciasAgrupadas).flatMap(
-      ([nome, lista]) => {
-        const pendencias = Array.isArray(lista) ? lista : [];
-        return pendencias.map((p) => [
-          nome,
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    let x = margemEsq;
+
+    colunas.forEach((col) => {
+      doc.text(col.titulo, x + 1, y);
+      x += col.largura;
+    });
+
+    // Linha abaixo do cabeçalho
+    y += 3;
+    doc.line(margemEsq, y, margemEsq + larguraPagina, y);
+    y += 4;
+
+    // -------------------- Dados --------------------
+    doc.setFont("helvetica", "normal");
+
+    Object.values(pendenciasAgrupadas).forEach(({ nome, lista }) => {
+      // Nome do colaborador (linha destacada)
+      if (y > 270) {
+        doc.addPage();
+        y = margemTopo;
+        numPag++;
+      }
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(22, 96, 122); // azul escuro
+      doc.text(nome || "Colaborador não identificado", margemEsq, y);
+      doc.setTextColor(0, 0, 0);
+      doc.setFont("helvetica", "normal");
+      y += 6;
+
+      lista.forEach((p) => {
+        if (y > 280) {
+          doc.addPage();
+          y = margemTopo;
+          numPag++;
+        }
+
+        const linha = [
           p.employee?.cpf || "-",
           p.employee?.matricula || "-",
           p.kitSize || "-",
           formatarDataHora(p.date),
           formatarDataHora(p.devolDate),
           definirStatus(p),
-        ]);
-      }
-    );
+        ];
 
-    // Coordenadas e tamanhos
-    const startX = 10;
-    const startY = 25;
-    const rowHeight = 8;
-    const colWidths = [30, 25, 25, 40, 40, 25]; // ajustável
+        let x = margemEsq;
+        linha.forEach((texto, i) => {
+          doc.text(String(texto || "-"), x + 1, y);
+          x += colunas[i].largura;
+        });
 
-    // Desenha cabeçalho
-    doc.setFontSize(10);
-    let y = startY;
-
-    headers.forEach((header, i) => {
-      doc.text(
-        header,
-        startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2,
-        y
-      );
-    });
-
-    // Linha abaixo do cabeçalho
-    y += 2;
-    doc.line(startX, y, startX + colWidths.reduce((a, b) => a + b, 0), y);
-
-    // Desenha linhas da tabela
-    dados.forEach((linha) => {
-      y += rowHeight;
-      linha.forEach((texto, i) => {
-        const x = startX + colWidths.slice(0, i).reduce((a, b) => a + b, 0) + 2;
-        doc.text(String(texto || "-"), x, y);
+        y += 6;
       });
+
+      y += 2;
+      doc.setDrawColor(180);
+      doc.line(margemEsq, y, margemEsq + larguraPagina, y);
+      y += 5;
+
+      doc.text("Página " + numPag, 180, 290);
     });
 
-    // Salvar o PDF
+    // -------------------- Rodapé --------------------
+    doc.setFontSize(8);
+    doc.setTextColor(100);
+    doc.text(
+      `Total de pendências: ${pendenciasFiltradas.length}`,
+      margemEsq,
+      290
+    );
+    // doc.text(`Página 1`, 180, 290);
+
+    // -------------------- Salvar --------------------
     doc.save("relatorio-pendencias.pdf");
   };
+
   const gerarExcel = () => {
     console.log(pendenciasAgrupadas);
     const linhas = Object.values(pendenciasAgrupadas).flatMap(
