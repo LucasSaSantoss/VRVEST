@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 // controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
   try {
-    const { inicio, fim } = req.query; 
+    const { inicio, fim } = req.query;
     let filtroData = {};
 
     if (inicio && fim) {
@@ -31,7 +31,7 @@ export const getRegistros = async (req, res) => {
       orderBy: { date: "desc" },
       include: {
         employee: {
-          select: { cpf: true, name: true, sector: true },
+          select: { cpf: true, name: true, sector: true, matricula: true },
         },
       },
     });
@@ -103,9 +103,7 @@ export const baixarPendencias = async (req, res) => {
       "Devolução de Kit",
       `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date(
         pendenciaAtualizada.devolDate
-      ).toLocaleString(
-        "pt-BR"
-      )}, através da baixa de pendências.`
+      ).toLocaleString("pt-BR")}, através da baixa de pendências.`
     );
 
     return res.json({

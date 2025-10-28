@@ -212,7 +212,7 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser > 2 && (
+            {levelUser > 3 && (
               <li
                 data-testid="userSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
