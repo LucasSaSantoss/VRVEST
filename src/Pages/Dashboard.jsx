@@ -16,6 +16,7 @@ import {
 } from "react-icons/fa";
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
+import { FaUserGear } from "react-icons/fa6";
 
 // import HomeVRVest from "../Components/HomeVRVest";
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
@@ -26,6 +27,8 @@ import HeaderQRCode from "../Components/HeaderQRCode";
 import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
+import ProfileUser from "../Components/FormChangePassword/PasswordChange";
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -37,6 +40,7 @@ export default function Dashboard() {
   const [showPopup, setShowPopup] = useState(false);
   const [instantClose, setInstantClose] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
+  const [userName, setUserName] = useState("");
 
   let timeoutId;
 
@@ -94,6 +98,7 @@ export default function Dashboard() {
           // Token válido → define nível de usuário
           const nivel = decodedToken.level;
           setLevelUser(nivel);
+          setUserName(decodedToken.name || decodedToken.username || "Usuário");
 
           // Só define tela se nenhuma estiver selecionada
           setSelected((atual) => {
@@ -144,6 +149,7 @@ export default function Dashboard() {
     usuarios: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
     baixa: <ListaPendencias />,
+    perfil: <ProfileUser />,
   };
 
   return (
@@ -319,9 +325,24 @@ export default function Dashboard() {
             )}
           </ul>
 
-          {/* Logoff */}
+          {/* Perfil Usuário */}
           <div
-            className="p-4 mt-[5vh] border-t flex items-center cursor-pointer hover:text-red-500"
+            className={`p-2 border-b flex items-center cursor-default hover:text-green-400`}
+            onClick={() => setSelected("perfil")}
+          >
+            <span className="text-xl">
+              <FaUserGear />
+            </span>
+            <span
+              className={`ml-3 font-semibold transition-all duration-300 ${
+                hovered ? "opacity-100" : "hidden"
+              }`}
+            >
+              {userName}
+            </span>
+          </div>
+          <div
+            className="p-4 mt-[3vh] border-t flex items-center cursor-pointer hover:text-red-400"
             onClick={handleLogoff}
           >
             <span className="text-xl">

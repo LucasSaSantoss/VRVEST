@@ -1,3 +1,4 @@
+
 function HeaderQRCode() {
   return (
     <header className="flex flex-col md:flex-row items-center justify-between fixed top-0 left-0 w-full z-40 bg-[#16607a] shadow-md py-3 px-4 md:py-5 md:px-8">

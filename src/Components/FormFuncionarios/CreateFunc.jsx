@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { cadastrarFuncionario } from "../../services/api";
+import { cadastrarFuncionario, listarSetores } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 
@@ -15,17 +15,39 @@ export default function CreateFunc({ onClose }) {
   const [matricula, setMatricula] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const [popup, setPopup] = useState({ mostrar: false, mensagem: "", tipo: "info" });
+  const [sectors, setSectors] = useState([]);
+
+  useEffect(() => {
+    const carregarSetores = async () => {
+      try {
+        const resposta = await listarSetores();
+        if (resposta.success) {
+          setSectors(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar setores.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar setores:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar setores.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarSetores();
+  }, []);
 
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
     setMostarModalSimNao(false);
   };
-
-  const [popup, setPopup] = useState({
-    mostrar: false,
-    mensagem: "",
-    tipo: "info",
-  });
 
   const limparTexto = (e, setState) => {
     let valor = e.target.value;
@@ -64,41 +86,19 @@ export default function CreateFunc({ onClose }) {
     );
   };
 
-  const payload = {
-    name,
-    email,
-    cpf,
-    sector,
-    position,
-    modality,
-  };
-
-  const validarEmail = (email) => {
-    // Regex simples de validação de email
-    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    setMostarModalSimNao(false);
-    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
-    return re.test(email);
-  };
+  const validarEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleCadastro = async (e) => {
     e.preventDefault();
-    if (
-      !payload.name ||
-      !payload.email ||
-      !payload.cpf ||
-      !payload.sector ||
-      !payload.position ||
-      !payload.modality
-    ) {
-      setMensagem("Existem dados em branco, favor preencher.");
+
+    if (!name || !email || !cpf || !sector || !position || !modality) {
       setPopup({
         mostrar: true,
         mensagem: "Existem dados em branco, favor preencher.",
         tipo: "error",
       });
-      setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
       setMostarModalSimNao(false);
+      setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
       return;
     }
 
@@ -118,14 +118,12 @@ export default function CreateFunc({ onClose }) {
     });
 
     setMensagem(data.message);
-
     setPopup({
       mostrar: true,
       mensagem: data.message,
       tipo: data.success ? "success" : "error",
     });
 
-    // Fecha o popup automaticamente depois de 3 segundos
     setTimeout(() => setPopup({ ...popup, mostrar: false }), 2000);
 
     if (data.success) {
@@ -138,6 +136,7 @@ export default function CreateFunc({ onClose }) {
       setModality("");
       setMatricula("");
     }
+
     setMostarModalSimNao(false);
   };
 
@@ -145,12 +144,10 @@ export default function CreateFunc({ onClose }) {
     <div className="bg-white border-2 border-cyan-600 mx-auto max-w-[1500px] rounded-xl p-6 flex items-center mb-20">
       <div className="w-full">
         <form className="flex flex-wrap gap-4">
+          {/* Nome e Email */}
           <div className="flex flex-wrap w-full gap-2">
             <div className="flex-1 min-w-[425px]">
-              <label
-                htmlFor="nome"
-                className="block text-sm font-semibold mb-1"
-              >
+              <label htmlFor="nome" className="block text-sm font-semibold mb-1">
                 Nome:
               </label>
               <input
@@ -166,10 +163,7 @@ export default function CreateFunc({ onClose }) {
             </div>
 
             <div className="flex-1 min-w-[450px]">
-              <label
-                htmlFor="email"
-                className="block text-sm font-semibold mb-1"
-              >
+              <label htmlFor="email" className="block text-sm font-semibold mb-1">
                 E-mail:
               </label>
               <input
@@ -184,24 +178,24 @@ export default function CreateFunc({ onClose }) {
               />
             </div>
           </div>
+
+          {/* Matrícula */}
           <div className="flex-1 min-w-[450px]">
-            <label htmlFor="email" className="block text-sm font-semibold mb-1">
+            <label htmlFor="matricula" className="block text-sm font-semibold mb-1">
               Matrícula:
             </label>
             <input
               type="text"
               id="matricula"
               value={matricula}
-              onChange={(e) => {
-                const somenteNumeros = e.target.value.replace(/\D/g, "");
-                setMatricula(somenteNumeros);
-              }}
+              onChange={(e) => setMatricula(e.target.value.replace(/\D/g, ""))}
               maxLength={20}
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             />
           </div>
+
           {/* CPF */}
-          <div className="flex-1 min-w-[200px] w-full">
+          <div className="flex-1 min-w-[200px]">
             <label htmlFor="cpf" className="block text-sm font-semibold mb-1">
               CPF:
             </label>
@@ -209,10 +203,7 @@ export default function CreateFunc({ onClose }) {
               type="text"
               id="cpf"
               value={cpf}
-              onChange={(e) => {
-                const somenteNumeros = e.target.value.replace(/\D/g, "");
-                setCpf(somenteNumeros);
-              }}
+              onChange={(e) => setCpf(e.target.value.replace(/\D/g, ""))}
               maxLength={11}
               placeholder="Digite o CPF"
               required
@@ -221,7 +212,7 @@ export default function CreateFunc({ onClose }) {
           </div>
 
           {/* Cargo */}
-          <div className="flex-1 min-w-[200px] w-full">
+          <div className="flex-1 min-w-[200px]">
             <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
               Cargo:
             </label>
@@ -236,8 +227,8 @@ export default function CreateFunc({ onClose }) {
             />
           </div>
 
-          {/* Setor */}
-          <div className="flex-1 min-w-[200px] w-full">
+          {/* Setor - dinâmico */}
+          <div className="flex-1 min-w-[200px]">
             <label htmlFor="setor" className="block text-sm font-semibold mb-1">
               Setor:
             </label>
@@ -246,38 +237,20 @@ export default function CreateFunc({ onClose }) {
               value={sector}
               onChange={(e) => setSector(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm bg-gray-50"
             >
               <option value="">Selecione o setor</option>
-              <option value="SALA AMARELA">SALA AMARELA</option>
-              <option value="SALA VERMELHA">SALA VERMELHA</option>
-              <option value="TRAUMA">TRAUMA</option>
-              <option value="EMERGÊNCIA PEDIÁTRICA">
-                EMERGÊNCIA PEDIÁTRICA
-              </option>
-              <option value="OBSERVAÇÃO PEDIÁTRICA">
-                OBSERVAÇÃO PEDIÁTRICA
-              </option>
-              <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
-              <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
-              <option value="UI ADULTO">UI ADULTO</option>
-              <option value="UTI ADULTO">UTI ADULTO</option>
-              <option value="ORTOPEDIA">ORTOPEDIA</option>
-              <option value="CIRURGIA GERAL">CIRURGIA GERAL</option>
-              <option value="CETIPE">CETIPE</option>
-              <option value="UTI NEONATAL">UTI NEONATAL</option>
-              <option value="PEDIATRIA">PEDIATRIA</option>
-              <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
-              <option value="OUTROS">OUTROS</option>
+              {sectors.map((setor) => (
+                <option key={setor.id} value={setor.name}>
+                  {setor.name}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Modalidade */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label
-              htmlFor="modalidade"
-              className="block text-sm font-semibold mb-1"
-            >
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="modalidade" className="block text-sm font-semibold mb-1">
               Modalidade:
             </label>
             <select
@@ -291,10 +264,11 @@ export default function CreateFunc({ onClose }) {
               <option value="PJ">PJ</option>
               <option value="CLT">CLT</option>
               <option value="RPA">RPA</option>
-              <option value="POS">PÓS GRADUANDO/ RESIDENTE</option>
+              <option value="POS">PÓS GRADUANDO/RESIDENTE</option>
             </select>
           </div>
 
+          {/* Botão Cadastrar */}
           <div className="w-full flex justify-center">
             <button
               type="button"
@@ -304,8 +278,7 @@ export default function CreateFunc({ onClose }) {
                   if (!matricula && modality === "CLT") {
                     setPopup({
                       mostrar: true,
-                      mensagem:
-                        "Para funcionários CLT, a matrícula é obrigatória.",
+                      mensagem: "Para funcionários CLT, a matrícula é obrigatória.",
                       tipo: "error",
                     });
                   } else {
@@ -318,14 +291,12 @@ export default function CreateFunc({ onClose }) {
                     tipo: "error",
                   });
                 }
-                setTimeout(
-                  () => setPopup((prev) => ({ ...prev, mostrar: false })),
-                  3000
-                );
+                setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
               }}
             >
               Cadastrar
             </button>
+
             <ModalSimNao
               mostrar={MostrarModalSimNao}
               onConfirmar={handleCadastro}
@@ -335,10 +306,11 @@ export default function CreateFunc({ onClose }) {
           </div>
         </form>
 
+        {/* Popup */}
         {popup.mostrar && (
           <div
             className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
-            ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
+              ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
           >
             {popup.mensagem}
           </div>

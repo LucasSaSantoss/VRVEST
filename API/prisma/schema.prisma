@@ -71,3 +71,8 @@ model UserLog {
   newData   Json?
   createdAt DateTime @default(now())
 }
+
+model Sectors {
+  id        Int      @id @default(autoincrement())
+  name      String @db.VarChar(100)
+}

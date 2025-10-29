@@ -237,3 +237,52 @@ export const updateUser = async (req, res) => {
       .json({ success: false, message: "Erro no servidor" });
   }
 };
+
+export const updateUserPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { oldPassword, newPassword } = req.body;
+
+    const usuario = await prisma.user.findUnique({ where: { id: Number(id) } });
+
+    // Verifica senha atual
+    const senhaCorreta = await bcrypt.compare(oldPassword, usuario.password);
+    if (!senhaCorreta) {
+      return res
+        .status(400)
+        .json({ success: false, message: "Senha atual incorreta." });
+    }
+
+    // Gera nova senha criptografada
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    // Atualiza apenas os campos modificados
+    const updatedUser = await prisma.user.update({
+      where: { id: Number(id) },
+      data: { password: hashedPassword },
+    });
+
+    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    // (Opcional) registrar log
+    await prisma.userLog.create({
+      data: {
+        userId: usuario.id,
+        action: "Alteração de senha",
+        changes: { password: "Senha alterada" },
+        createdAt: dateBRNow,
+      },
+    });
+    // --------------------------------------
+
+    return res.json({
+      success: true,
+      message: "Senha alterada com sucesso",
+      usuario: updatedUser,
+    });
+  } catch (err) {
+    console.error("Erro ao atualizar senha:", err);
+    return res
+      .status(500)
+      .json({ success: false, message: "Erro no servidor" });
+  }
+};

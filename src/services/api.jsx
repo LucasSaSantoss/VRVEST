@@ -148,6 +148,30 @@ export async function alterarUsuario(id, dados) {
   }
 }
 
+// Alteração de Senha
+export async function alterarSenha({ id, oldPassword, newPassword }) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.put(
+      `${API_URL}/passchange/${id}`,
+      { oldPassword, newPassword },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+
+    return {
+      success: true,
+      data: res.data,
+      message: "Senha alterada com sucesso!",
+    };
+  } catch (err) {
+    console.error("Erro ao alterar senha:", err.response?.data || err.message);
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro no servidor",
+    };
+  }
+}
+
 // 🔹 Cadastro de usuário
 export async function cadastrarUsuario({
   name,
@@ -289,6 +313,16 @@ export async function carregarPendencias(inicio, fim) {
     return { success: false, message: "Erro ao buscar pendências" };
   }
 }
+
+export const listarSetores = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/sec/sectors`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao listar setores:", error);
+    return { success: false, data: [] };
+  }
+};
 
 // ------------------------------ Verificação de Token ----------------------------
 
