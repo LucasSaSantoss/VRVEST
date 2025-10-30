@@ -22,7 +22,7 @@ function LeitorQrCode() {
   const [mensagem, setMensagem] = useState("");
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
   const [simNaoComNumero, setSimNaoComNumero] = useState(true);
-  const [doubleClick, setDoubleClick] = useState(false);
+  const [mostrarPopupEmail, setMostrarPopupEmail] = useState("");
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -47,26 +47,6 @@ function LeitorQrCode() {
       return;
     }
 
-    // try {
-    //   const decodedToken = jwtDecode(token);
-    //   const agora = Date.now() / 1000; // em segundos
-
-    //   if (decodedToken.exp < agora) {
-    //     // Token expirado
-    //     localStorage.removeItem("token");
-    //     showTemporaryPopup("Sua sessão expirou, faça login novamente.");
-    //     setTimeout(() => {
-    //       navigate("/");
-    //     }, 3000);
-    //   }
-    //   setLevelUser(decodedToken.level);
-    // } catch (err) {
-    //   console.error("Erro ao verificar token:", err);
-    //   localStorage.removeItem("token");
-    //   showTemporaryPopup("Token inválido, faça login novamente.");
-    //   navigate("/");
-    // }
-
     const regex = /^\d{11}$/;
     if (!regex.test(cpf)) {
       setCpf("");
@@ -80,6 +60,15 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
+      if (resposta.status === 205) {
+        setMostrarPopupEmail(
+          <div>
+            <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"></div>
+            <div className="bg-white text-black px-6 py-4 rounded-lg shadow-lg w-[600px]"></div>
+          </div>
+        );
+        return;
+      }
 
       if (!resposta.success || !resposta.data) {
         setCpf("");
@@ -106,6 +95,7 @@ function LeitorQrCode() {
     if (e.key !== "Enter" || showModal) return;
 
     const resultado = await validateCpf();
+
     if (!resultado.success) {
       showTemporaryPopup(resultado.message);
       return;
