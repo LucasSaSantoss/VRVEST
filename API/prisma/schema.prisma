@@ -49,7 +49,7 @@ model Employee {
 
 model Pendency {
   id      Int      @id @default(autoincrement())
-  emplID    Int 
+  emplID    Int? 
   emplName   String @db.VarChar(100)    
   userId  Int
   userName String @db.VarChar(100) 
@@ -60,7 +60,7 @@ model Pendency {
   devolType Int @default(1)
   status Int @default(1)
   kitSize String @db.VarChar(5)
-  employee     Employee @relation(fields: [emplID], references: [id])
+  employee     Employee? @relation(fields: [emplID], references: [id])
 }
 
 model UserLog {
@@ -73,6 +73,11 @@ model UserLog {
 }
 
 model Sectors {
+  id        Int      @id @default(autoincrement())
+  name      String @db.VarChar(100)
+}
+
+model Modalities {
   id        Int      @id @default(autoincrement())
   name      String @db.VarChar(100)
 }

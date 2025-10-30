@@ -24,7 +24,8 @@ export async function verificarCpf(cpf) {
     const res = await axios.get(`${API_URL}/empl/verificar-cpf/${cpf}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data;
+    console.log(res);
+    return res;
   } catch (err) {
     console.error("Erro ao verificar CPF:", err);
     return { error: "Erro na verificação" };
@@ -219,12 +220,6 @@ export async function loginUsuario({ email, password }) {
       { headers: { "Content-Type": "application/json" } }
     );
 
-    console.log("=== LOGIN DEBUG FRONT ===");
-    console.log("URL chamada:", `${API_URL}/login`);
-    console.log("Status:", res.status);
-    console.log("Headers:", res.headers["content-type"]);
-    console.log("Resposta completa:", res.data);
-
     return { success: true, token: res.data.token, message: res.data.message };
   } catch (err) {
     return {
@@ -320,6 +315,16 @@ export const listarSetores = async () => {
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Erro ao listar setores:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export const listarModalidades = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/mod/modalities`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao listar modalidades:", error);
     return { success: false, data: [] };
   }
 };

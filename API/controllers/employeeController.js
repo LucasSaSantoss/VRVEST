@@ -1,7 +1,10 @@
 // controllers/userController.js
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
+import dotenv from "dotenv";
+dotenv.config();
 
+const emailCopiado = process.env.EMAIL_COPIADO;
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
 const prisma = new PrismaClient();
@@ -269,6 +272,14 @@ export const getCpf = async (req, res) => {
       where: { cpf },
     });
 
+    if (!empl.email) {
+      return res.status(205).json({
+        success: false,
+        status: 205,
+        message: "O colaborador não possui email cadastrado.",
+      });
+    }
+
     if (empl.active !== 1) {
       return res
         .status(200)
@@ -345,7 +356,7 @@ export const registrarKit = async (req, res) => {
     });
 
     // Enviar e-mail automaticamente
-    const limiteVenc = dateBRNow;
+    const limiteVenc = new Date();
     limiteVenc.setHours(limiteVenc.getHours() + 36);
 
     const dataParaDevol = limiteVenc.toLocaleString("pt-BR");
@@ -354,7 +365,7 @@ export const registrarKit = async (req, res) => {
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")}. 
       \nPrazo para devolução: ${dataParaDevol}.`,
-      "luky647@yahoo.com.br"
+      emailCopiado
     );
 
     // ---------------- LOGS ----------------
@@ -440,17 +451,17 @@ export const devolverKit = async (req, res) => {
     //   });
     // }
 
-    // Valida prazo de 24h
-    const limite = dateBRNow;
-    limite.setHours(limite.getHours() - 36);
+    // Valida prazo de 36h
+    // const limite = dateBRNow;
+    // limite.setHours(limite.getHours() - 36);
 
-    if (pendenciaSelecionada.date < limite) {
-      return res.json({
-        success: false,
-        expired: true,
-        message: "A última pendência encontrada está fora do prazo de 36hrs.",
-      });
-    }
+    // if (pendenciaSelecionada.date < limite) {
+    //   return res.json({
+    //     success: false,
+    //     expired: true,
+    //     message: "A última pendência encontrada está fora do prazo de 36hrs.",
+    //   });
+    // }
 
     // Atualiza a pendência
     const pendenciaAtualizada = await prisma.pendency.update({
@@ -468,10 +479,10 @@ export const devolverKit = async (req, res) => {
     await enviarEmail(
       funcionario.email,
       "Devolução de Kit",
-      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date(
-        pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")}. `,
-      "luky647@yahoo.com.br"
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date().toLocaleString(
+        "pt-BR"
+      )}. `,
+      emailCopiado
     );
 
     // ---------------- LOGS ----------------

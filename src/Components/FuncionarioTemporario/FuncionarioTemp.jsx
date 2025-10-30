@@ -1,5 +1,9 @@
-import React, { useState, useRef } from "react";
-import { cadastrarFuncionarioTemporario } from "../../services/api";
+import React, { useState, useRef, useEffect } from "react";
+import {
+  cadastrarFuncionarioTemporario,
+  listarSetores,
+  listarModalidades,
+} from "../../services/api";
 import { data, useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 import SelfieWebcam from "../WebCam/SelfieWebCam";
@@ -16,7 +20,6 @@ export default function CreateFuncTemp() {
   const [matricula, setMatricula] = useState("");
   const [obs, setObs] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
-  const [selected, setSelected] = useState("");
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -28,6 +31,60 @@ export default function CreateFuncTemp() {
   const cpfInputRef = useRef(null);
   const API_URL = import.meta.env.VITE_API_URL;
   const token = localStorage.getItem("token");
+  const [sectors, setSectors] = useState([]);
+  const [mods, setMods] = useState([]);
+
+  useEffect(() => {
+    const carregarSetores = async () => {
+      try {
+        const resposta = await listarSetores();
+        if (resposta.success) {
+          setSectors(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar setores.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar setores:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar setores.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarSetores();
+  }, []);
+
+  useEffect(() => {
+    const carregarMods = async () => {
+      try {
+        const resposta = await listarModalidades();
+        if (resposta.success) {
+          setMods(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar modalidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar modalidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar modalidades.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarMods();
+  }, []);
 
   const carregaCpf = async () => {
     if (!cpf) {
@@ -318,56 +375,47 @@ export default function CreateFuncTemp() {
           </div>
 
           {/* Setor */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label className="block text-sm font-semibold mb-1">Setor:</label>
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="setor" className="block text-sm font-semibold mb-1">
+              Setor:
+            </label>
             <select
+              id="setor"
               value={sector}
-              onKeyDown={passarCampos}
               onChange={(e) => setSector(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm bg-gray-50"
             >
               <option value="">Selecione o setor</option>
-              <option value="SALA AMARELA">SALA AMARELA</option>
-              <option value="SALA VERMELHA">SALA VERMELHA</option>
-              <option value="TRAUMA">TRAUMA</option>
-              <option value="EMERGÊNCIA PEDIÁTRICA">
-                EMERGÊNCIA PEDIÁTRICA
-              </option>
-              <option value="OBSERVAÇÃO PEDIÁTRICA">
-                OBSERVAÇÃO PEDIÁTRICA
-              </option>
-              <option value="CENTRO CIRÚRGICO">CENTRO CIRÚRGICO</option>
-              <option value="CLÍNICA MÉDICA">CLÍNICA MÉDICA</option>
-              <option value="UI ADULTO">UI ADULTO</option>
-              <option value="UTI ADULTO">UTI ADULTO</option>
-              <option value="ORTOPEDIA">ORTOPEDIA</option>
-              <option value="CIRURGIA GERAL">CIRURGIA GERAL</option>
-              <option value="CETIPE">CETIPE</option>
-              <option value="UTI NEONATAL">UTI NEONATAL</option>
-              <option value="PEDIATRIA">PEDIATRIA</option>
-              <option value="OBSTETRÍCIA">OBSTETRÍCIA</option>
-              <option value="OUTROS">OUTROS</option>
+              {sectors.map((setor) => (
+                <option key={setor.id} value={setor.name}>
+                  {setor.name}
+                </option>
+              ))}
             </select>
           </div>
 
           {/* Modalidade */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label className="block text-sm font-semibold mb-1">
+          <div className="flex-1 min-w-[200px]">
+            <label
+              htmlFor="modalidade"
+              className="block text-sm font-semibold mb-1"
+            >
               Modalidade:
             </label>
             <select
+              id="modalidade"
               value={modality}
-              onKeyDown={passarCampos}
               onChange={(e) => setModality(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">Selecione a modalidade</option>
-              <option value="PJ">PJ</option>
-              <option value="CLT">CLT</option>
-              <option value="RPA">RPA</option>
-              <option value="POS">PÓS GRADUANDO/ RESIDENTE</option>
+              {mods.map((mod) => (
+                <option key={mod.id} value={mod.name}>
+                  {mod.name}
+                </option>
+              ))}
             </select>
           </div>
 

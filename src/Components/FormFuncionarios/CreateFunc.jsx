@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { cadastrarFuncionario, listarSetores } from "../../services/api";
+import {
+  cadastrarFuncionario,
+  listarModalidades,
+  listarSetores,
+} from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
 
@@ -15,8 +19,13 @@ export default function CreateFunc({ onClose }) {
   const [matricula, setMatricula] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
-  const [popup, setPopup] = useState({ mostrar: false, mensagem: "", tipo: "info" });
+  const [popup, setPopup] = useState({
+    mostrar: false,
+    mensagem: "",
+    tipo: "info",
+  });
   const [sectors, setSectors] = useState([]);
+  const [mods, setMods] = useState([]);
 
   useEffect(() => {
     const carregarSetores = async () => {
@@ -42,6 +51,32 @@ export default function CreateFunc({ onClose }) {
     };
 
     carregarSetores();
+  }, []);
+
+  useEffect(() => {
+    const carregarMods = async () => {
+      try {
+        const resposta = await listarModalidades();
+        if (resposta.success) {
+          setMods(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar modalidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar modalidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar modalidades.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarMods();
   }, []);
 
   const cancelarOperacao = () => {
@@ -147,7 +182,10 @@ export default function CreateFunc({ onClose }) {
           {/* Nome e Email */}
           <div className="flex flex-wrap w-full gap-2">
             <div className="flex-1 min-w-[425px]">
-              <label htmlFor="nome" className="block text-sm font-semibold mb-1">
+              <label
+                htmlFor="nome"
+                className="block text-sm font-semibold mb-1"
+              >
                 Nome:
               </label>
               <input
@@ -163,7 +201,10 @@ export default function CreateFunc({ onClose }) {
             </div>
 
             <div className="flex-1 min-w-[450px]">
-              <label htmlFor="email" className="block text-sm font-semibold mb-1">
+              <label
+                htmlFor="email"
+                className="block text-sm font-semibold mb-1"
+              >
                 E-mail:
               </label>
               <input
@@ -181,7 +222,10 @@ export default function CreateFunc({ onClose }) {
 
           {/* Matrícula */}
           <div className="flex-1 min-w-[450px]">
-            <label htmlFor="matricula" className="block text-sm font-semibold mb-1">
+            <label
+              htmlFor="matricula"
+              className="block text-sm font-semibold mb-1"
+            >
               Matrícula:
             </label>
             <input
@@ -250,7 +294,10 @@ export default function CreateFunc({ onClose }) {
 
           {/* Modalidade */}
           <div className="flex-1 min-w-[200px]">
-            <label htmlFor="modalidade" className="block text-sm font-semibold mb-1">
+            <label
+              htmlFor="modalidade"
+              className="block text-sm font-semibold mb-1"
+            >
               Modalidade:
             </label>
             <select
@@ -261,10 +308,11 @@ export default function CreateFunc({ onClose }) {
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">Selecione a modalidade</option>
-              <option value="PJ">PJ</option>
-              <option value="CLT">CLT</option>
-              <option value="RPA">RPA</option>
-              <option value="POS">PÓS GRADUANDO/RESIDENTE</option>
+              {mods.map((mod) => (
+                <option key={mod.id} value={mod.name}>
+                  {mod.name}
+                </option>
+              ))}
             </select>
           </div>
 
@@ -278,7 +326,8 @@ export default function CreateFunc({ onClose }) {
                   if (!matricula && modality === "CLT") {
                     setPopup({
                       mostrar: true,
-                      mensagem: "Para funcionários CLT, a matrícula é obrigatória.",
+                      mensagem:
+                        "Para colaboradores CLT, a matrícula é obrigatória.",
                       tipo: "error",
                     });
                   } else {
@@ -291,7 +340,10 @@ export default function CreateFunc({ onClose }) {
                     tipo: "error",
                   });
                 }
-                setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
+                setTimeout(
+                  () => setPopup((prev) => ({ ...prev, mostrar: false })),
+                  3000
+                );
               }}
             >
               Cadastrar

@@ -33,7 +33,7 @@ export default function ModalSimNao({
             >
               {isProcessing ? "Processando..." : "Sim"}
             </button>
-            <p>{textSim}</p>
+            <p>{isProcessing ? "" : textSim}</p>
           </div>
           <div
             className={`${isProcessing ? "" : "flex flex-col items-center pr-5"}`}
