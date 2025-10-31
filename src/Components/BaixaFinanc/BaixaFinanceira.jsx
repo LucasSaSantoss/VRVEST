@@ -13,36 +13,25 @@ export default function ListaPendencias() {
   const [MostrarModalSimNao, setMostrarModalSimNao] = useState(false);
   const [filtroPorBaixa, setFiltroPorBaixa] = useState(1);
   const [idSelecionado, setIdSelecionado] = useState(null);
-  const [funcSelecionado, setFuncSelecionado] = useState("");
-  const [dataSelecionada, setDataSelecionada] = useState(null);
   const [isProcessing, setIsProcessing] = useState(false);
   const [mensagem, setMensagem] = useState("");
 
-  // Estados para popup de mensagens
+  // Popup states
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const API_URL = import.meta.env.VITE_API_URL;
 
-  const cancelarOperacao = () => {
-    setMostrarModalSimNao(false);
-  };
+  const cancelarOperacao = () => setMostrarModalSimNao(false);
 
   const listarPendencias = async () => {
     const dados = await carregarPendencias();
-    if (dados?.success) {
-      setPendencias(dados.data);
-    }
+    if (dados?.success) setPendencias(dados.data);
   };
 
   useEffect(() => {
     listarPendencias();
   }, []);
-
-  // const handleSelecionarLinha = (id, status) => {
-  //   if (status === 2) return; // não seleciona baixadas
-  //   setIdSelecionado(id === idSelecionado ? null : id);
-  // };
 
   const showTemporaryPopup = (message, sucesso = true) => {
     setPopupMessage(message);
@@ -50,8 +39,6 @@ export default function ListaPendencias() {
     setShowPopup(true);
     setTimeout(() => setShowPopup(false), 3000);
   };
-
-  // Função para baixar uma pendência específica
 
   const baixarPendencias = async (id) => {
     setIsProcessing(true);
@@ -65,7 +52,6 @@ export default function ListaPendencias() {
       );
       if (resposta.data.success) {
         const pendenciaAtualizada = resposta.data.updatedPendencias[0];
-        // Atualiza a tabela
         setPendencias((prev) =>
           prev.map((p) =>
             p.id === pendenciaAtualizada.id
@@ -73,44 +59,34 @@ export default function ListaPendencias() {
               : p
           )
         );
-        // Mensagem de sucesso
         showTemporaryPopup(
-          `Pendência do funcionário ${pendenciaAtualizada.emplName} baixada em ${new Date(
-            pendenciaAtualizada.devolDate
-          ).toLocaleString("pt-BR")} por ${pendenciaAtualizada.devolUserName}`,
+          `Pendência de ${pendenciaAtualizada.emplName} baixada com sucesso.`,
           true
         );
-        setIsProcessing(false);
-        setMostrarModalSimNao(false);
       } else {
         showTemporaryPopup(
           resposta.data.message || "Erro ao baixar pendência.",
           false
         );
-        setMostrarModalSimNao(false);
-        setIsProcessing(false);
       }
-    } catch (err) {
-      console.error("Erro ao baixar pendência:", err);
+    } catch {
       showTemporaryPopup("Erro ao baixar pendência.", false);
-      setMostrarModalSimNao(false);
+    } finally {
       setIsProcessing(false);
+      setMostrarModalSimNao(false);
     }
   };
 
-  // Filtragem
   const pendenciasFiltradas = pendencias.filter((p) => {
-    const passaFiltroTexto =
-      p.emplName?.toLowerCase().includes(filtro.toLowerCase()) ||
-      p.userName?.toLowerCase().includes(filtro.toLowerCase()) ||
-      p.employee?.cpf.toLowerCase().includes(filtro.toLowerCase());
-
-    const passaFiltroStatus =
-      filtroPorBaixa === 0 || p.status === filtroPorBaixa;
-    return passaFiltroTexto && passaFiltroStatus;
+    const texto = filtro.toLowerCase();
+    const passaTexto =
+      p.emplName?.toLowerCase().includes(texto) ||
+      p.userName?.toLowerCase().includes(texto) ||
+      p.employee?.cpf.toLowerCase().includes(texto);
+    const passaStatus = filtroPorBaixa === 0 || p.status === filtroPorBaixa;
+    return passaTexto && passaStatus;
   });
 
-  // Paginação
   const totalPaginas = Math.max(
     1,
     Math.ceil(pendenciasFiltradas.length / regPorPagina)
@@ -122,48 +98,46 @@ export default function ListaPendencias() {
     indiceUltimoRegistro
   );
 
-  const handleProximaPagina = () => {
-    if (paginaAtual < totalPaginas) setPaginaAtual((prev) => prev + 1);
-  };
-
-  const handlePaginaAnterior = () => {
-    if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
-  };
-
   return (
-    <div className="p-4 mt-10">
-      <div className="flex justify-between">
-        <label className="font-bold text-4xl mb-3">Baixa Financeira</label>
+    <div className="p-6 mt-10">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-3xl font-bold text-gray-800">Baixa Financeira</h1>
       </div>
 
-      <div className="flex items-center justify-between w-full mt-5 mb-4 gap-6">
-        {/* Filtros */}
-        <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <label>Registros por página:</label>
+      {/* Filtros */}
+      <div className="bg-white shadow-md rounded-lg p-5 mb-6 flex flex-wrap justify-between items-center gap-6">
+        <div className="flex gap-4 flex-wrap">
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1">
+              Registros por página
+            </label>
             <select
               value={regPorPagina}
               onChange={(e) => {
                 setRegPorPagina(Number(e.target.value));
                 setPaginaAtual(1);
               }}
-              className="border rounded p-1"
+              className="border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
+              {[10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
             </select>
           </div>
 
-          <div className="flex items-center gap-2">
-            <label>Apresentar pendências:</label>
+          <div>
+            <label className="block text-sm font-semibold text-gray-600 mb-1">
+              Status
+            </label>
             <select
               value={filtroPorBaixa}
               onChange={(e) => {
                 setFiltroPorBaixa(Number(e.target.value));
                 setPaginaAtual(1);
               }}
-              className="border rounded p-1"
+              className="border border-gray-300 rounded-lg px-3 py-1 focus:ring-2 focus:ring-blue-400 focus:outline-none"
             >
               <option value={1}>Em Aberto</option>
               <option value={2}>Baixadas</option>
@@ -172,167 +146,136 @@ export default function ListaPendencias() {
           </div>
         </div>
 
-        {/* Busca */}
-        <input
-          type="text"
-          placeholder="Filtrar por nome, usuário ou cpf"
-          value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
-          className="border bg-white w-[30vw] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
+        <div className="w-[30vw]">
+          <label className="block text-sm font-semibold text-gray-600 mb-1">
+            Buscar
+          </label>
+          <input
+            type="text"
+            placeholder="Filtrar por nome, usuário ou CPF"
+            value={filtro}
+            onChange={(e) => setFiltro(e.target.value)}
+            className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 focus:outline-none"
+          />
+        </div>
       </div>
 
+      {/* Popup */}
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div
-            className={
-              isSuccess
-                ? "bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
-                : "bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg animate-fadeInOut"
-            }
+            className={`px-6 py-3 rounded-lg shadow-lg text-white transition-all duration-500 ${
+              isSuccess ? "bg-green-500" : "bg-red-500"
+            }`}
           >
             {popupMessage}
           </div>
         </div>
       )}
 
-      <table className="min-w-full border-collapse border-b border-gray-300">
-        <thead>
-          <tr className="text-center bg-gray-100 border-t border-gray-300 text-xl font-bold">
-            <th className="py-2 px-4"></th>
-            <th className="py-2 px-4">Colaborador</th>
-            <th className="py-2 px-4">CPF</th>
-            <th className="py-2 px-1">Data</th>
-            <th className="py-2 px-1">Data Devolução</th>
-            <th className="py-2 px-1">Baixa Realizada Por</th>
-            <th className="py-2 px-1">Tamanho Kit</th>
-            <th className="py-2 px-1">Baixa Financeira</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registrosFiltrados.map((p) => (
-            <tr
-              key={p.id}
-              className={`text-center text-md transition cursor-pointer hover:bg-blue-200 ${
-                p.status === 2 ? "text-gray-500" : ""
-              }`}
-              // onClick={() => handleSelecionarLinha(p.id, p.status)}
-            >
-              <td className="py-2 px-4">
-                {p.status === 1 ? (
-                  <img
-                    src={redLight}
-                    alt="Em aberto"
-                    className="w-6 h-6 inline"
-                  />
-                ) : (
-                  <img
-                    src={greenLight}
-                    alt="Baixado"
-                    className="w-6 h-6 inline"
-                  />
-                )}
-              </td>
-              <td className="py-2 px-4">{p.emplName}</td>
-              <td className="py-2 px-4">{p.employee?.cpf}</td>
-              <td className="py-2 px-1">
-                {new Date(p.date).toLocaleString("pt-BR")}
-              </td>
-              <td className="py-2 px-1">
-                {p.devolDate
-                  ? new Date(p.devolDate).toLocaleString("pt-BR")
-                  : ""}
-              </td>
-              <td className="py-2 px-1">{p.devolUserName}</td>
-              <td className="py-2 px-1">{p.kitSize}</td>
-              <td className="py-2 px-1">
-                {p.status === 1 ? (
-                  <button
-                    onClick={() => {
-                      (setIdSelecionado(p.id),
-                        setFuncSelecionado(p.emplName),
-                        setMostrarModalSimNao(true));
-                      setMensagem(
-                        `Deseja baixar a pendência do funcionário ${p.emplName}, criada na data ${new Date(p.date).toLocaleString("pt-BR")}?`
-                      );
-                    }}
-                    className="px-4 py-1 bg-[#1d8aaa] text-white rounded hover:bg-blue-500"
-                  >
-                    Baixar
-                  </button>
-                ) : (
-                  <span>
-                    <button
-                      className="px-2 py-1 bg-gray-500 text-white rounded"
-                      disabled
-                    >
-                      Baixado
-                    </button>
-                  </span>
-                )}
-              </td>
+      {/* Tabela */}
+      <div className="overflow-x-auto bg-white shadow-md rounded-lg">
+        <table className="min-w-full border-collapse">
+          <thead>
+            <tr className="bg-gray-100 text-gray-700 text-md font-semibold">
+              <th className="py-3 px-4"></th>
+              <th className="py-3 px-4 text-left">Colaborador</th>
+              <th className="py-3 px-4">CPF</th>
+              <th className="py-3 px-4">Data</th>
+              <th className="py-3 px-4">Data Devolução</th>
+              <th className="py-3 px-4">Baixa Realizada Por</th>
+              <th className="py-3 px-4">Tamanho Kit</th>
+              <th className="py-3 px-4 text-center">Baixa Financeira</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="flex justify-between mt-4 items-center">
-        <div className="flex gap-2 ml-[35vw] items-center">
-          <button
-            onClick={handlePaginaAnterior}
-            disabled={paginaAtual === 1}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="ml-1">
-            Página {paginaAtual} de {totalPaginas}
-          </span>
-          <button
-            onClick={handleProximaPagina}
-            disabled={paginaAtual === totalPaginas || totalPaginas === 0}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
-          >
-            Próxima
-          </button>
-        </div>
-
-        <ModalSimNao
-          mostrar={MostrarModalSimNao}
-          onConfirmar={() => baixarPendencias(idSelecionado)}
-          onCancelar={cancelarOperacao}
-          onClose={() => {
-            listarPendencias();
-            setMostrarModalSimNao(false);
-          }}
-          isProcessing={isProcessing}
-          mensagem={mensagem}
-        />
+          </thead>
+          <tbody>
+            {registrosFiltrados.map((p, i) => (
+              <tr
+                key={p.id}
+                className={`text-center text-sm ${
+                  i % 2 === 0 ? "bg-white" : "bg-gray-50"
+                } hover:bg-blue-50 transition`}
+              >
+                <td className="py-2">
+                  <img
+                    src={p.status === 1 ? redLight : greenLight}
+                    alt={p.status === 1 ? "Em aberto" : "Baixado"}
+                    className="w-5 h-5 mx-auto"
+                  />
+                </td>
+                <td className="py-2 text-left">{p.emplName}</td>
+                <td className="py-2">{p.employee?.cpf}</td>
+                <td className="py-2">
+                  {new Date(p.date).toLocaleString("pt-BR")}
+                </td>
+                <td className="py-2">
+                  {p.devolDate
+                    ? new Date(p.devolDate).toLocaleString("pt-BR")
+                    : "-"}
+                </td>
+                <td className="py-2">{p.devolUserName || "-"}</td>
+                <td className="py-2">{p.kitSize}</td>
+                <td className="py-2">
+                  {p.status === 1 ? (
+                    <button
+                      onClick={() => {
+                        setIdSelecionado(p.id);
+                        setMensagem(
+                          `Deseja baixar a pendência do funcionário ${p.emplName}?`
+                        );
+                        setMostrarModalSimNao(true);
+                      }}
+                      className="bg-blue-600 text-white px-4 py-1 rounded-lg hover:bg-blue-700 transition"
+                    >
+                      Baixar
+                    </button>
+                  ) : (
+                    <span className="bg-gray-400 text-white px-3 py-1 rounded-lg text-sm">
+                      Baixado
+                    </span>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      <style jsx>{`
-        @keyframes fadeInOut {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
+      {/* Paginação */}
+      <div className="flex justify-center mt-6 gap-4 items-center">
+        <button
+          onClick={() => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1)}
+          disabled={paginaAtual === 1}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Anterior
+        </button>
+        <span className="text-gray-700 text-sm">
+          Página {paginaAtual} de {totalPaginas}
+        </span>
+        <button
+          onClick={() =>
+            paginaAtual < totalPaginas && setPaginaAtual(paginaAtual + 1)
           }
-          10% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          90% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-        }
-        .animate-fadeInOut {
-          animation: fadeInOut 3s forwards;
-        }
-      `}</style>
+          disabled={paginaAtual === totalPaginas}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Próxima
+        </button>
+      </div>
+
+      {/* Modal */}
+      <ModalSimNao
+        mostrar={MostrarModalSimNao}
+        onConfirmar={() => baixarPendencias(idSelecionado)}
+        onCancelar={cancelarOperacao}
+        onClose={() => {
+          listarPendencias();
+          setMostrarModalSimNao(false);
+        }}
+        isProcessing={isProcessing}
+        mensagem={mensagem}
+      />
     </div>
   );
 }

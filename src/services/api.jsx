@@ -24,11 +24,25 @@ export async function verificarCpf(cpf) {
     const res = await axios.get(`${API_URL}/empl/verificar-cpf/${cpf}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.log(res);
-    return res;
+    return res.data;
   } catch (err) {
     console.error("Erro ao verificar CPF:", err);
     return { error: "Erro na verificação" };
+  }
+}
+
+export async function cadastrarEmail({ cpf, email }) {
+  const token = localStorage.getItem("token");
+  try {
+    const res = await axios.post(
+      `${API_URL}/empl/cadastrar-email`,
+      { cpf, email },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return res.data;
+  } catch (err) {
+    console.error("Erro ao cadastrar email:", err);
+    return { success: false, message: "Erro ao cadastrar email" };
   }
 }
 

@@ -7,6 +7,11 @@ dotenv.config();
 const emailCopiado = process.env.EMAIL_COPIADO;
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
+function validarEmail(email) {
+  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return regex.test(email);
+}
+
 const prisma = new PrismaClient();
 
 export const createEmpl = async (req, res) => {
@@ -273,10 +278,19 @@ export const getCpf = async (req, res) => {
     });
 
     if (!empl.email) {
-      return res.status(205).json({
+      return res.status(200).json({
         success: false,
-        status: 205,
-        message: "O colaborador não possui email cadastrado.",
+        emailRequired: true,
+        message: "Colaborador não possui email cadastrado.",
+      });
+    }
+
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empl.email);
+    if (!emailValido) {
+      return res.status(200).json({
+        success: false,
+        emailRequired: true,
+        message: "O email cadastrado é inválido.",
       });
     }
 
@@ -291,6 +305,54 @@ export const getCpf = async (req, res) => {
     return res
       .status(500)
       .json({ success: false, message: "Erro interno no servidor." });
+  }
+};
+
+export const cadastrarEmail = async (req, res) => {
+  try {
+    const { cpf, email } = req.body;
+
+    if (!cpf || !email) {
+      return res.status(400).json({
+        success: false,
+        message: "CPF e email são obrigatórios.",
+      });
+    }
+
+    const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!regex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        message: "Email inválido.",
+      });
+    }
+
+    const empl = await prisma.employee.findUnique({
+      where: { cpf },
+    });
+
+    if (!empl) {
+      return res.status(404).json({
+        success: false,
+        message: "Colaborador não encontrado.",
+      });
+    }
+
+    await prisma.employee.update({
+      where: { cpf },
+      data: { email },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "Email cadastrado com sucesso.",
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({
+      success: false,
+      message: "Erro ao cadastrar email.",
+    });
   }
 };
 
@@ -432,36 +494,6 @@ export const devolverKit = async (req, res) => {
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
     const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
-
-    // // Última pendência em aberto (sem limite de tempo)
-    // const UltimaPendencia = await prisma.pendency.findFirst({
-    //   where: {
-    //     emplID: funcionario.id,
-    //     status: 1,
-    //   },
-    //   orderBy: {
-    //     date: "desc",
-    //   },
-    // });
-
-    // if (!UltimaPendencia) {
-    //   return res.json({
-    //     success: false,
-    //     message: "Nenhuma pendência em aberto encontrada para baixar.",
-    //   });
-    // }
-
-    // Valida prazo de 36h
-    // const limite = dateBRNow;
-    // limite.setHours(limite.getHours() - 36);
-
-    // if (pendenciaSelecionada.date < limite) {
-    //   return res.json({
-    //     success: false,
-    //     expired: true,
-    //     message: "A última pendência encontrada está fora do prazo de 36hrs.",
-    //   });
-    // }
 
     // Atualiza a pendência
     const pendenciaAtualizada = await prisma.pendency.update({

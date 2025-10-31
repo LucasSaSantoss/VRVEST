@@ -1,56 +1,43 @@
 import { useEffect, useState } from "react";
 import CreateUser from "./CreateUsuario";
 import AlterUser from "./AlterUsuarios";
-import { FaRegTrashAlt, FaRegEdit } from "react-icons/fa";
+import { FaRegEdit } from "react-icons/fa";
 
 export default function TabelaUsuarios() {
   const [usuarios, setUsuarios] = useState([]);
   const [filtroNome, setFiltroNome] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [regPorPagina, setRegPorPagina] = useState(10);
-
-  const [showModalCreate, setShowModalCreate] = useState(false); // modal de cadastro
-  const [showModalAlter, setShowModalAlter] = useState(false); // modal de alteração
+  const [showModalCreate, setShowModalCreate] = useState(false);
+  const [showModalAlter, setShowModalAlter] = useState(false);
   const [usuarioSelecionado, setUsuarioSelecionado] = useState(null);
+
   const API_URL = import.meta.env.VITE_API_URL;
 
-  //------------------ popup criação/alteração --------------------
-  const [popup, setPopup] = useState({
-    mostrar: false,
-    mensagem: "",
-    tipo: "info", // success / error / info
-  });
-  const mostrarPopup = (mensagem, tipo = "info") => {
-    setPopup({ mostrar: true, mensagem, tipo });
-    setTimeout(() => setPopup((prev) => ({ ...prev, mostrar: false })), 3000);
-  };
-
-  // ---------------------------------------------------------------
-
   useEffect(() => {
-    fetch(`${API_URL}/users`)
-      .then((res) => res.json())
-      .then((data) => setUsuarios(data))
-      .catch((err) => console.error("Erro ao carregar usuários:", err));
+    buscarUsuarios();
   }, []);
 
-  const usuariosFiltrados = usuarios.filter(
-    (u) =>
-      u.name.toLowerCase().includes(filtroNome.toLowerCase()) ||
-      u.email.toLowerCase().includes(filtroNome.toLowerCase()) ||
-      u.sector.toLowerCase().includes(filtroNome.toLowerCase()) ||
-      u.position.toLowerCase().includes(filtroNome.toLowerCase()) ||
-      (u.level === 1 ? "OPERADOR" : u.level === 2 ? "SUPERVISOR" : "")
-        .toLowerCase()
-        .includes(filtroNome.toLowerCase())
-  );
-
-  const handleEditar = (user) => {
-    setUsuarioSelecionado(user);
-    setShowModalAlter(true);
+  const buscarUsuarios = async () => {
+    try {
+      const res = await fetch(`${API_URL}/users`);
+      const data = await res.json();
+      setUsuarios(data);
+    } catch (error) {
+      console.error("Erro ao carregar usuários:", error);
+    }
   };
 
-  // Paginação
+  const usuariosFiltrados = usuarios.filter((u) =>
+    [
+      u.name,
+      u.email,
+      u.sector,
+      u.position,
+      u.level === 1 ? "OPERADOR" : u.level === 2 ? "SUPERVISOR" : "ADMIN",
+    ].some((campo) => campo?.toLowerCase().includes(filtroNome.toLowerCase()))
+  );
+
   const totalPaginas = Math.ceil(usuariosFiltrados.length / regPorPagina);
   const indiceUltimoRegistro = paginaAtual * regPorPagina;
   const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
@@ -59,48 +46,51 @@ export default function TabelaUsuarios() {
     indiceUltimoRegistro
   );
 
-  const handleProximaPagina = () => {
-    if (paginaAtual < totalPaginas) setPaginaAtual((prev) => prev + 1);
-  };
-
-  const handlePaginaAnterior = () => {
-    if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
+  const editarUsuario = (user) => {
+    setUsuarioSelecionado(user);
+    setShowModalAlter(true);
   };
 
   return (
-    <div className="p-4 mt-8">
-      {/* Título + Campo de busca */}
-      <div className="flex flex-col items-start mb-4">
-        <h1 className="text-4xl font-bold">Usuários Cadastrados</h1>
+    <>
+      <div className="w-full px-4 sm:px-6 lg:px-10 mt-20">
+        {/* Cabeçalho da página */}
+        <div className="flex flex-col items-start mb-6">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">
+            Usuários Cadastrados
+          </h1>
+          <p className="text-gray-600 text-sm mt-1">
+            Gerencie os usuários cadastrados no sistema
+          </p>
+        </div>
 
-        <div className="w-full flex items-center justify-between mt-6">
-          {/* Botão novo usuário */}
+        {/* Barra de ação */}
+        <div className="w-full flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
           <button
-            className="bg-[#27ae60] text-white px-4 py-2 rounded hover:bg-green-700 transition"
+            className="bg-[#27ae60] text-white px-4 py-2 rounded-lg font-medium hover:bg-green-800 transition w-full lg:w-auto"
             onClick={() => setShowModalCreate(true)}
           >
-            Novo Usuário
+            + Novo Usuário
           </button>
 
-          {/* Barra de busca + paginação */}
-          <div className="flex items-center gap-6">
+          <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
             <input
               type="text"
               placeholder="Buscar usuário..."
               value={filtroNome}
               onChange={(e) => setFiltroNome(e.target.value)}
-              className="border bg-white min-w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="border bg-white w-full sm:w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
             />
 
-            <div className="flex items-center">
-              <label className="mr-3">Registros por página:</label>
+            <div className="flex items-center text-sm">
+              <label className="mr-2">Registros:</label>
               <select
                 value={regPorPagina}
                 onChange={(e) => {
                   setRegPorPagina(Number(e.target.value));
                   setPaginaAtual(1);
                 }}
-                className="border rounded p-1"
+                className="border rounded px-2 py-1 focus:ring-2 focus:ring-cyan-500"
               >
                 <option value={10}>10</option>
                 <option value={20}>20</option>
@@ -110,168 +100,126 @@ export default function TabelaUsuarios() {
           </div>
         </div>
 
-        {/* MODAL CADASTRO */}
-        {showModalCreate && (
-          <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 transition-opacity duration-300 ease-out">
-            <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-2xl font-bold">Cadastro de Usuário</h2>
-                <button
-                  className="text-white  border-2  rounded font-bold text-xl px-0.5 hover:bg-red-700 hover:scale-110 transition duration-200"
-                  onClick={() => setShowModalCreate(false)}
-                >
-                  ✖
-                </button>
-              </div>
-              <CreateUser
-                onClose={() => {
-                  fetch(`${API_URL}/users`)
-                    .then((res) => res.json())
-                    .then((data) => setUsuarios(data));
-                  // setShowModalCreate(false);
-                  // mostrarPopup = { mostrarPopup };
-                }}
-              />
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* TABELA */}
-      <table className="min-w-full border-collapse border-b border-gray-300">
-        <thead>
-          <tr className="text-center odd:bg-gray-100 border-t border-gray-300 text-xl font-bold">
-            <th className="py-2 px-4">Nome</th>
-            <th className="py-2 px-4">Email</th>
-            <th className="py-2 px-4">Setor</th>
-            <th className="py-2 px-4">Cargo</th>
-            <th className="py-2 px-4">Nível de Acesso</th>
-            <th className="py-2 px-4">Ativo</th>
-            <th className="py-2 px-4">Ações</th>
-          </tr>
-        </thead>
-        <tbody>
-          {registrosFiltrados.map((user) => (
-            <tr
-              key={user.id}
-              className="text-center text-md hover:bg-blue-100 transition odd:bg-white even:bg-gray-100 "
-            >
-              <td className="py-2 px-4">{user.name}</td>
-              <td className="py-2 px-4">{user.email}</td>
-              <td className="py-2 px-4">{user.sector}</td>
-              <td className="py-2 px-4">{user.position}</td>
-              <td className="py-2 px-4">
-                {user.level === 1
-                  ? "OPERADOR"
-                  : user.level === 2
-                    ? "CONTROLADOR"
-                    : user.level === 3
-                      ? "DP"
-                      : "SUPERVISOR"}
-              </td>
-              <td className="py-2 px-4">{user.active === 1 ? "Sim" : "Não"}</td>
-              <td className="py-2 px-4">
-                <div className="flex justify-center items-center gap-3">
-                  {/* Botão Editar */}
-                  <button
-                    onClick={() => handleEditar(user)}
-                    className="cursor-pointer p-1 rounded-lg bg-transparent border-1 border-[#1d8aaa] hover:bg-[#36b0d4] flex items-center justify-center hover:scale-110 transition duration-200"
+        {/* Tabela */}
+        <div className="overflow-x-auto shadow-md rounded-lg border border-gray-200 bg-white">
+          <table className="min-w-full border-collapse text-sm sm:text-base">
+            <thead className="bg-gray-100 text-gray-700 text-center font-semibold">
+              <tr>
+                <th className="py-3 px-4">Nome</th>
+                <th className="py-3 px-4">Email</th>
+                <th className="py-3 px-4">Setor</th>
+                <th className="py-3 px-4">Cargo</th>
+                <th className="py-3 px-4">Nível</th>
+                <th className="py-3 px-4">Ativo</th>
+                <th className="py-3 px-4">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {registrosFiltrados.length > 0 ? (
+                registrosFiltrados.map((user) => (
+                  <tr
+                    key={user.id}
+                    className="text-center text-gray-700 hover:bg-gray-300 odd:bg-white even:bg-gray-50 transition"
                   >
-                    <FaRegEdit
-                      className="h-6 w-6 text-gray-700 cursor-pointer"
-                      title="Editar usuário"
-                    />
-                  </button>
-                </div>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      {/* MODAL ALTERAÇÃO */}
-      {showModalAlter && usuarioSelecionado && (
-        <div className="fixed inset-0 flex items-center justify-center backdrop-blur-sm z-50 transition-opacity duration-300 ease-out">
-          <div className="bg-white p-6 rounded-lg shadow-lg w-[60vw] max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-2xl font-bold">Alterar Usuário</h2>
-              <button
-                className="rounded font-bold text-xl hover:text-red-700 hover:scale-110 hover:bg-red-700 transition duration-200"
-                onClick={() => setShowModalAlter(false)} // Fecha manualmente
-              >
-                ✖
-              </button>
-            </div>
-            <AlterUser
-              user={usuarioSelecionado}
-              onUpdate={async () => {
-                // Atualiza apenas a lista de usuários sem fechar o modal
-                const res = await fetch(`${API_URL}/users`);
-                const data = await res.json();
-                setUsuarios(data);
-                setShowModalAlter(false);
-              }}
-              onClose={() => setShowModalAlter(false)}
-              mostrarPopup={mostrarPopup}
-            />
-          </div>
+                    <td className="py-2 px-4">{user.name}</td>
+                    <td className="py-2 px-4">{user.email}</td>
+                    <td className="py-2 px-4">{user.sector}</td>
+                    <td className="py-2 px-4">{user.position}</td>
+                    <td className="py-2 px-4">
+                      {user.level === 1
+                        ? "OPERADOR"
+                        : user.level === 2
+                          ? "SUPERVISOR"
+                          : "ADMIN"}
+                    </td>
+                    <td className="py-2 px-4">
+                      {user.active === 1 ? "Sim" : "Não"}
+                    </td>
+                    <td className="py-2 px-4">
+                      <button
+                        onClick={() => editarUsuario(user)}
+                        className="p-2 border border-cyan-600 rounded-lg hover:bg-cyan-600 hover:text-white transition"
+                      >
+                        <FaRegEdit />
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td
+                    colSpan="7"
+                    className="text-center text-gray-500 py-6 italic"
+                  >
+                    Nenhum usuário encontrado
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
 
-      {popup.mostrar && (
-        <div
-          className={`fixed bottom-5 right-5 px-6 py-3 rounded-lg text-white font-semibold shadow-lg transition-opacity
-      ${popup.tipo === "success" ? "bg-green-500" : "bg-red-500"}`}
-        >
-          {popup.mensagem}
-        </div>
-      )}
-
-      {/* PAGINAÇÃO */}
-      <div className="flex justify-between mt-4 items-center">
-        <div className="flex gap-2 ml-[35vw] items-center">
+        {/* Paginação */}
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
           <button
-            onClick={handlePaginaAnterior}
+            onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
             disabled={paginaAtual === 1}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
           >
             Anterior
           </button>
-          <span className="ml-1">
+          <span className="text-sm sm:text-base">
             Página {paginaAtual} de {totalPaginas}
           </span>
           <button
-            onClick={handleProximaPagina}
+            onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
             disabled={paginaAtual === totalPaginas || totalPaginas === 0}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
+            className="px-4 py-2 bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 disabled:opacity-50"
           >
             Próxima
           </button>
         </div>
       </div>
-      <style jsx>{`
-        @keyframes fadeInOut {
-          0% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          10% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          90% {
-            opacity: 1;
-            transform: translateY(0);
-          }
-          100% {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-        }
-        .animate-fadeInOut {
-          animation: fadeInOut 3s forwards;
-        }
-      `}</style>
-    </div>
+
+      {/* Modal Criar Usuário */}
+      {showModalCreate && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[90vw] md:w-[70vw] lg:w-[50vw] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Cadastrar Usuário
+              </h2>
+              <button
+                className="text-red-500 text-xl"
+                onClick={() => setShowModalCreate(false)}
+              >
+                ✖
+              </button>
+            </div>
+            <CreateUser onClose={buscarUsuarios} />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Usuário */}
+      {showModalAlter && usuarioSelecionado && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 bg-black/40 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[90vw] md:w-[70vw] lg:w-[50vw] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Alterar Usuário
+              </h2>
+              <button
+                className="text-red-500 text-xl"
+                onClick={() => setShowModalAlter(false)}
+              >
+                ✖
+              </button>
+            </div>
+            <AlterUser user={usuarioSelecionado} onClose={buscarUsuarios} />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

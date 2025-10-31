@@ -4,6 +4,7 @@ import {
   getOpenPendencies,
   verificarCpf,
   devolucaoKit,
+  cadastrarEmail,
 } from "../services/api";
 import ModalSimNao from "./ModalSimNao";
 
@@ -22,7 +23,8 @@ function LeitorQrCode() {
   const [mensagem, setMensagem] = useState("");
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
   const [simNaoComNumero, setSimNaoComNumero] = useState(true);
-  const [mostrarPopupEmail, setMostrarPopupEmail] = useState("");
+  const [mostrarPopupEmail, setMostrarPopupEmail] = useState(false);
+  const [email, setEmail] = useState("");
 
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
@@ -60,24 +62,23 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
-      if (resposta.status === 205) {
-        setMostrarPopupEmail(
-          <div>
-            <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm"></div>
-            <div className="bg-white text-black px-6 py-4 rounded-lg shadow-lg w-[600px]"></div>
-          </div>
-        );
-        return;
+      console.log(resposta);
+      if (resposta.error) {
+        return {
+          success: false,
+          message: "Erro ao verificar CPF.",
+        };
+      }
+      if (resposta.emailRequired) {
+        setMostrarPopupEmail(true);
+        return { success: false, message: resposta.message };
       }
 
       if (!resposta.success || !resposta.data) {
         setCpf("");
         cpfInputRef.current?.focus();
         setIsSuccess(false);
-        return {
-          success: false,
-          message: resposta.message || "CPF não encontrado.",
-        };
+        return {};
       }
       cpfInputRef.current?.blur();
       return { success: true, message: "Funcionário válido." };
@@ -403,7 +404,7 @@ function LeitorQrCode() {
   };
 
   return (
-    <div className="flex flex-col w-[500px] mx-auto mt-[15vh] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
+    <div className="flex flex-col w-[500px] mx-auto mt-[18rem] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
       <h1 className="text-3xl font-bold text-cyan-700 mb-6 text-center">
         Leitor de QR Code
       </h1>
@@ -422,7 +423,7 @@ function LeitorQrCode() {
         pattern="\d*"
         maxLength={11}
         value={cpf}
-        onChange={(e) => setCpf(e.target.value)}
+        onChange={(e) => setCpf(e.target.value.replace(/\D/g, ""))}
         onKeyDown={handleCpfEnter}
         className="mt-3 p-3 border-2 border-cyan-300 rounded-xl w-full text-lg focus:outline-none focus:ring-2 focus:ring-cyan-400 placeholder-gray-400 transition"
       />
@@ -433,10 +434,7 @@ function LeitorQrCode() {
           onClick={() => {
             (setTipoOperacao("retirada"), cpfInputRef.current?.focus());
           }}
-          onDoubleClick={(e) => {
-            const simulaEnter = { key: "Enter" };
-            handleCpfEnter(simulaEnter);
-          }}
+          onDoubleClick={() => handleCpfEnter({ key: "Enter" })}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
           tipoOperacao === "retirada"
@@ -451,10 +449,7 @@ function LeitorQrCode() {
           onClick={() => {
             (setTipoOperacao("devolucao"), cpfInputRef.current?.focus());
           }}
-          onDoubleClick={(e) => {
-            const simulaEnter = { key: "Enter" };
-            handleCpfEnter(simulaEnter);
-          }}
+          onDoubleClick={() => handleCpfEnter({ key: "Enter" })}
           className={`flex-1 px-6 py-3 rounded-xl font-bold text-xl transition
         ${
           tipoOperacao === "devolucao"
@@ -482,6 +477,49 @@ function LeitorQrCode() {
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div className="bg-red-700 text-white text-xl px-6 py-3 rounded-lg shadow-lg animate-fadeInOut">
             {pendPopupMessage}
+          </div>
+        </div>
+      )}
+      {mostrarPopupEmail && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl shadow-xl w-96">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-gray-800">
+                Cadastrar Email
+              </h2>
+              <button
+                className="text-red-500 text-xl"
+                onClick={() => setMostrarPopupEmail(false)}
+              >
+                ✖
+              </button>
+            </div>
+
+            <input
+              type="email"
+              placeholder="Digite o email"
+              className="w-full border p-3 rounded-lg mb-4"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+            />
+
+            <button
+              className="w-full bg-cyan-600 text-white p-2 rounded-lg font-bold hover:bg-cyan-700"
+              onClick={async () => {
+                // Chama API para salvar email
+                const resp = await cadastrarEmail({ cpf, email });
+                if (resp.success) {
+                  showTemporaryPopup("Email cadastrado com sucesso!");
+                  setMostrarPopupEmail(false);
+                  setEmail("");
+                  setShowModal(true); // abre seleção do kit
+                } else {
+                  showTemporaryPopup("Erro ao cadastrar email");
+                }
+              }}
+            >
+              Salvar
+            </button>
           </div>
         </div>
       )}

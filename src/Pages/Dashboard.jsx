@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-
 import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import {
@@ -18,7 +17,6 @@ import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
 import { FaUserGear } from "react-icons/fa6";
 
-// import HomeVRVest from "../Components/HomeVRVest";
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
@@ -28,7 +26,6 @@ import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios"
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileUser from "../Components/FormChangePassword/PasswordChange";
-
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -61,8 +58,6 @@ export default function Dashboard() {
       setInstantClose(true);
       setLocked(false);
       setHovered(false);
-
-      // reativa a transição depois de fechar
       setTimeout(() => setInstantClose(false), 50);
     } else {
       setLocked(true);
@@ -85,22 +80,15 @@ export default function Dashboard() {
 
       try {
         const decodedToken = jwtDecode(token);
-        const agora = Date.now() / 1000; // em segundos
-
+        const agora = Date.now() / 1000;
         if (decodedToken.exp < agora) {
-          // Token expirado
           localStorage.removeItem("token");
           showTemporaryPopup("Sua sessão expirou, faça login novamente.");
-          setTimeout(() => {
-            navigate("/");
-          }, 3000);
+          setTimeout(() => navigate("/"), 3000);
         } else {
-          // Token válido → define nível de usuário
           const nivel = decodedToken.level;
           setLevelUser(nivel);
           setUserName(decodedToken.name || decodedToken.username || "Usuário");
-
-          // Só define tela se nenhuma estiver selecionada
           setSelected((atual) => {
             if (!atual) {
               switch (nivel) {
@@ -115,7 +103,7 @@ export default function Dashboard() {
                   return "home";
               }
             }
-            return atual; // mantém a tela atual
+            return atual;
           });
         }
       } catch (err) {
@@ -126,15 +114,10 @@ export default function Dashboard() {
       }
     };
 
-    // Verifica o token imediatamente ao montar
     validarToken();
-
-    // Repete a validação a cada 1 minuto
     const intervalo = setInterval(validarToken, 60 * 1000);
-
-    // Limpa o intervalo ao desmontar o componente
     return () => clearInterval(intervalo);
-  }, [navigate, setLevelUser, setSelected]);
+  }, [navigate]);
 
   const handleLogoff = () => {
     localStorage.removeItem("token");
@@ -154,49 +137,47 @@ export default function Dashboard() {
 
   return (
     <>
-      <div>
-        <HeaderQRCode />
-      </div>
-      <div className="flex w-full h-screen bg-gray-100">
+      <HeaderQRCode />
+
+      <div className="flex flex-col md:flex-row w-full min-h-screen bg-gray-100">
+        {/* Sidebar */}
         <aside
-          className={`shadow-lg ${!instantClose ? "transition-all duration-300" : "transition-all duration-200"} rounded-xl text-white hover:shadow-xl flex flex-col justify-center items-center 
-          focus:border-2 focus:ring-blue-500 ${hovered || locked ? "w-64" : "w-16"} mt-[15vh] h-[85%] max-h-[100%]`}
+          className={`fixed top-[100px] left-0  shadow-lg z-30 flex flex-col justify-between items-center text-white bg-[#16607a]
+         ${hovered || locked ? "w-56 sm:w-64" : "w-14 sm:w-16"}
+         h-[calc(100vh-95px)] transition-all duration-300 rounded-tr-2xl `}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
-          style={{ backgroundColor: "#16607a" }}
         >
-          <div className="p-4 flex justify-center items-center border-b">
-            <span
-              className={`font-bold text-xl transition-opacity duration-300 
-              ${hovered ? "opacity-100 " : "opacity-0 absolute"}`}
-            ></span>
+          {/* Toggle */}
+          <div className="p-2 sm:p-4 flex justify-center items-center border-b border-white/20 w-full">
             <button
-              className={`flex items-center hover:opacity-70`}
+              className="flex items-center hover:opacity-70 text-white"
               onClick={handleToggleLock}
             >
-              <span className="text-md rounded-full">
+              <span className="text-lg sm:text-md rounded-full">
                 {locked ? <FaArrowLeft /> : <FaArrowRight />}
               </span>
               <span
-                className={`ml-3 ${hovered ? "opacity-100 mr-8" : "hidden"}`}
+                className={`ml-2 text-sm sm:text-base ${hovered ? "opacity-100" : "hidden"}`}
               >
-                {locked ? "Ocultar Menu Lateral" : "Fixar Menu Lateral"}
+                {locked ? "Ocultar Menu" : "Fixar Menu"}
               </span>
             </button>
           </div>
 
-          {/* Menu */}
-          <ul className="p-3 space-y-auto h-[60vh] ">
+          {/* Menu principal */}
+          <ul className="p-2 sm:p-3 space-y-1 overflow-y-auto flex-1 w-full">
             {levelUser >= 4 && (
               <li
-                data-testid="homeSelection"
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-              ${selected === "home" ? "bg-white text-gray-800 rounded" : "hover:bg-white hover:text-gray-800"}`}
+                className={`flex items-center cursor-pointer px-3 py-2 rounded 
+                transition-colors duration-200 ${
+                  selected === "home"
+                    ? "bg-white text-gray-800"
+                    : "hover:bg-white hover:text-gray-800"
+                }`}
                 onClick={() => setSelected("home")}
               >
-                <span className="text-xl  rounded-full">
-                  <LuLayoutGrid />
-                </span>
+                <LuLayoutGrid className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   Dashboard
                 </span>
@@ -205,163 +186,149 @@ export default function Dashboard() {
 
             {(levelUser === 1 || levelUser >= 4) && (
               <li
-                data-testid="qrCodeSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-              ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("qrcode")}
               >
-                <span className="text-xl">
-                  <LuQrCode />
-                </span>
+                <LuQrCode className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
                   QR Code
                 </span>
               </li>
             )}
+
             {levelUser > 3 && (
               <li
-                data-testid="userSelection"
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "usuarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
                 onClick={() => setSelected("usuarios")}
               >
-                <span className="text-xl ">
-                  <LuUserCog />
-                </span>
-                <span
-                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
-                >
-                  Cadastro de usuários
+                <LuUserCog className="text-xl" />
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Usuários
                 </span>
               </li>
             )}
 
             {levelUser >= 2 && (
-              <li
-                data-testid="employeeSelection"
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("funcionarios")}
-              >
-                <span className="text-xl ">
-                  <FaHospitalUser />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Cadastro de Colaboradores
-                </span>
-              </li>
+              <>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => setSelected("funcionarios")}
+                >
+                  <FaHospitalUser className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Colaboradores
+                  </span>
+                </li>
+
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => setSelected("funcionarioTemp")}
+                >
+                  <FaBusinessTime className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Colaborador Temporário
+                  </span>
+                </li>
+              </>
             )}
 
-            {levelUser >= 2 && (
-              <li
-                data-testid="tempEmployeeSelection"
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("funcionarioTemp")}
-              >
-                <span className="text-xl ">
-                  <FaBusinessTime />
-                </span>
-                <span
-                  className={`ml-1 ${hovered ? "opacity-100 p-2" : "hidden"}`}
-                >
-                  Cadastro de Colaborador Temporário
-                </span>
-              </li>
-            )}
             {levelUser >= 3 && (
-              <li
-                data-testid="baixaSelection"
-                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("baixa")}
-              >
-                <span className="text-xl">
-                  <HiOutlineReceiptTax />
-                </span>
-                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
-                  Baixa Financeira
-                </span>
-              </li>
-            )}
-            {/* === DROPCOMBO DE RELATÓRIOS === */}
-            {levelUser >= 3 && (
-              <li data-testid="relatorioSelection" className="px-3 mt-2">
-                <div
-                  className={`flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 ${
-                    submenuOpen
-                      ? "bg-white text-gray-800"
-                      : "hover:bg-white hover:text-gray-800"
-                  }`}
-                  onClick={() => setSubmenuOpen(!submenuOpen)}
+              <>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => setSelected("baixa")}
                 >
-                  <div className="flex items-center">
-                    <LuClipboardList className="text-xl" />
-                    <span
-                      className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                    >
-                      Relatórios
-                    </span>
+                  <HiOutlineReceiptTax className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Baixa Financeira
+                  </span>
+                </li>
+
+                {/* Submenu Relatórios */}
+                <li className="px-2.5 mt-2">
+                  <div
+                    className={`flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 ${
+                      submenuOpen
+                        ? "hover:bg-white hover:text-gray-800"
+                        : "hover:bg-white hover:text-gray-800"
+                    }`}
+                    onClick={() => setSubmenuOpen(!submenuOpen)}
+                  >
+                    <div className="flex items-center">
+                      <LuClipboardList className="text-xl" />
+                      <span
+                        className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                      >
+                        Relatórios
+                      </span>
+                    </div>
+                    {hovered && (
+                      <span className="text-sm">{submenuOpen ? "▲" : "▼"}</span>
+                    )}
                   </div>
-                  {hovered && (
-                    <span className="text-sm mr-2">
-                      {submenuOpen ? "▲" : "▼"}
-                    </span>
+                  {submenuOpen && hovered && (
+                    <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
+                      <li
+                        className="cursor-pointer hover:text-gray-300"
+                        onClick={() => setSelected("relatorios")}
+                      >
+                        Financeiro
+                      </li>
+                    </ul>
                   )}
-                </div>
-
-                {/* SUBMENU */}
-                {submenuOpen && hovered && (
-                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
-                    <li
-                      className="cursor-pointer hover:text-gray-300"
-                      onClick={() => setSelected("relatorios")}
-                    >
-                      Relatório Financeiro
-                    </li>
-                  </ul>
-                )}
-              </li>
+                </li>
+              </>
             )}
           </ul>
 
-          {/* Perfil Usuário */}
-          <div
-            className={`p-2 border-b flex items-center cursor-default hover:text-green-400`}
-            onClick={() => setSelected("perfil")}
-          >
-            <span className="text-xl">
-              <FaUserGear />
-            </span>
-            <span
-              className={`ml-3 font-semibold transition-all duration-300 ${
-                hovered ? "opacity-100" : "hidden"
-              }`}
+          {/* Perfil + Logoff */}
+          <div className="w-full">
+            <div
+              className="p-3 border-t border-white/20 flex items-center cursor-pointer hover:text-green-400"
+              onClick={() => setSelected("perfil")}
             >
-              {userName}
-            </span>
-          </div>
-          <div
-            className="p-4 mt-[3vh] border-t flex items-center cursor-pointer hover:text-red-400"
-            onClick={handleLogoff}
-          >
-            <span className="text-xl">
-              <CgLogOff />
-            </span>
-            <span
-              className={`ml-3 transition-all duration-300
-              ${hovered ? "opacity-100" : "hidden "}`}
+              <FaUserGear className="text-xl" />
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                {userName}
+              </span>
+            </div>
+            <div
+              className="p-3 border-t border-white/20 flex items-center cursor-pointer hover:text-red-400"
+              onClick={handleLogoff}
             >
-              Log Off
-            </span>
+              <CgLogOff className="text-xl" />
+              <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                Log Off
+              </span>
+            </div>
           </div>
         </aside>
 
         {/* Main */}
-        <main className="flex-1 p-6 transition-all duration-300 overflow-y-auto mt-[14vh]">
+        <main
+          className="
+    flex-1
+    p-3 sm:p-5 md:p-6 lg:p-5
+    transition-all duration-300
+    overflow-y-auto
+    mt-[70px] sm:mt-[80px] md:mt-[90px] lg:mt-[50px] ml-[50px]
+  "
+        >
           {pages[selected]}
         </main>
 
+        {/* Popup */}
         {showPopup && (
           <div className="fixed bottom-5 right-5 bg-red-500 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in">
             {popupMessage}
