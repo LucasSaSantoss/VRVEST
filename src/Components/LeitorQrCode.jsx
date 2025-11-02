@@ -4,8 +4,8 @@ import {
   getOpenPendencies,
   verificarCpf,
   devolucaoKit,
-  cadastrarEmail,
 } from "../services/api";
+import PopupEmail from "./QrCodeComponents/CreateEmailPopup";
 import ModalSimNao from "./ModalSimNao";
 
 function LeitorQrCode() {
@@ -70,7 +70,11 @@ function LeitorQrCode() {
         };
       }
       if (resposta.emailRequired) {
-        setMostrarPopupEmail(true);
+        showTemporaryPopup(resposta.message);
+        setTimeout(() => {
+          setMostrarPopupEmail(true);
+        }, 1500);
+
         return { success: false, message: resposta.message };
       }
 
@@ -481,47 +485,15 @@ function LeitorQrCode() {
         </div>
       )}
       {mostrarPopupEmail && (
-        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
-          <div className="bg-white p-6 rounded-2xl shadow-xl w-96">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">
-                Cadastrar Email
-              </h2>
-              <button
-                className="text-red-500 text-xl"
-                onClick={() => setMostrarPopupEmail(false)}
-              >
-                ✖
-              </button>
-            </div>
-
-            <input
-              type="email"
-              placeholder="Digite o email"
-              className="w-full border p-3 rounded-lg mb-4"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-
-            <button
-              className="w-full bg-cyan-600 text-white p-2 rounded-lg font-bold hover:bg-cyan-700"
-              onClick={async () => {
-                // Chama API para salvar email
-                const resp = await cadastrarEmail({ cpf, email });
-                if (resp.success) {
-                  showTemporaryPopup("Email cadastrado com sucesso!");
-                  setMostrarPopupEmail(false);
-                  setEmail("");
-                  setShowModal(true); // abre seleção do kit
-                } else {
-                  showTemporaryPopup("Erro ao cadastrar email");
-                }
-              }}
-            >
-              Salvar
-            </button>
-          </div>
-        </div>
+        <PopupEmail
+          cpf={cpf}
+          onClose={() => setMostrarPopupEmail(false)}
+          showTemporaryPopup={showTemporaryPopup}
+          onSuccess={() => {
+            setMostrarPopupEmail(false);
+            setShowModal(true);
+          }}
+        />
       )}
 
       {/* Modal de seleção de KIT sem fundo preto */}
