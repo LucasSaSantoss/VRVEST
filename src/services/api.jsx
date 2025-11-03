@@ -147,6 +147,34 @@ export async function alterarFuncionario(id, dados) {
   }
 }
 
+export async function importarFuncionarios(dados) {
+  const token = localStorage.getItem("token");
+
+  try {
+    const res = await axios.post(
+      `${API_URL}/empl/importar-funcionarios`,
+      { funcionarios: dados },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    console.log(res);
+    return {
+      success: res.data.success,
+      message: res.data.message || "Importação concluída com sucesso!",
+    };
+  } catch (err) {
+    console.error(
+      "Erro ao importar colaboradores:",
+      err.response?.data || err.message
+    );
+    return {
+      success: false,
+      message:
+        err.response?.data?.message ||
+        "Erro ao enviar os dados para o servidor.",
+    };
+  }
+}
+
 export async function alterarUsuario(id, dados) {
   const token = localStorage.getItem("token");
   try {

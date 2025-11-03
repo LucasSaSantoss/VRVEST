@@ -10,6 +10,7 @@ import {
   createTempEmpl,
   carregaCpfCampos,
   cadastrarEmail,
+  importarFuncionarios,
 } from "../controllers/employeeController.js";
 import { authMiddleware } from "../middlewares/authMiddleware.js";
 import multer from "multer";
@@ -33,5 +34,6 @@ router.get("/verificar-cpf/:cpf", getCpf);
 router.get("/carregacampos/:cpf", carregaCpfCampos);
 router.put("/:id", updateEmpl); // Alterar Funcionários
 router.post("/cadastrar-email", cadastrarEmail);
+router.post("/importar-funcionarios", importarFuncionarios);
 
 export default router;

@@ -407,8 +407,8 @@ export default function RelatoriosPendencias() {
           <tbody>
             {registrosAgrupadosPag.map(({ nome, lista }) => (
               <React.Fragment key={nome}>
-                <tr className="bg-blue-200 font-bold text-left">
-                  <td colSpan={6} className="p-2 text-[#16607a]">
+                <tr className="bg-linear-to-r/hsl from-indigo-600 to-blue-400 font-bold text-left">
+                  <td colSpan={6} className="p-2 text-white">
                     {nome}
                   </td>
                 </tr>

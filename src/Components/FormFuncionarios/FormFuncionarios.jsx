@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import carregarFuncionarios from "../../services/api";
 import CreateFunc from "./CreateFunc";
 import AlterForm from "./AlterFuncionarios";
+import ImportarColab from "./ImportFunc";
 import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
 import { useReactToPrint } from "react-to-print";
 import { LuQrCode } from "react-icons/lu";
@@ -18,6 +19,7 @@ export default function ListaFuncionarios() {
   const [MostrarAlterFunc, setMostarAlterFunc] = useState(false);
   const [showModalCracha, setShowModalCracha] = useState(false);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
+  const [showImportFunc, setShowImportFunc] = useState(false);
 
   // Popup de feedback
   const [popup, setPopup] = useState({
@@ -95,10 +97,17 @@ export default function ListaFuncionarios() {
               className="bg-[#27ae60] text-white px-4 py-2 rounded hover:bg-green-800 transition w-full lg:w-auto"
               onClick={() => setshowCreateFunc(true)}
             >
-            + Novo Colaborador
+              + Novo Colaborador
             </button>
 
             <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto">
+              <button
+                className="bg-[#27ae60] text-white px-4 py-2 rounded hover:bg-green-800 transition w-full lg:w-auto"
+                onClick={() => setShowImportFunc(true)}
+              >
+                Importar Colaboradores
+              </button>
+
               <input
                 type="text"
                 placeholder="Buscar Funcionário..."
@@ -108,9 +117,7 @@ export default function ListaFuncionarios() {
               />
 
               <div className="flex items-center">
-                <label className="mr-3 text-sm sm:text-base">
-                  Registros:
-                </label>
+                <label className="mr-3 text-sm sm:text-base">Registros:</label>
                 <select
                   value={regPorPagina}
                   onChange={(e) => {
@@ -163,9 +170,7 @@ export default function ListaFuncionarios() {
                   </td>
                   <td
                     className={`py-2 px-2 sm:px-4 ${
-                      employee.tempEmpl === 1
-                        ? "text-red-600"
-                        : "text-blue-600"
+                      employee.tempEmpl === 1 ? "text-red-600" : "text-blue-600"
                     }`}
                   >
                     {employee.tempEmpl === 1 ? "Sim" : "Não"}
@@ -173,7 +178,7 @@ export default function ListaFuncionarios() {
                   <td className="py-2 px-2 sm:px-4">
                     <div className="flex justify-center items-center gap-3">
                       {/* Editar */}
-                     <button
+                      <button
                         onClick={() => abrirAlterForm(employee)}
                         className="p-2 border border-cyan-600 rounded-lg hover:bg-cyan-600 hover:text-white transition"
                       >
@@ -283,6 +288,26 @@ export default function ListaFuncionarios() {
               }}
               mostrarPopup={mostrarPopup}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Modal Edição */}
+      {showImportFunc && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-[90vw] md:w-[70vw] lg:w-[60vw] max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl sm:text-2xl font-bold">
+                Alteração de Colaboradores
+              </h2>
+              <button
+                onClick={() => setShowImportFunc(false)}
+                className="text-red-500 font-bold text-xl hover:scale-110 transition"
+              >
+                ✖
+              </button>
+            </div>
+            <ImportarColab />
           </div>
         </div>
       )}

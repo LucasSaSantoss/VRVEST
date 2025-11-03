@@ -1,15 +1,54 @@
 // controllers/userController.js
+import React from "react";
 import { PrismaClient } from "@prisma/client";
 import { enviarEmail } from "../emailService/emailService.js";
+import fs from "fs";
+import path from "path";
 import dotenv from "dotenv";
+
 dotenv.config();
+
+/**
+ * Gera um arquivo TXT com os registros ignorados
+ * @param {Array} ignorados - array de objetos ignorados
+ */
+const gerarArquivoIgnorados = (ignorados) => {
+  if (!ignorados || ignorados.length === 0) return;
+
+  // Cria pasta 'logs' se não existir
+  const pastaLogs = path.join(process.cwd(), "logs");
+  if (!fs.existsSync(pastaLogs)) {
+    fs.mkdirSync(pastaLogs, { recursive: true });
+  }
+
+  // Cria nome de arquivo com data/hora
+  const dataHora = new Date().toISOString().replace(/[:.]/g, "-");
+  const nomeArquivo = `ignorados_${dataHora}.txt`;
+  const filePath = path.join(pastaLogs, nomeArquivo);
+
+  // Gera conteúdo do arquivo
+  const linhas = ignorados.map((f) => {
+    // Aqui você pode incluir outros campos além de CPF e motivo
+    return `CPF: ${f.cpf} | Motivo: ${f.motivo}`;
+  });
+  const conteudo = linhas.join("\n");
+
+  // Salva arquivo
+  fs.writeFileSync(filePath, conteudo, "utf8");
+
+  console.log(`Arquivo de ignorados gerado em: ${filePath}`);
+};
 
 const emailCopiado = process.env.EMAIL_COPIADO;
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
 
-function validarEmail(email) {
-  const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  return regex.test(email);
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function normalizarCPF(cpf) {
+  if (!cpf) return ""; // trata null ou undefined
+  return String(cpf).replace(/\D/g, "");
 }
 
 const prisma = new PrismaClient();
@@ -699,5 +738,115 @@ export const updateEmpl = async (req, res) => {
   } catch (err) {
     console.error("Erro ao atualizar funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
+  }
+};
+
+export const importarFuncionarios = async (req, res) => {
+  try {
+    const { funcionarios } = req.body;
+
+    if (!Array.isArray(funcionarios) || funcionarios.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Nenhum colaborador recebido para importação.",
+      });
+    }
+
+    const validos = [];
+    const ignorados = [];
+
+    for (const f of funcionarios) {
+      // const cpfNormalizado = normalizarCPF();
+
+      if (!f.cpf || !f.Nome) {
+        ignorados.push({
+          cpf: f.cpf,
+          motivo: "CPF ou nome ausente.",
+        });
+        continue;
+      }
+
+      if (!f.Email || !isValidEmail(f.Email)) {
+        ignorados.push({
+          cpf: f.cpf,
+          motivo: !f.Email ? "E-mail ausente." : "E-mail inválido.",
+        });
+        continue;
+      }
+
+      validos.push({
+        name: f.Nome?.trim(),
+        cpf: String(f.cpf),
+        email: f.Email.trim(),
+        sector: f.Setor || null,
+        position: f.Cargo || null,
+        modality: f.Modalidade || null,
+        matricula: f.mMtricula || null,
+        cadUserID: req.user?.id || 1,
+        cadUserName: req.user?.name || "Importação",
+      });
+    }
+    console.log(ignorados);
+    // 🔹 Remove duplicados internos
+    const cpfUnicos = new Map();
+    const semDuplicados = validos.filter((f) => {
+      if (cpfUnicos.has(f.cpf)) {
+        ignorados.push({
+          cpf: f.cpf,
+          motivo: "Duplicado na planilha.",
+        });
+        return false;
+      }
+      cpfUnicos.set(f.cpf, true);
+      return true;
+    });
+
+    // 🔹 Busca CPFs existentes normalizados
+    const cpfsExistentes = await prisma.employee.findMany({
+      where: { cpf: { in: semDuplicados.map((f) => String(f.cpf)) } },
+      select: { cpf: true },
+    });
+
+    const cpfExistentesSet = new Set(cpfsExistentes.map((e) => e.cpf));
+
+    const novos = semDuplicados.filter((f) => {
+      if (cpfExistentesSet.has(f.cpf)) {
+        ignorados.push({
+          cpf: f.cpf,
+          motivo: "Já cadastrado no banco.",
+        });
+        return false;
+      }
+      return true;
+    });
+
+    if (novos.length === 0) {
+      return res.status(200).json({
+        success: false,
+        message: "Nenhum colaborador novo para importar.",
+        inseridos: [],
+        ignorados,
+      });
+    }
+
+    const resultado = await prisma.employee.createMany({
+      data: novos,
+      skipDuplicates: true,
+    });
+
+    gerarArquivoIgnorados(ignorados);
+    console.log(ignorados);
+    return res.status(200).json({
+      success: true,
+      message: `Importação concluída: ${resultado.count} inseridos, ${ignorados.length} ignorados.`,
+      inseridos: resultado.count,
+      ignorados,
+    });
+  } catch (error) {
+    console.error("Erro ao importar colaboradores:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Erro no servidor durante a importação.",
+    });
   }
 };
