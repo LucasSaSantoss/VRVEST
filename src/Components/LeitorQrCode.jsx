@@ -408,7 +408,7 @@ function LeitorQrCode() {
   };
 
   return (
-    <div className="flex flex-col w-[500px] mx-auto mt-[18rem] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
+    <div className="flex flex-col w-[500px] mx-auto mt-[12rem] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
       <h1 className="text-3xl font-bold text-cyan-700 mb-6 text-center">
         Leitor de QR Code
       </h1>

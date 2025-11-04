@@ -35,6 +35,7 @@ export default function RelatoriosPendencias() {
   const listarPendencias = async () => {
     setLoading(true);
     try {
+      console.log(inicio, fim);
       const dados = await carregarPendencias(
         ajustarDataInicial(inicio),
         ajustarDataFinal(fim)
@@ -300,7 +301,7 @@ export default function RelatoriosPendencias() {
   return (
     <div className="w-full px-4 sm:px-6 lg:px-10 mt-10">
       <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-4">
-        Relatórios de Pendências
+        Relatório de Pendências
       </h1>
 
       {/* Filtros */}

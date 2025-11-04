@@ -835,7 +835,7 @@ export const importarFuncionarios = async (req, res) => {
     });
 
     gerarArquivoIgnorados(ignorados);
-    console.log(ignorados);
+
     return res.status(200).json({
       success: true,
       message: `Importação concluída: ${resultado.count} inseridos, ${ignorados.length} ignorados.`,

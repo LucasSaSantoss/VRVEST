@@ -26,6 +26,8 @@ export default function AlterForm({
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [sectors, setSectors] = useState([]);
   const [mods, setMods] = useState([]);
+  // const [inicioEstudos, setInicioEstudos] = useState(new Date());
+  // const [fimEstudos, setFimEstudos] = useState(new Date());
 
   useEffect(() => {
     const carregarSetores = async () => {
@@ -331,7 +333,7 @@ export default function AlterForm({
                 ))}
               </select>
             </div>
-            
+
             {/* Ativo */}
             <div className="flex-1 max-w-[200px] w-full">
               <label
@@ -353,6 +355,39 @@ export default function AlterForm({
             </div>
           </div>
 
+          {/* <div
+            className={`${modality !== "PJ" && modality !== "CLT" && modality !== "RPA" ? "visible" : "invisible"} grid grid-cols-2 gap-10`}
+          >
+            <div>
+              <label className={`flex max-w-[100px]`}>Data de Início</label>
+              <input
+                type="Date"
+                id="dataInicio"
+                value={inicioEstudos}
+                onChange={(e) => {
+                  setInicioEstudos(e.target.value);
+                }}
+                maxLength={50}
+                required
+                className={`p-2 mb-5 border border-gray-300 rounded-lg text-sm`}
+              />
+            </div>
+
+            <div>
+              <label className={` flex max-w-[100px]`}>Data Fim</label>
+              <input
+                type="Date"
+                id="dataFim"
+                value={fimEstudos}
+                onChange={(e) => {
+                  setFimEstudos(e.target.value);
+                }}
+                maxLength={50}
+                required
+                className={` max-w-[150px] p-2 mb-5 border border-gray-300 rounded-lg text-sm`}
+              />
+            </div>
+          </div> */}
           {/* Botão */}
           <div className="w-full flex justify-center">
             <button

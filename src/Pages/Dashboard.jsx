@@ -224,22 +224,21 @@ export default function Dashboard() {
                     Colaboradores
                   </span>
                 </li>
-
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => setSelected("funcionarioTemp")}
-                >
-                  <FaBusinessTime className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Colaborador Temporário
-                  </span>
-                </li>
               </>
             )}
-
+            
+            {levelUser !== 2 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("funcionarioTemp")}
+              >
+                <FaBusinessTime className="text-xl" />
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Colaborador Temporário
+                </span>
+              </li>
+            )}
             {levelUser >= 3 && (
               <>
                 <li
@@ -283,7 +282,7 @@ export default function Dashboard() {
                         className="cursor-pointer hover:text-gray-300"
                         onClick={() => setSelected("relatorios")}
                       >
-                        Financeiro
+                        Relatório de Pendências
                       </li>
                     </ul>
                   )}
