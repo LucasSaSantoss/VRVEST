@@ -71,7 +71,7 @@ export default function ProfileUser() {
   }
 
   return (
-    <div className="bg-white shadow-xl rounded-2xl max-w-[700px] mx-auto p-6 mt-6 border border-gray-200 hover:shadow-2xl transition-all duration-300 ease-in-out">
+    <div className="bg-white shadow-xl rounded-2xl max-w-[700px] mx-auto p-6 mt-[10rem] border border-gray-200 hover:shadow-2xl transition-all duration-300 ease-in-out">
       <h1 className="text-2xl font-bold text-gray-800 mb-1">
         Perfil do Usuário
       </h1>

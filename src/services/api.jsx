@@ -156,10 +156,11 @@ export async function importarFuncionarios(dados) {
       { funcionarios: dados },
       { headers: { Authorization: `Bearer ${token}` } }
     );
-    console.log(res);
+
     return {
       success: res.data.success,
       message: res.data.message || "Importação concluída com sucesso!",
+      ignorados: res.data.ignorados,
     };
   } catch (err) {
     console.error(

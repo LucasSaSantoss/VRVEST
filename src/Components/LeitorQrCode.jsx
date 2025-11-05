@@ -139,16 +139,15 @@ function LeitorQrCode() {
                   {pendData.list.map((p) => {
                     const dataPendencia = new Date(p.date);
                     const podeSelecionar = dataPendencia >= limite;
-
                     return (
                       <tr key={p.id}>
-                        <td className="border border-gray-300 px-2 py-1">
-                          {dataPendencia.toLocaleDateString()}
+                        <td className="border border-gray-300 px-2 py-1 text-center">
+                          {dataPendencia.toLocaleString()}
                         </td>
-                        <td className="border border-gray-300 px-2 py-1">
+                        <td className="border border-gray-300 px-2 py-1 text-center">
                           {p.kitSize}
                         </td>
-                        <td className="border border-gray-300 px-2 py-1">
+                        <td className="border border-gray-300 px-2 py-1 text-center">
                           R$ {valorKit}
                         </td>
                         {tipoOperacao === "devolucao" && (
@@ -408,7 +407,7 @@ function LeitorQrCode() {
   };
 
   return (
-    <div className="flex flex-col w-[500px] mx-auto mt-[12rem] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
+    <div className="flex flex-col w-[500px] mx-auto mt-[10rem] p-8 bg-gradient-to-b from-cyan-50 to-white border-2 border-cyan-400 rounded-2xl shadow-2xl items-center transition-all">
       <h1 className="text-3xl font-bold text-cyan-700 mb-6 text-center">
         Leitor de QR Code
       </h1>

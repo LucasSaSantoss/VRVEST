@@ -28,6 +28,20 @@ export default function ImportFunc() {
 
       if (response.success) {
         setMensagem(response.message);
+
+        // Se existirem registros ignorados, gera o arquivo .txt
+        if (response.ignorados && response.ignorados.length > 0) {
+          const linhas = response.ignorados.map(
+            (f) => `CPF: ${f.cpf} | Motivo: ${f.motivo}`
+          );
+          const conteudo = linhas.join("\n");
+          const blob = new Blob([conteudo], { type: "text/plain" });
+          const link = document.createElement("a");
+          const dataHora = new Date().toISOString().replace(/[:.]/g, "-");
+          link.href = URL.createObjectURL(blob);
+          link.download = `ignorados_${dataHora}.txt`;
+          link.click();
+        }
       } else {
         setMensagem(response.message || "Erro ao importar colaboradores.");
       }

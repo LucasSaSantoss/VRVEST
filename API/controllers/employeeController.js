@@ -7,7 +7,7 @@ import path from "path";
 import dotenv from "dotenv";
 
 dotenv.config();
-
+let caminhoIgnorados = "";
 /**
  * Gera um arquivo TXT com os registros ignorados
  * @param {Array} ignorados - array de objetos ignorados
@@ -35,8 +35,7 @@ const gerarArquivoIgnorados = (ignorados) => {
 
   // Salva arquivo
   fs.writeFileSync(filePath, conteudo, "utf8");
-
-  console.log(`Arquivo de ignorados gerado em: ${filePath}`);
+  caminhoIgnorados = filePath;
 };
 
 const emailCopiado = process.env.EMAIL_COPIADO;
@@ -465,7 +464,8 @@ export const registrarKit = async (req, res) => {
       funcionario.email,
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")}. 
-      \nPrazo para devolução: ${dataParaDevol}.`,
+      \nPrazo para devolução: ${dataParaDevol}.
+      \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.`,
       emailCopiado
     );
 
@@ -786,7 +786,7 @@ export const importarFuncionarios = async (req, res) => {
         cadUserName: req.user?.name || "Importação",
       });
     }
-    console.log(ignorados);
+
     // 🔹 Remove duplicados internos
     const cpfUnicos = new Map();
     const semDuplicados = validos.filter((f) => {
@@ -822,7 +822,7 @@ export const importarFuncionarios = async (req, res) => {
 
     if (novos.length === 0) {
       return res.status(200).json({
-        success: false,
+        success: true,
         message: "Nenhum colaborador novo para importar.",
         inseridos: [],
         ignorados,
@@ -834,7 +834,7 @@ export const importarFuncionarios = async (req, res) => {
       skipDuplicates: true,
     });
 
-    gerarArquivoIgnorados(ignorados);
+    // gerarArquivoIgnorados(ignorados);
 
     return res.status(200).json({
       success: true,
