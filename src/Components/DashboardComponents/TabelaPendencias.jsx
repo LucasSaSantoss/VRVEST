@@ -1,6 +1,5 @@
 // src/components/TabelaPendencias.jsx
-import { addHours, format, parseISO } from "date-fns";
-import { ptBR } from "date-fns/locale";
+import React from "react";
 export default function TabelaPendencias({
   pendencias,
   filtroStatus,
@@ -18,20 +17,6 @@ export default function TabelaPendencias({
         return "text-gray-600 bg-gray-100";
     }
   };
-
-  function formatarData(data, horas = 3) {
-    if (!data) return "-";
-
-    try {
-      const dataObj = parseISO(data);
-      const dataAjustada = addHours(dataObj, horas);
-
-      return format(dataAjustada, "dd/MM/yyyy HH:mm", { locale: ptBR });
-    } catch (erro) {
-      console.error("Erro ao formatar data:", erro);
-      return "-";
-    }
-  }
 
   return (
     <div className="bg-white rounded-xl shadow-md p-4 mt-2 w-[45%] ">
@@ -54,11 +39,11 @@ export default function TabelaPendencias({
         <table className="w-[100%] text-left border-t border-gray-200 ">
           <thead>
             <tr className="text-gray-700 border-b text-xl items-center">
-              <th className="py-2 px-3">Colaborador</th>
-              <th className="py-2 px-3">Kit</th>
-              <th className="py-2 px-3">Retirado em</th>
-              <th className="py-2 px-10 ">Status</th>
-              <th className="py-2 px-3">Tempo</th>
+              <th className="py-2 px-2">Colaborador</th>
+              <th className="py-2 px-3">Setor</th>
+              <th className="py-2 px-2">Retirado em</th>
+              <th className="py-2 px-8 ">Status</th>
+              <th className="py-2 px-2">Tempo</th>
             </tr>
           </thead>
           <tbody>
@@ -68,10 +53,14 @@ export default function TabelaPendencias({
                   key={i}
                   className="border-b hover:bg-gray-50 transition border-gray-200 text-sm items-center"
                 >
-                  <td className="py-2 px-3">{p.colaborador}</td>
+                  <td className="py-2 px-2">{p.colaborador}</td>
                   <td className="py-2 ">{p.kit}</td>
-                  <td className="py-2 px-3">{formatarData(p.data)}</td>
-                  <td className="py-2 px-10">
+                  <td className="py-2 px-2">
+                    {new Date(
+                      new Date(p.data).getTime() + 3 * 60 * 60 * 1000
+                    ).toLocaleString("en-US")}
+                  </td>
+                  <td className="py-2 px-8">
                     <span
                       className={`px-2 py-1 rounded-full text-xs ${getStatusCor(
                         p.status

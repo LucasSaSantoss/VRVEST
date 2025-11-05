@@ -62,7 +62,7 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
-      console.log(resposta);
+
       if (resposta.error) {
         return {
           success: false,
@@ -127,7 +127,7 @@ function LeitorQrCode() {
                     <th className="border border-gray-300 px-2 py-1">
                       Tamanho
                     </th>
-                    <th className="border border-gray-300 px-2 py-1">Valor</th>
+                    {/* <th className="border border-gray-300 px-2 py-1">Valor</th> */}
                     {tipoOperacao === "devolucao" && (
                       <th className="border border-gray-300 px-2 py-1">
                         Selecionar
@@ -147,9 +147,9 @@ function LeitorQrCode() {
                         <td className="border border-gray-300 px-2 py-1 text-center">
                           {p.kitSize}
                         </td>
-                        <td className="border border-gray-300 px-2 py-1 text-center">
+                        {/* <td className="border border-gray-300 px-2 py-1 text-center">
                           R$ {valorKit}
-                        </td>
+                        </td> */}
                         {tipoOperacao === "devolucao" && (
                           <td className="border border-gray-300 px-2 py-1 text-center">
                             {podeSelecionar ? (
@@ -180,14 +180,14 @@ function LeitorQrCode() {
                   })}
                 </tbody>
               </table>
-              <div className="w-full mt-2 items-center">
+              {/* <div className="w-full mt-2 items-center">
                 <div className="flex bg-gray-100 font-bold border border-gray-300">
                   <div className="px-2 py-1 text-right flex-1">Total</div>
                   <div className="px-2 py-1 flex-1">
                     R$ {Number((pendData.list.length * valorKit).toFixed(2))}
                   </div>
                 </div>
-              </div>
+              </div> */}
             </div>
           </div>
         );

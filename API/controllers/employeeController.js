@@ -465,7 +465,8 @@ export const registrarKit = async (req, res) => {
       "Retirada de Kit",
       `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")}. 
       \nPrazo para devolução: ${dataParaDevol}.
-      \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.`,
+      \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.
+      \n\n Sistema atualmente em fase de testes.`,
       emailCopiado
     );
 
@@ -552,7 +553,8 @@ export const devolverKit = async (req, res) => {
       "Devolução de Kit",
       `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date().toLocaleString(
         "pt-BR"
-      )}. `,
+      )}. 
+      \n\n Sistema atualmente em fase de testes.`,
       emailCopiado
     );
 
