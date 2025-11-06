@@ -37,7 +37,7 @@ model Employee {
   numPend  Int     @default(0)
   cadUserID Int 
   cadUserName String @db.VarChar(100) 
-  modality String @db.VarChar(5)
+  modality String @db.VarChar(100)
   active Int @default(1)
   tempEmpl Int @default(0)
   tempEmplObs String? @db.VarChar(255)
