@@ -7,6 +7,7 @@ import {
 } from "../services/api";
 import PopupEmail from "./QrCodeComponents/CreateEmailPopup";
 import ModalSimNao from "./ModalSimNao";
+import { data } from "react-router-dom";
 
 function LeitorQrCode() {
   const [cpf, setCpf] = useState("");
@@ -137,12 +138,15 @@ function LeitorQrCode() {
                 </thead>
                 <tbody className="text-sm">
                   {pendData.list.map((p) => {
-                    const dataPendencia = new Date(p.date);
+                    const dataPendencia = new Date(
+                      new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+                    ).toLocaleString("pt-BR");
                     const podeSelecionar = dataPendencia >= limite;
+
                     return (
                       <tr key={p.id}>
                         <td className="border border-gray-300 px-2 py-1 text-center">
-                          {dataPendencia.toLocaleString()}
+                          {dataPendencia}
                         </td>
                         <td className="border border-gray-300 px-2 py-1 text-center">
                           {p.kitSize}

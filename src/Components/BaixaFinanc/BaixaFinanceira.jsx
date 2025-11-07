@@ -206,11 +206,11 @@ export default function ListaPendencias() {
                 <td className="py-2 text-left">{p.emplName}</td>
                 <td className="py-2">{p.employee?.cpf}</td>
                 <td className="py-2">
-                  {new Date(p.date).toLocaleString("pt-BR")}
+                  {new Date((new Date(p.date).getTime() + 3 * 60 * 60 * 1000)).toLocaleString("pt-BR")}
                 </td>
                 <td className="py-2">
                   {p.devolDate
-                    ? new Date(p.devolDate).toLocaleString("pt-BR")
+                    ? new Date((new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000)).toLocaleString("pt-BR")
                     : "-"}
                 </td>
                 <td className="py-2">{p.devolUserName || "-"}</td>

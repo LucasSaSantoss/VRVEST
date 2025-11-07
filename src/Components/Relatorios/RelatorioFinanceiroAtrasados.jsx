@@ -5,6 +5,7 @@ import * as XLSX from "xlsx";
 import jsPDF from "jspdf";
 import { differenceInMinutes } from "date-fns";
 import React from "react";
+import { da } from "date-fns/locale";
 export default function RelatoriosPendencias() {
   // -------------------- Estados ---------------------------
   const [pendencias, setPendencias] = useState([]);
@@ -35,11 +36,14 @@ export default function RelatoriosPendencias() {
   const listarPendencias = async () => {
     setLoading(true);
     try {
-      console.log(inicio, fim);
+      const inicioValido = inicio || inicioMes;
+      const fimValido = fim || dataBR;
+
       const dados = await carregarPendencias(
-        ajustarDataInicial(inicio),
-        ajustarDataFinal(fim)
+        ajustarDataInicial(inicioValido),
+        ajustarDataFinal(fimValido)
       );
+
       if (dados?.success) setPendencias(dados.data);
       else mostrarPopup(dados.message, "error");
     } catch (err) {

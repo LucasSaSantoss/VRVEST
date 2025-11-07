@@ -463,7 +463,7 @@ export const registrarKit = async (req, res) => {
     await enviarEmail(
       funcionario.email,
       "Retirada de Kit",
-      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${new Date().toLocaleString("pt-BR")}. 
+      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${dateBRNow}. 
       \nPrazo para devolução: ${dataParaDevol}.
       \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.
       \n\n Sistema atualmente em fase de testes.`,
