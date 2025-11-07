@@ -232,7 +232,10 @@ export default function CreateFunc({ onClose }) {
               type="text"
               id="matricula"
               value={matricula}
-              onChange={(e) => setMatricula(e.target.value.replace(/\D/g, ""))}
+              onChange={(e) => {
+                const somenteNumeros = e.target.value.toUpperCase();
+                setMatricula(somenteNumeros);
+              }}
               maxLength={20}
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             />

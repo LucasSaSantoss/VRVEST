@@ -257,7 +257,7 @@ export default function AlterForm({
                 id="matricula"
                 value={matricula}
                 onChange={(e) => {
-                  const somenteNumeros = e.target.value.replace(/\D/g, "");
+                  const somenteNumeros = e.target.value.toUpperCase();
                   setMatricula(somenteNumeros);
                 }}
                 maxLength={20}
