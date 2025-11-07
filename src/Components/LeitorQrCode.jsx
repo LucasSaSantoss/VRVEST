@@ -143,10 +143,7 @@ function LeitorQrCode() {
                     return (
                       <tr key={p.id}>
                         <td className="border border-gray-300 px-2 py-1 text-center">
-                          {new Date(
-                            new Date(dataPendencia).getTime() +
-                              3 * 60 * 60 * 1000
-                          ).toLocaleString("pt-BR")}
+                          {dataPendencia.toLocaleString("pt-BR")}
                         </td>
                         <td className="border border-gray-300 px-2 py-1 text-center">
                           {p.kitSize}
