@@ -437,7 +437,7 @@ export const registrarKit = async (req, res) => {
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
     const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
-
+    
     // Cria a pendência
     const pendencia = await prisma.pendency.create({
       data: {
