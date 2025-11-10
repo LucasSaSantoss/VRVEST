@@ -34,7 +34,11 @@ export const validaFuncTemp = async () => {
               changes: {
                 active: { old: 1, new: 2 },
               },
-              newData: dataBR,
+              newData: {
+                data: dataBR,
+                name: func.name,
+                cpf: func.cpf,
+              },
             },
           });
 

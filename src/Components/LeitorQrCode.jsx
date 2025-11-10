@@ -69,6 +69,12 @@ function LeitorQrCode() {
           message: "Erro ao verificar CPF.",
         };
       }
+      if (!resposta.success) {
+        return {
+          success: false,
+          message: resposta.message,
+        };
+      }
       if (resposta.emailRequired) {
         showTemporaryPopup(resposta.message);
         setTimeout(() => {

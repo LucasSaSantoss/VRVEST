@@ -5,6 +5,7 @@ import { enviarEmail } from "../emailService/emailService.js";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
+import { data } from "react-router-dom";
 
 dotenv.config();
 let caminhoIgnorados = "";
@@ -437,6 +438,11 @@ export const registrarKit = async (req, res) => {
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
     const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    const retiradaFormatada = dateBRNow.toLocaleString("pt-BR");
+
+    // Enviar e-mail automaticamente
+    const limiteVenc = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    limiteVenc.setHours(limiteVenc.getHours() + 36);
 
     // Cria a pendência
     const pendencia = await prisma.pendency.create({
@@ -455,15 +461,12 @@ export const registrarKit = async (req, res) => {
       },
     });
 
-    // Enviar e-mail automaticamente
-    const limiteVenc = new Date();
-    limiteVenc.setHours(limiteVenc.getHours() + 36);
-
     const dataParaDevol = limiteVenc.toLocaleString("pt-BR");
+
     await enviarEmail(
       funcionario.email,
       "Retirada de Kit",
-      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${dateBRNow}. 
+      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${retiradaFormatada}. 
       \nPrazo para devolução: ${dataParaDevol}.
       \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.
       \n\n Sistema atualmente em fase de testes.`,
@@ -551,7 +554,7 @@ export const devolverKit = async (req, res) => {
     await enviarEmail(
       funcionario.email,
       "Devolução de Kit",
-      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${dateBRNow}. 
+      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${dateBRNow.toLocaleString("pt-BR")}. 
       \n\n Sistema atualmente em fase de testes.`,
       emailCopiado
     );
