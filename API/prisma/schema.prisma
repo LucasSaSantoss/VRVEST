@@ -60,6 +60,8 @@ model Pendency {
   devolType Int @default(1)
   status Int @default(1)
   kitSize String @db.VarChar(5)
+  kitPrice String? @db.VarChar(10)
+  kitType String? @db.VarChar(10)
   employee     Employee? @relation(fields: [emplID], references: [id])
 }
 
@@ -80,4 +82,16 @@ model Sectors {
 model Modalities {
   id        Int      @id @default(autoincrement())
   name      String @db.VarChar(100)
+}
+
+model itemsCloth{
+  id        Int      @id @default(autoincrement())
+  itemName  String @db.VarChar(100)
+  itemVal     String @db.VarChar(10) 
+}
+
+model Specialties {
+  id        Int      @id @default(autoincrement())
+  name      String @unique @db.VarChar(100)
+  permiteKitTrauma Int @default(0)
 }

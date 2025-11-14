@@ -35,7 +35,6 @@ export const getRegistros = async (req, res) => {
         },
       },
     });
-
     return res.json({
       success: true,
       message: "Registros carregados com sucesso",

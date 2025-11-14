@@ -154,7 +154,9 @@ export default function ListaPendencias() {
             type="text"
             placeholder="Filtrar por nome, usuário ou CPF"
             value={filtro}
-            onChange={(e) => setFiltro(e.target.value)}
+            onChange={(e) => {
+              (setFiltro(e.target.value), setPaginaAtual(1));
+            }}
             className="border border-gray-300 rounded-lg px-3 py-2 w-full focus:ring-2 focus:ring-blue-400 focus:outline-none"
           />
         </div>
@@ -206,11 +208,15 @@ export default function ListaPendencias() {
                 <td className="py-2 text-left">{p.emplName}</td>
                 <td className="py-2">{p.employee?.cpf}</td>
                 <td className="py-2">
-                  {new Date((new Date(p.date).getTime() + 3 * 60 * 60 * 1000)).toLocaleString("pt-BR")}
+                  {new Date(
+                    new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+                  ).toLocaleString("pt-BR")}
                 </td>
                 <td className="py-2">
                   {p.devolDate
-                    ? new Date((new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000)).toLocaleString("pt-BR")
+                    ? new Date(
+                        new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+                      ).toLocaleString("pt-BR")
                     : "-"}
                 </td>
                 <td className="py-2">{p.devolUserName || "-"}</td>
@@ -244,6 +250,13 @@ export default function ListaPendencias() {
       {/* Paginação */}
       <div className="flex justify-center mt-6 gap-4 items-center">
         <button
+          onClick={() => setPaginaAtual(1)}
+          disabled={paginaAtual === 1}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Primeira Página
+        </button>
+        <button
           onClick={() => paginaAtual > 1 && setPaginaAtual(paginaAtual - 1)}
           disabled={paginaAtual === 1}
           className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
@@ -261,6 +274,13 @@ export default function ListaPendencias() {
           className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
         >
           Próxima
+        </button>
+        <button
+          onClick={() => setPaginaAtual(totalPaginas)}
+          disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Última Página
         </button>
       </div>
 

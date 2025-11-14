@@ -77,6 +77,8 @@ export default function RelatoriosPendencias() {
   const ajustarDataInicial = (data) => {
     if (!data) return null;
     const d = new Date(data);
+    d.setDate(d.getDate() + 1);
+    if (isNaN(d.getTime())) return null;
     d.setHours(0, 0, 0, 0);
     return d;
   };
@@ -84,6 +86,8 @@ export default function RelatoriosPendencias() {
   const ajustarDataFinal = (data) => {
     if (!data) return null;
     const d = new Date(data);
+    d.setDate(d.getDate() + 1);
+    if (isNaN(d.getTime())) return null;
     d.setHours(23, 59, 59, 999);
     return d;
   };
@@ -144,13 +148,13 @@ export default function RelatoriosPendencias() {
   );
 
   // -------------------- Estatísticas ---------------------------
-  const pendAbertas = pendenciasFiltradas.filter(
+  const pendAbertas = pendencias.filter(
     (p) => definirStatus(p) === "Em aberto"
   ).length;
-  const pendBaixadas = pendenciasFiltradas.filter(
+  const pendBaixadas = pendencias.filter(
     (p) => definirStatus(p) === "Devolvido"
   ).length;
-  const pendAtrasadas = pendenciasFiltradas.filter(
+  const pendAtrasadas = pendencias.filter(
     (p) => definirStatus(p) === "Atrasado"
   ).length;
 
@@ -328,7 +332,9 @@ export default function RelatoriosPendencias() {
           type="text"
           placeholder="Filtrar por nome ou CPF"
           value={filtro}
-          onChange={(e) => setFiltro(e.target.value)}
+          onChange={(e) => {
+            (setFiltro(e.target.value), setPaginaAtual(1));
+          }}
           className="border bg-white w-full sm:w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
@@ -422,9 +428,18 @@ export default function RelatoriosPendencias() {
                     <td className="py-2 px-2">{p.employee.cpf}</td>
                     <td className="py-2 px-2">{p.employee.matricula}</td>
                     <td className="py-2 px-2">{p.kitSize}</td>
-                    <td className="py-2 px-2">{formatarDataHora(p.date)}</td>
                     <td className="py-2 px-2">
-                      {formatarDataHora(p.devolDate)}
+                      {" "}
+                      {new Date(
+                        new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+                      ).toLocaleString("pt-BR")}
+                    </td>
+                    <td className="py-2 px-2">
+                      {p.devolDate
+                        ? new Date(
+                            new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+                          ).toLocaleString("pt-BR")
+                        : "-"}
                     </td>
                     <td
                       className={`py-2 px-2 ${getStatusCor(definirStatus(p))}`}
@@ -441,6 +456,13 @@ export default function RelatoriosPendencias() {
 
       {/* Paginação */}
       <div className="flex justify-center items-center gap-4 mt-4">
+        <button
+          onClick={() => setPaginaAtual(1)}
+          disabled={paginaAtual === 1}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Primeira Página
+        </button>
         <button
           onClick={() => setPaginaAtual((prev) => Math.max(prev - 1, 1))}
           disabled={paginaAtual === 1}
@@ -459,6 +481,13 @@ export default function RelatoriosPendencias() {
           className="px-4 py-2 bg-[#36b0d4] rounded text-white font-medium hover:bg-blue-500 disabled:opacity-50 transition"
         >
           Próxima
+        </button>
+        <button
+          onClick={() => setPaginaAtual(totalPaginas)}
+          disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Última Página
         </button>
       </div>
 

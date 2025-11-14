@@ -3,6 +3,7 @@ import {
   cadastrarFuncionario,
   listarModalidades,
   listarSetores,
+  listarEspecialidades,
 } from "../../services/api";
 import { useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
@@ -19,6 +20,8 @@ export default function CreateFunc({ onClose }) {
   const [matricula, setMatricula] = useState("");
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [mensagem, setMensagem] = useState("");
+  const [kitTrauma, setKitTrauma] = useState(false);
+  const [showKitTrauma, setShowKitTrauma] = useState(false);
   const [popup, setPopup] = useState({
     mostrar: false,
     mensagem: "",
@@ -26,6 +29,7 @@ export default function CreateFunc({ onClose }) {
   });
   const [sectors, setSectors] = useState([]);
   const [mods, setMods] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
 
   useEffect(() => {
     const carregarSetores = async () => {
@@ -49,7 +53,6 @@ export default function CreateFunc({ onClose }) {
         });
       }
     };
-
     carregarSetores();
   }, []);
 
@@ -75,8 +78,33 @@ export default function CreateFunc({ onClose }) {
         });
       }
     };
-
     carregarMods();
+  }, []);
+
+  useEffect(() => {
+    const carregarEspecialidades = async () => {
+      try {
+        const resposta = await listarEspecialidades();
+        if (resposta.success) {
+          setSpecialties(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar especialidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar especialidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar especialidades.",
+          tipo: "error",
+        });
+      }
+    };
+   
+    carregarEspecialidades();
   }, []);
 
   const cancelarOperacao = () => {
@@ -150,6 +178,7 @@ export default function CreateFunc({ onClose }) {
       position,
       modality,
       matricula,
+      PermissTrauma: kitTrauma ? 1 : 0,
     });
 
     setMensagem(data.message);
@@ -170,6 +199,8 @@ export default function CreateFunc({ onClose }) {
       setSector("");
       setModality("");
       setMatricula("");
+      setKitTrauma(false);
+      setShowKitTrauma(false);
     }
 
     setMostarModalSimNao(false);
@@ -261,20 +292,25 @@ export default function CreateFunc({ onClose }) {
           {/* Cargo */}
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
-              Cargo:
+              Especialidade:
             </label>
-            <input
-              type="text"
-              id="cargo"
+            <select
+              id="especialidade"
               value={position}
-              onChange={(e) => limparTexto(e, setPosition)}
-              maxLength={50}
+              onChange={(e) => setPosition(e.target.value)}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            />
+            >
+              <option value="">Selecione a especialidade</option>
+              {specialties.map((mod) => (
+                <option key={mod.id} value={mod.name}>
+                  {mod.name}
+                </option>
+              ))}
+            </select>
           </div>
 
-          {/* Setor - dinâmico */}
+          {/* Setor  */}
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="setor" className="block text-sm font-semibold mb-1">
               Setor:
@@ -282,7 +318,12 @@ export default function CreateFunc({ onClose }) {
             <select
               id="setor"
               value={sector}
-              onChange={(e) => setSector(e.target.value)}
+              onChange={(e) => {
+                setSector(e.target.value);
+                e.target.value === "TRAUMA"
+                  ? setShowKitTrauma(true)
+                  : setShowKitTrauma(false);
+              }}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm bg-gray-50"
             >
@@ -318,6 +359,25 @@ export default function CreateFunc({ onClose }) {
               ))}
             </select>
           </div>
+
+          {/*Apresenta opção de Kit Trauma */}
+          {showKitTrauma && (
+            <div className="flex items-center space-x-3 bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 hover:shadow-sm transition-all duration-200">
+              <input
+                type="checkbox"
+                id="kitTrauma"
+                checked={kitTrauma}
+                onChange={(e) => setKitTrauma(e.target.checked)}
+                className="h-5 w-5 text-blue-600 focus:ring-2 focus:ring-blue-400 border-gray-300 rounded cursor-pointer transition-all"
+              />
+              <label
+                htmlFor="kitTrauma"
+                className="text-gray-800 text-sm font-medium cursor-pointer select-none"
+              >
+                Permitir retirada de Pijama Trauma
+              </label>
+            </div>
+          )}
 
           {/* Botão Cadastrar */}
           <div className="w-full flex justify-center">

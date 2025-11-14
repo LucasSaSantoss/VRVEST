@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { alterarUsuario } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
+import { listarEspecialidades } from "../../services/api";
+import { useEffect } from "react";
 
 export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
   const [level, setLevel] = useState(user?.level || 1);
   const [active, setActive] = useState(user?.active || 1);
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
+  const [specialties, setSpecialties] = useState([]);
 
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
@@ -25,6 +28,32 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
     mensagem: "",
     tipo: "info",
   });
+
+  useEffect(() => {
+    const carregarEspecialidades = async () => {
+      try {
+        const resposta = await listarEspecialidades();
+        if (resposta.success) {
+          setSpecialties(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar especialidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar especialidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar especialidades.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarEspecialidades();
+  }, []);
 
   const limparTexto = (e, setState) => {
     let valor = e.target.value;
@@ -181,22 +210,25 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             />
           </div>
-
-          <div className="flex-1 min-w-[200px] w-full">
+          {/* Cargo */}
+          <div className="flex-1 min-w-[200px]">
             <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
-              Cargo:
+              Especialidade:
             </label>
-            <input
-              type="text"
-              id="cargo"
-              maxLength={50}
+            <select
+              id="especialidade"
               value={position}
-              onChange={(e) => {
-                limparTexto(e, setPosition);
-              }}
+              onChange={(e) => setPosition(e.target.value)}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            />
+            >
+              <option value="">Selecione a especialidade</option>
+              {specialties.map((mod) => (
+                <option key={mod.id} value={mod.name}>
+                  {mod.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className="flex-1 min-w-[200px] w-full">
@@ -211,7 +243,7 @@ export default function AlterUser({ user, onClose, onUpdate, mostrarPopup }) {
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
             >
               <option value="">Selecione o setor</option>
-             <option value="DP">D.P</option>
+              <option value="DP">D.P</option>
               <option value="RH">R.H</option>
               <option value="ROUPARIA">ROUPARIA</option>
               <option value="CENTRO DE ESTUDOS">CENTRO DE ESTUDOS</option>

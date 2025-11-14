@@ -77,9 +77,9 @@ export default function Dashboard() {
           return {
             colaborador: item.emplName,
             kit: item.employee?.sector || "-",
-            data: new Date(item.date).toLocaleString("pt-BR"),
+            data: item.date,
             dataDevolucao: item.devolDate
-              ? new Date(item.devolDate).toLocaleString("pt-BR")
+              ? item.devolDate
               : "-",
             status: definirStatus(item),
             tempo: formatarTempo(minutos),

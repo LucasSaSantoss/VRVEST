@@ -17,7 +17,7 @@ export default function TabelaPendencias({
         return "text-gray-600 bg-gray-100";
     }
   };
-
+  console.log(pendencias);
   return (
     <div className="bg-white rounded-xl shadow-md p-4 mt-2 w-[45%] ">
       {/* Cabeçalho da tabela */}
@@ -53,12 +53,14 @@ export default function TabelaPendencias({
                   key={i}
                   className="border-b hover:bg-gray-50 transition border-gray-200 text-sm items-center"
                 >
-                  <td className="py-2 px-2">{p.colaborador}</td>
+                  <td className="py-2 px-2">{p.colaborador.toUpperCase()}</td>
                   <td className="py-2 ">{p.kit}</td>
                   <td className="py-2 px-2">
                     {new Date(
                       new Date(p.data).getTime() + 3 * 60 * 60 * 1000
-                    ).toLocaleString("en-US")}
+                    ).toLocaleString("pt-BR", {
+                      timeZone: "America/Sao_Paulo",
+                    })}
                   </td>
                   <td className="py-2 px-8">
                     <span

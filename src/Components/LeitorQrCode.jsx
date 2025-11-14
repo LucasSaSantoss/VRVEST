@@ -25,10 +25,14 @@ function LeitorQrCode() {
   const [simNaoComNumero, setSimNaoComNumero] = useState(true);
   const [mostrarPopupEmail, setMostrarPopupEmail] = useState(false);
   const [email, setEmail] = useState("");
-
+  const [showModalKitTrauma, setShowModalKitTrauma] = useState(false);
+  const [tipoKitTrauma, setTipoKitTrauma] = useState(null);
+  const [funcTrauma, setFuncTrauma] = useState(false);
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
   const btnNaoRef = useRef(null);
+  const [sector, setSector] = useState("");
+  let nomeColab;
 
   // Ref para travar processamento no teclado
   const processingRef = useRef(false);
@@ -62,19 +66,14 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
-      console.log(resposta);
+
       if (resposta.error) {
         return {
           success: false,
           message: "Erro ao verificar CPF.",
         };
       }
-      if (!resposta.success) {
-        return {
-          success: false,
-          message: resposta.message,
-        };
-      }
+
       if (resposta.emailRequired) {
         showTemporaryPopup(resposta.message);
         setTimeout(() => {
@@ -84,14 +83,28 @@ function LeitorQrCode() {
         return { success: false, message: resposta.message };
       }
 
+      if (!resposta.success) {
+        return {
+          success: false,
+          message: resposta.message,
+        };
+      }
+
       if (!resposta.success || !resposta.data) {
         setCpf("");
         cpfInputRef.current?.focus();
         setIsSuccess(false);
-        return {};
+        return { success: false, message: "Funcionário não encontrado." };
       }
+
       cpfInputRef.current?.blur();
-      return { success: true, message: "Funcionário válido." };
+      nomeColab = resposta.data.name;
+
+      return {
+        success: true,
+        message: "Funcionário válido.",
+        trauma: resposta.trauma,
+      };
     } catch (err) {
       console.error(err);
       setCpf("");
@@ -106,7 +119,6 @@ function LeitorQrCode() {
     if (e.key !== "Enter" || showModal) return;
 
     const resultado = await validateCpf();
-
     if (!resultado.success) {
       showTemporaryPopup(resultado.message);
       return;
@@ -114,8 +126,6 @@ function LeitorQrCode() {
 
     try {
       const pendData = await getOpenPendencies({ cpf });
-      const valorKit = 114.9;
-
       if (pendData.success && pendData.total > 0) {
         const limite = new Date();
         limite.setHours(limite.getHours() - 36);
@@ -126,6 +136,9 @@ function LeitorQrCode() {
               <h2 className="text-xl font-bold mb-4 text-center">
                 Pendências em Aberto
               </h2>
+              <h3 className="text-center text-2xl font-semibold text-blue-600 mb-4">
+                {nomeColab}
+              </h3>
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
                   <tr className="bg-gray-200">
@@ -133,6 +146,7 @@ function LeitorQrCode() {
                     <th className="border border-gray-300 px-2 py-1">
                       Tamanho
                     </th>
+                    <th className="border border-gray-300 px-2 py-1">Tipo</th>
                     <th className="border border-gray-300 px-2 py-1">Valor</th>
                     {tipoOperacao === "devolucao" && (
                       <th className="border border-gray-300 px-2 py-1">
@@ -158,7 +172,10 @@ function LeitorQrCode() {
                           {p.kitSize}
                         </td>
                         <td className="border border-gray-300 px-2 py-1 text-center">
-                          R$ {valorKit}
+                          {p.kitType ? p.kitType : "-"}
+                        </td>
+                        <td className="border border-gray-300 px-2 py-1 text-center">
+                          {p.kitPrice ? "R$" + p.kitPrice : "-"}
                         </td>
                         {tipoOperacao === "devolucao" && (
                           <td className="border border-gray-300 px-2 py-1 text-center">
@@ -194,14 +211,23 @@ function LeitorQrCode() {
                 <div className="flex bg-gray-100 font-bold border border-gray-300">
                   <div className="px-2 py-1 text-right flex-1">Total</div>
                   <div className="px-2 py-1 flex-1">
-                    R$ {Number((pendData.list.length * valorKit).toFixed(2))}
+                    R$
+                    {pendData.list
+                      .reduce((acc, p) => {
+                        const valorNum = parseFloat(
+                          p.kitPrice ? p.kitPrice.replace(",", ".") : "0"
+                        );
+                        return acc + (isNaN(valorNum) ? 0 : valorNum);
+                      }, 0)
+                      .toFixed(2)
+                      .replace(".", ",")}
                   </div>
                 </div>
               </div>
             </div>
           </div>
         );
-
+        setFuncTrauma(resultado.trauma);
         setShowPendPopup(true);
       } else {
         if (tipoOperacao === "devolucao") {
@@ -209,7 +235,13 @@ function LeitorQrCode() {
           setCpf("");
           cpfInputRef.current?.focus();
         } else {
-          setShowModal(true);
+          setFuncTrauma(resultado.trauma);
+          if (resultado.trauma) {
+            setShowModalKitTrauma(true);
+          } else {
+            setTipoKitTrauma("COMUM");
+            setShowModal(true);
+          }
         }
       }
     } catch (err) {
@@ -238,7 +270,12 @@ function LeitorQrCode() {
       if (showPendPopup) {
         setShowPendPopup(false);
         if (tipoOperacao === "retirada") {
-          setShowModal(true);
+          if (funcTrauma) {
+            setShowModalKitTrauma(true);
+          } else {
+            setTipoKitTrauma("COMUM");
+            setShowModal(true);
+          }
         } else {
           if (pendenciaSelecionada) {
             setMensagem("Deseja realmente devolver a pendência selecionada?");
@@ -326,6 +363,33 @@ function LeitorQrCode() {
     pendenciaSelecionada,
   ]);
 
+  useEffect(() => {
+    if (!showModalKitTrauma) return;
+
+    const handleKey = (e) => {
+      if (e.key === "1") {
+        setTipoKitTrauma("COMUM");
+        setShowModalKitTrauma(false);
+        setShowModal(true);
+      }
+
+      if (e.key === "2") {
+        setTipoKitTrauma("TRAUMA");
+        setShowModalKitTrauma(false);
+        setShowModal(true);
+      }
+
+      if (e.key !== "1" && e.key !== "2") {
+        setShowModalKitTrauma(false);
+        cpfInputRef.current?.focus();
+      }
+    };
+
+    window.addEventListener("keydown", handleKey);
+
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [showModalKitTrauma]);
+
   // Foco automático no botão Sim
   useEffect(() => {
     if (mostrarModalSimNao) {
@@ -341,7 +405,11 @@ function LeitorQrCode() {
 
     try {
       if (tipoOperacao === "retirada") {
-        const response = await registrarKit({ cpf, kitSize });
+        const response = await registrarKit({
+          cpf,
+          kitSize,
+          kitType: tipoKitTrauma,
+        });
         if (response.success) {
           showTemporaryPopup(`Saída de kit registrada! Tamanho: ${kitSize}`);
           setCpf("");
@@ -478,7 +546,7 @@ function LeitorQrCode() {
       {showPopup && (
         <div className="fixed inset-0 flex items-center justify-center z-50">
           <div
-            className={`px-6 py-3 rounded-lg shadow-lg text-white font-semibold animate-fadeInOut ${isSuccess ? "bg-green-500" : "bg-red-500"}`}
+            className={`px-6 py-3 rounded-lg shadow-lg text-white font-semibold animate-fadeInOut ${isSuccess ? (tipoKitTrauma === "TRAUMA" ? "bg-blue-500" : "bg-green-500") : "bg-red-500"}`}
           >
             {popupMessage}
           </div>
@@ -512,6 +580,9 @@ function LeitorQrCode() {
             <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
               Selecione o KIT
             </h2>
+            <h3 className=" text-md font-bold mb-6 text-center text-gray-800  ">
+              {nomeColab}
+            </h3>
             <div className="grid grid-cols-4 gap-4 justify-center mb-6">
               {[
                 { kit: "P", numero: 1 },
@@ -527,9 +598,10 @@ function LeitorQrCode() {
                     onClick={() => {
                       setKitSelecionado(kit);
                       setMostrarModalSimNao(true);
+                      setTipoKitTrauma("COMUM");
                       setMensagem(`Tamanho ${kit}. Deseja prosseguir?`);
                     }}
-                    className="w-16 h-16 rounded-lg bg-cyan-100 hover:bg-cyan-200 font-bold text-lg shadow-md transition"
+                    className={`w-16 h-16 rounded-lg ${tipoKitTrauma === "COMUM" ? "bg-green-500 hover:bg-green-600 text-white" : "bg-blue-700 hover:bg-blue-800 text-white"}  font-bold text-lg shadow-md transition`}
                   >
                     {kit}
                   </button>
@@ -544,14 +616,66 @@ function LeitorQrCode() {
                 setShowModal(false);
                 cpfInputRef.current?.focus();
               }}
-              className="bg-cyan-500 text-white px-4 py-2 rounded-lg w-full hover:bg-cyan-600 transition"
+              className="bg-gray-400 text-white px-4 py-2 rounded-lg w-full hover:bg-gray-600 transition"
             >
               Fechar
             </button>
           </div>
         </div>
       )}
+      {showModalKitTrauma && (
+        <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
+          <div className="bg-white p-6 rounded-2xl shadow-2xl w-96">
+            <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
+              Escolha o tipo de KIT
+            </h2>
 
+            <div className="flex flex-col items-center gap-6">
+              {/* GRID COM OS 2 TIPOS DE KIT */}
+              <div className="grid grid-cols-2 gap-6 justify-items-center w-full">
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => {
+                      setTipoKitTrauma("COMUM");
+                      setShowModalKitTrauma(false);
+                      setShowModal(true);
+                    }}
+                    className="bg-green-500 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-600 shadow-md w-32 text-center"
+                  >
+                    KIT COMUM
+                  </button>
+                  <p className="mt-2 text-gray-700 font-semibold text-lg">1</p>
+                </div>
+
+                <div className="flex flex-col items-center">
+                  <button
+                    onClick={() => {
+                      setTipoKitTrauma("TRAUMA");
+                      setShowModalKitTrauma(false);
+                      setShowModal(true);
+                    }}
+                    className="bg-blue-800 text-white px-6 py-3 rounded-xl font-bold hover:bg-blue-900 shadow-md w-32 text-center"
+                  >
+                    KIT TRAUMA
+                  </button>
+                  <p className="mt-2 text-gray-700 font-semibold text-lg">2</p>
+                </div>
+              </div>
+
+              {/* BOTÃO CANCELAR CENTRALIZADO */}
+              <button
+                onClick={() => {
+                  setShowModalKitTrauma(false);
+                  cpfInputRef.current?.focus();
+                }}
+                className="bg-cyan-500 text-white px-4 py-2 rounded-lg w-full hover:bg-cyan-600 transition text-center font-bold"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {/* Modal Sim/Não */}
       <ModalSimNao
         mostrar={mostrarModalSimNao}

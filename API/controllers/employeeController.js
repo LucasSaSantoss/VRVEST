@@ -6,6 +6,7 @@ import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
 import { data } from "react-router-dom";
+import { Console } from "console";
 
 dotenv.config();
 let caminhoIgnorados = "";
@@ -41,15 +42,6 @@ const gerarArquivoIgnorados = (ignorados) => {
 
 const emailCopiado = process.env.EMAIL_COPIADO;
 // import { emailQueue } from "../emailService/queues/emailQueue.js";
-
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-}
-
-function normalizarCPF(cpf) {
-  if (!cpf) return ""; // trata null ou undefined
-  return String(cpf).replace(/\D/g, "");
-}
 
 const prisma = new PrismaClient();
 
@@ -339,7 +331,17 @@ export const getCpf = async (req, res) => {
         .json({ success: false, message: "Colaborador inativo." });
     }
 
-    return res.status(200).json({ success: true, data: empl });
+    const specialty = await prisma.specialties.findUnique({
+      where: { name: empl.position },
+    });
+
+    let permiteKitTrauma = false;
+    if (specialty && specialty.permiteKitTrauma === 1) {
+      permiteKitTrauma = true;
+    }
+    return res
+      .status(200)
+      .json({ success: true, data: empl, trauma: permiteKitTrauma });
   } catch (err) {
     return res
       .status(500)
@@ -424,7 +426,7 @@ export const carregaCpfCampos = async (req, res) => {
 
 export const registrarKit = async (req, res) => {
   try {
-    const { cpf, kitSize } = req.body;
+    const { cpf, kitSize, kitType } = req.body;
 
     // Verifica se o funcionário existe
     const funcionario = await prisma.employee.findUnique({ where: { cpf } });
@@ -434,10 +436,13 @@ export const registrarKit = async (req, res) => {
         .json({ success: false, message: "CPF não encontrado" });
     }
 
+    const kit = await prisma.itemsCloth.findUnique({ where: { id: 1 } });
+
     // Dados do usuário logado
     const usuarioID = req.user.id;
     const usuarioName = req.user.name;
-    const dateBRNow = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    const dateBRNow = new Date();
+    dateBRNow.setHours(dateBRNow.getHours() - 3);
     const retiradaFormatada = dateBRNow.toLocaleString("pt-BR");
 
     // Enviar e-mail automaticamente
@@ -458,6 +463,8 @@ export const registrarKit = async (req, res) => {
         devolType: 1,
         status: 1,
         kitSize: kitSize,
+        kitPrice: kit ? kit.itemVal : "0",
+        kitType: kitType,
       },
     });
 
@@ -466,7 +473,7 @@ export const registrarKit = async (req, res) => {
     await enviarEmail(
       funcionario.email,
       "Retirada de Kit",
-      `Olá ${funcionario.name}, seu kit de tamanho ${kitSize} foi retirado em ${retiradaFormatada}. 
+      `Olá ${funcionario.name}, seu pijama cirúrgico de tamanho ${kitSize}, no valor de R$${pendencia.kitPrice} foi retirado em ${retiradaFormatada}. 
       \nPrazo para devolução: ${dataParaDevol}.
       \nCaso o kit cirúrgico não seja devolvido dentro do prazo estabelecido, poderão ser aplicados descontos em seus honorários correspondentes ao valor do kit.
       \n\n Sistema atualmente em fase de testes.`,
@@ -484,6 +491,8 @@ export const registrarKit = async (req, res) => {
           userId: usuarioID,
           userName: usuarioName,
           kitSize: pendencia.kitSize,
+          kitPrice: pendencia.kitPrice,
+          kitType: pendencia.kitType,
         },
         createdAt: dateBRNow,
       },
@@ -572,6 +581,7 @@ export const devolverKit = async (req, res) => {
           userId: usuarioID,
           userName: usuarioName,
           kitSize: pendenciaAtualizada.kitSize,
+          kitPrice: pendenciaAtualizada.kitPrice,
         },
         createdAt: dateBRNow,
       },
@@ -620,7 +630,9 @@ export const getOpenPendencies = async (req, res) => {
       list: pendencias.map((p) => ({
         id: p.id,
         kitSize: p.kitSize,
+        kitPrice: p.kitPrice,
         date: p.date,
+        kitType: p.kitType,
       })),
     });
   } catch (err) {
@@ -759,8 +771,6 @@ export const importarFuncionarios = async (req, res) => {
     const ignorados = [];
 
     for (const f of funcionarios) {
-      // const cpfNormalizado = normalizarCPF();
-
       if (!f.cpf || !f.Nome) {
         ignorados.push({
           cpf: f.cpf,
@@ -769,22 +779,22 @@ export const importarFuncionarios = async (req, res) => {
         continue;
       }
 
-      if (!f.Email || !isValidEmail(f.Email)) {
-        ignorados.push({
-          cpf: f.cpf,
-          motivo: !f.Email ? "E-mail ausente." : "E-mail inválido.",
-        });
-        continue;
-      }
+      // if (!f.Email || !isValidEmail(f.Email)) {
+      //   ignorados.push({
+      //     cpf: f.cpf,
+      //     motivo: !f.Email ? "E-mail ausente." : "E-mail inválido.",
+      //   });
+      //   continue;
+      // }
 
       validos.push({
         name: f.Nome?.trim(),
         cpf: String(f.cpf),
-        email: f.Email.trim(),
+        email: f.Email ? f.Email.trim() : " ",
         sector: f.Setor || null,
         position: f.Cargo || null,
         modality: f.Modalidade || null,
-        matricula: f.mMtricula || null,
+        matricula: f.Matrícula || null,
         cadUserID: req.user?.id || 1,
         cadUserName: req.user?.name || "Importação",
       });
@@ -836,8 +846,6 @@ export const importarFuncionarios = async (req, res) => {
       data: novos,
       skipDuplicates: true,
     });
-
-    // gerarArquivoIgnorados(ignorados);
 
     return res.status(200).json({
       success: true,

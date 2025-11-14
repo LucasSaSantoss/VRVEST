@@ -76,6 +76,14 @@ export default function ListaFuncionarios() {
     if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
   };
 
+  const handlePrimeiraPagina = () => {
+    setPaginaAtual(1);
+  };
+
+  const handleUltimaPagina = () => {
+    setPaginaAtual(totalPaginas);
+  };
+
   const abrirAlterForm = (func) => {
     setFuncSelecionado(func);
     setMostarAlterFunc(true);
@@ -112,7 +120,10 @@ export default function ListaFuncionarios() {
                 type="text"
                 placeholder="Buscar Funcionário..."
                 value={filtroNome}
-                onChange={(e) => setFiltroNome(e.target.value)}
+                onChange={(e) => {
+                  setFiltroNome(e.target.value);
+                  setPaginaAtual(1);
+                }}
                 className="border bg-white w-full sm:w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
               />
 
@@ -209,9 +220,16 @@ export default function ListaFuncionarios() {
         {/* Paginação */}
         <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
           <button
+            onClick={handlePrimeiraPagina}
+            disabled={paginaAtual === 1}
+            className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            Primeira Página
+          </button>
+          <button
             onClick={handlePaginaAnterior}
             disabled={paginaAtual === 1}
-            className="px-4 py-2 bg-[#36b0d4] rounded text-white font-medium hover:bg-blue-500 disabled:opacity-50 transition"
+            className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
             Anterior
           </button>
@@ -221,9 +239,16 @@ export default function ListaFuncionarios() {
           <button
             onClick={handleProximaPagina}
             disabled={paginaAtual === totalPaginas || totalPaginas === 0}
-            className="px-4 py-2 bg-[#36b0d4] rounded text-white font-medium hover:bg-blue-500 disabled:opacity-50 transition"
+            className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
           >
             Próxima
+          </button>
+          <button
+            onClick={handleUltimaPagina}
+            disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+            className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+          >
+            Última Página
           </button>
         </div>
       </div>

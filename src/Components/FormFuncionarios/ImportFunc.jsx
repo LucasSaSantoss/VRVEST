@@ -13,7 +13,15 @@ export default function ImportFunc() {
     if (!file) return;
 
     const rows = await readXlsxFile(file);
-    const headers = rows[0];
+    const headers = [
+      "Nome",
+      "cpf",
+      "Email",
+      "Setor",
+      "Cargo",
+      "Modalidade",
+      "Matrícula",
+    ];
     const data = rows
       .slice(1)
       .map((row) => Object.fromEntries(headers.map((h, i) => [h, row[i]])));

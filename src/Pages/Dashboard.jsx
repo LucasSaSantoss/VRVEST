@@ -25,7 +25,8 @@ import HeaderQRCode from "../Components/HeaderQRCode";
 import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios";
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
-import ProfileUser from "../Components/FormChangePassword/PasswordChange";
+import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
+
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -132,7 +133,7 @@ export default function Dashboard() {
     usuarios: <TabelaUsuarios />,
     funcionarios: <TabelaFuncionarios />,
     baixa: <ListaPendencias />,
-    perfil: <ProfileUser />,
+    perfil: <ProfileContainer />,
   };
 
   return (

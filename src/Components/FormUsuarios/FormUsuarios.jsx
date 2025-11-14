@@ -67,6 +67,14 @@ export default function TabelaUsuarios() {
     if (paginaAtual > 1) setPaginaAtual((prev) => prev - 1);
   };
 
+  const handlePrimeiraPagina = () => {
+    setPaginaAtual(1);
+  };
+
+  const handleUltimaPagina = () => {
+    setPaginaAtual(totalPaginas);
+  };
+
   return (
     <div className="p-4 mt-8">
       {/* Título + Campo de busca */}
@@ -88,7 +96,9 @@ export default function TabelaUsuarios() {
               type="text"
               placeholder="Buscar usuário..."
               value={filtroNome}
-              onChange={(e) => setFiltroNome(e.target.value)}
+              onChange={(e) => {
+                (setFiltroNome(e.target.value), setPaginaAtual(1));
+              }}
               className="border bg-white min-w-[300px] border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
 
@@ -228,26 +238,39 @@ export default function TabelaUsuarios() {
       )}
 
       {/* PAGINAÇÃO */}
-      <div className="flex justify-between mt-4 items-center">
-        <div className="flex gap-2 ml-[35vw] items-center">
-          <button
-            onClick={handlePaginaAnterior}
-            disabled={paginaAtual === 1}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
-          >
-            Anterior
-          </button>
-          <span className="ml-1">
-            Página {paginaAtual} de {totalPaginas}
-          </span>
-          <button
-            onClick={handleProximaPagina}
-            disabled={paginaAtual === totalPaginas || totalPaginas === 0}
-            className="px-4 py-1 bg-[#36b0d4] rounded hover:bg-blue-500 disabled:opacity-50"
-          >
-            Próxima
-          </button>
-        </div>
+      <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
+        <button
+          onClick={handlePrimeiraPagina}
+          disabled={paginaAtual === 1}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Primeira Página
+        </button>
+        <button
+          onClick={handlePaginaAnterior}
+          disabled={paginaAtual === 1}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Anterior
+        </button>
+
+        <span className="ml-1">
+          Página {paginaAtual} de {totalPaginas}
+        </span>
+        <button
+          onClick={handleProximaPagina}
+          disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Próxima
+        </button>
+        <button
+          onClick={handleUltimaPagina}
+          disabled={paginaAtual === totalPaginas || totalPaginas === 0}
+          className="px-4 py-1 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
+        >
+          Última Página
+        </button>
       </div>
       <style jsx>{`
         @keyframes fadeInOut {

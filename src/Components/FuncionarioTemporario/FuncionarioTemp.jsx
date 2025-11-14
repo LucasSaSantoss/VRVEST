@@ -3,6 +3,7 @@ import {
   cadastrarFuncionarioTemporario,
   listarSetores,
   listarModalidades,
+  listarEspecialidades
 } from "../../services/api";
 import { data, useNavigate } from "react-router-dom";
 import ModalSimNao from "../ModalSimNao";
@@ -33,6 +34,7 @@ export default function CreateFuncTemp() {
   const token = localStorage.getItem("token");
   const [sectors, setSectors] = useState([]);
   const [mods, setMods] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
 
   useEffect(() => {
     const carregarSetores = async () => {
@@ -84,6 +86,32 @@ export default function CreateFuncTemp() {
     };
 
     carregarMods();
+  }, []);
+
+  useEffect(() => {
+    const carregarEspecialidades = async () => {
+      try {
+        const resposta = await listarEspecialidades();
+        if (resposta.success) {
+          setSpecialties(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar especialidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar especialidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar especialidades.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarEspecialidades();
   }, []);
 
   const carregaCpf = async () => {
@@ -361,17 +389,24 @@ export default function CreateFuncTemp() {
             />
           </div>
           {/* Cargo */}
-          <div className="flex-1 min-w-[200px] w-full">
-            <label className="block text-sm font-semibold mb-1">Cargo:</label>
-            <input
-              type="text"
-              onKeyDown={passarCampos}
+          <div className="flex-1 min-w-[200px]">
+            <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
+              Especialidade:
+            </label>
+            <select
+              id="especialidade"
               value={position}
-              onChange={(e) => limparTexto(e, setPosition)}
-              maxLength={50}
+              onChange={(e) => setPosition(e.target.value)}
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-cyan-500"
-            />
+              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
+            >
+              <option value="">Selecione a especialidade</option>
+              {specialties.map((mod) => (
+                <option key={mod.id} value={mod.name}>
+                  {mod.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Setor */}

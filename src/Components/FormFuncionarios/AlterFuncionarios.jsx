@@ -4,6 +4,7 @@ import {
   alterarFuncionario,
   listarSetores,
   listarModalidades,
+  listarEspecialidades,
 } from "../../services/api";
 import ModalSimNao from "../ModalSimNao";
 
@@ -26,6 +27,7 @@ export default function AlterForm({
   const [MostrarModalSimNao, setMostarModalSimNao] = useState(false);
   const [sectors, setSectors] = useState([]);
   const [mods, setMods] = useState([]);
+  const [specialties, setSpecialties] = useState([]);
   // const [inicioEstudos, setInicioEstudos] = useState(new Date());
   // const [fimEstudos, setFimEstudos] = useState(new Date());
 
@@ -79,6 +81,32 @@ export default function AlterForm({
     };
 
     carregarMods();
+  }, []);
+
+  useEffect(() => {
+    const carregarEspecialidades = async () => {
+      try {
+        const resposta = await listarEspecialidades();
+        if (resposta.success) {
+          setSpecialties(resposta.data);
+        } else {
+          setPopup({
+            mostrar: true,
+            mensagem: "Erro ao carregar especialidades.",
+            tipo: "error",
+          });
+        }
+      } catch (err) {
+        console.error("Erro ao buscar especialidades:", err);
+        setPopup({
+          mostrar: true,
+          mensagem: "Falha na conexão ao buscar especialidades.",
+          tipo: "error",
+        });
+      }
+    };
+
+    carregarEspecialidades();
   }, []);
 
   const cancelarOperacao = () => {
@@ -266,24 +294,27 @@ export default function AlterForm({
             </div>
 
             {/* Cargo */}
-            <div className="flex-1 min-w-[200px] w-full">
+            <div className="flex-1 min-w-[200px]">
               <label
                 htmlFor="cargo"
                 className="block text-sm font-semibold mb-1"
               >
-                Cargo:
+                Especialidade:
               </label>
-              <input
-                type="text"
-                id="cargo"
+              <select
+                id="especialidade"
                 value={position}
-                onChange={(e) => {
-                  limparTexto(e, setPosition);
-                }}
-                maxLength={50}
+                onChange={(e) => setPosition(e.target.value)}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-              />
+              >
+                <option value="">Selecione a especialidade</option>
+                {specialties.map((mod) => (
+                  <option key={mod.id} value={mod.name}>
+                    {mod.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {/* Setor */}
@@ -297,7 +328,12 @@ export default function AlterForm({
               <select
                 id="setor"
                 value={sector}
-                onChange={(e) => setSector(e.target.value)}
+                onChange={(e) => {
+                  setSector(e.target.value);
+                  e.target.value === "TRAUMA"
+                    ? setShowKitTrauma(true)
+                    : setShowKitTrauma(false);
+                }}
                 required
                 className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm bg-gray-50"
               >

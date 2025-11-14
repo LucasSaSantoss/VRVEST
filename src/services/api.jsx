@@ -24,6 +24,7 @@ export async function verificarCpf(cpf) {
     const res = await axios.get(`${API_URL}/empl/verificar-cpf/${cpf}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
+
     return res.data;
   } catch (err) {
     console.error("Erro ao verificar CPF:", err);
@@ -55,12 +56,22 @@ export async function cadastrarFuncionario({
   position,
   modality,
   matricula,
+  PermissTrauma,
 }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl`,
-      { name, cpf, email, sector, position, modality, matricula },
+      {
+        name,
+        cpf,
+        email,
+        sector,
+        position,
+        modality,
+        matricula,
+        PermissTrauma,
+      },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -293,12 +304,12 @@ export async function getOpenPendencies({ cpf }) {
 }
 
 // 🔹 Verificação de CPF e registro de Kit
-export async function registrarKit({ cpf, kitSize }) {
+export async function registrarKit({ cpf, kitSize, kitType }) {
   try {
     const token = localStorage.getItem("token");
     const res = await axios.post(
       `${API_URL}/empl/registrarKit`,
-      { cpf, kitSize },
+      { cpf, kitSize, kitType },
       { headers: { Authorization: `Bearer ${token}` } }
     );
 
@@ -368,6 +379,41 @@ export const listarModalidades = async () => {
     return { success: true, data: response.data };
   } catch (error) {
     console.error("Erro ao listar modalidades:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export const listarEspecialidades = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/spe/specialties`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao listar especialidades:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export const listarItems = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/items/items-info`);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao carregar itens:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export const alterarItens = async (idUser, pijamaValue) => {
+  try {
+    const token = localStorage.getItem("token");
+    const res = await axios.post(
+      `${API_URL}/items/items-change`,
+      { idUser, pijamaValue },
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    return { success: true, data: res.data };
+  } catch (error) {
+    console.error("Erro ao alterar itens:", error);
     return { success: false, data: [] };
   }
 };
