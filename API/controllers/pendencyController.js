@@ -3,6 +3,8 @@ import { enviarEmail } from "../emailService/emailService.js";
 
 const prisma = new PrismaClient();
 
+const emailCopiado = process.env.EMAIL_COPIADO;
+
 // Buscar todos os registros
 // controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
@@ -62,7 +64,10 @@ export const baixarPendencias = async (req, res) => {
     }
 
     const oldPend = await prisma.pendency.findUnique({ where: { id } });
-
+    const usuario = await prisma.user.findUnique({
+      where: { id: usuarioID },
+    });
+    s;
     // Atualiza apenas a pendência correspondente
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: Number(id) },
@@ -96,14 +101,21 @@ export const baixarPendencias = async (req, res) => {
     const limiteVenc = new Date();
     limiteVenc.setHours(limiteVenc.getHours() + 36);
 
-    await enviarEmail(
-      funcionario.email,
-      "Devolução de Kit",
-      `Olá ${pendenciaAtualizada.emplName}, seu kit foi devolvido com sucesso em ${new Date(
-        pendenciaAtualizada.devolDate
-      ).toLocaleString("pt-BR")}, através da baixa de pendências.`,
-      "luky647@yahoo.com.br"
-    );
+    if (usuario.level >= 4) {
+      await enviarEmail(
+        funcionario.email,
+        "Baixa Financeira de Pendência",
+        `Olá ${pendenciaAtualizada.emplName},
+
+        Informamos que foi realizada a baixa financeira referente a uma pendência vinculada ao seu nome. 
+        O procedimento registrou o valor de R$ ${oldPend.kitPrice || "0,00"} na data ${new Date(
+          pendenciaAtualizada.devolDate
+        ).toLocaleString("pt-BR")}.
+
+      \n\nCaso tenha alguma dúvida, estamos à disposição.`,
+        emailCopiado
+      );
+    }
 
     return res.json({
       success: true,
