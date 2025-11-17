@@ -316,6 +316,27 @@ export const getCpf = async (req, res) => {
       });
     }
 
+    // if (empl.photoRequired) {
+    //   return res.status(200).json({
+    //     success: false,
+    //     photoRequired: true,
+    //     message: "Será necessário capturar a foto do Colaborador.",
+    //   });
+    // }
+
+    if (empl.cpf === "13863000714") {
+      return res.status(200).json({
+        success: false,
+        message: "Favor entrar em contato com a supervisão da rouparia.",
+      });
+    }
+    
+    if (empl.active !== 1) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Colaborador inativo." });
+    }
+
     const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empl.email);
     if (!emailValido) {
       return res.status(200).json({
@@ -323,12 +344,6 @@ export const getCpf = async (req, res) => {
         emailRequired: true,
         message: "O email cadastrado é inválido.",
       });
-    }
-
-    if (empl.active !== 1) {
-      return res
-        .status(200)
-        .json({ success: false, message: "Colaborador inativo." });
     }
 
     const specialty = await prisma.specialties.findUnique({
@@ -396,6 +411,53 @@ export const cadastrarEmail = async (req, res) => {
     });
   }
 };
+
+// export const cadastrarFotoColab = async (req, res) => {
+//   try {
+//     const { cpf, avatarImage } = req.body;
+
+//     if (!cpf) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "CPF inválido.",
+//       });
+//     }
+
+//     if (!avatarImage) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "A imagem é obrigatória.",
+//       });
+//     }
+
+//     const empl = await prisma.employee.findUnique({
+//       where: { cpf },
+//     });
+
+//     if (!empl) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Colaborador não encontrado.",
+//       });
+//     }
+
+//     await prisma.employee.update({
+//       where: { cpf },
+//       data: {   tempEmplImg: avatarFile ? avatarFile.filename : null
+//     }});
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Foto do colaborador registrada com sucesso.",
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Erro ao capturar foto do colaborador.",
+//     });
+//   }
+// };
 
 export const carregaCpfCampos = async (req, res) => {
   try {

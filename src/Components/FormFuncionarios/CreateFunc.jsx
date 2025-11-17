@@ -103,7 +103,7 @@ export default function CreateFunc({ onClose }) {
         });
       }
     };
-   
+
     carregarEspecialidades();
   }, []);
 
@@ -320,9 +320,6 @@ export default function CreateFunc({ onClose }) {
               value={sector}
               onChange={(e) => {
                 setSector(e.target.value);
-                e.target.value === "TRAUMA"
-                  ? setShowKitTrauma(true)
-                  : setShowKitTrauma(false);
               }}
               required
               className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm bg-gray-50"

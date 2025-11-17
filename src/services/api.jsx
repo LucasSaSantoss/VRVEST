@@ -47,6 +47,21 @@ export async function cadastrarEmail({ cpf, email }) {
   }
 }
 
+// export async function capturarFoto({ cpf, avatarImage }) {
+//   const token = localStorage.getItem("token");
+//   try {
+//     const res = await axios.post(
+//       `${API_URL}/empl/cadastrar-foto`,
+//       { cpf, avatarImage },
+//       { headers: { Authorization: `Bearer ${token}` } }
+//     );
+//     return res.data;
+//   } catch (err) {
+//     console.error("Erro ao cadastrar foto:", err);
+//     return { success: false, message: "Erro ao cadastrar foto" };
+//   }
+// }
+
 // 🔹 Cadastrar funcionário (inclui ID e nome do usuário logado)
 export async function cadastrarFuncionario({
   name,
@@ -100,7 +115,7 @@ export async function cadastrarFuncionarioTemporario({
   position,
   modality,
   obs,
-  avatarImage, // agora é File
+  avatarImage,
 }) {
   try {
     const token = localStorage.getItem("token");
