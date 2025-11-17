@@ -67,7 +67,7 @@ export const baixarPendencias = async (req, res) => {
     const usuario = await prisma.user.findUnique({
       where: { id: usuarioID },
     });
-    s;
+  
     // Atualiza apenas a pendência correspondente
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: Number(id) },

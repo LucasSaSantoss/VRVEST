@@ -294,8 +294,14 @@ export default function RelatoriosPendencias() {
           cpf: p.employee.cpf,
           Matricula: p.employee.matricula,
           Kit: p.kitSize,
-          Data: formatarDataHora(p.date),
-          DataDevol: formatarDataHora(p.devolDate),
+          Data: new Date(
+            p.date ? new Date(p.date).getTime() + 3 * 60 * 60 * 1000 : null
+          ).toLocaleString("pt-BR"),
+          DataDevol: new Date(
+            p.devolDate
+              ? new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+              : null
+          ).toLocaleString("pt-BR"),
           Status: definirStatus(p),
         }))
     );
