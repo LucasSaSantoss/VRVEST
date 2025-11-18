@@ -31,8 +31,7 @@ function LeitorQrCode() {
   const cpfInputRef = useRef(null);
   const btnSimRef = useRef(null);
   const btnNaoRef = useRef(null);
-  const [sector, setSector] = useState("");
-  let nomeColab;
+  const [nomeColab, setNomeColab] = useState("");
 
   // Ref para travar processamento no teclado
   const processingRef = useRef(false);
@@ -56,6 +55,7 @@ function LeitorQrCode() {
     const regex = /^\d{11}$/;
     if (!regex.test(cpf)) {
       setCpf("");
+      setNomeColab("");
       cpfInputRef.current?.focus();
       setIsSuccess(false);
       return {
@@ -66,6 +66,9 @@ function LeitorQrCode() {
 
     try {
       const resposta = await verificarCpf(cpf);
+
+      const nomeColaborador = resposta.data?.name || "";
+      setNomeColab(nomeColaborador);
 
       if (resposta.error) {
         return {
@@ -98,16 +101,17 @@ function LeitorQrCode() {
       }
 
       cpfInputRef.current?.blur();
-      nomeColab = resposta.data.name;
 
       return {
         success: true,
         message: "Funcionário válido.",
+        nomeColaborador: nomeColaborador,
         trauma: resposta.trauma,
       };
     } catch (err) {
       console.error(err);
       setCpf("");
+      setNomeColab("");
       cpfInputRef.current?.focus();
       setIsSuccess(false);
       return { success: false, message: "Erro ao verificar CPF." };
@@ -137,7 +141,7 @@ function LeitorQrCode() {
                 Pendências em Aberto
               </h2>
               <h3 className="text-center text-2xl font-semibold text-blue-600 mb-4">
-                {nomeColab}
+                {resultado.nomeColaborador ? resultado.nomeColaborador : ""}
               </h3>
               <table className="w-full border-collapse border border-gray-300">
                 <thead>
@@ -233,6 +237,7 @@ function LeitorQrCode() {
         if (tipoOperacao === "devolucao") {
           showTemporaryPopup("Nenhuma pendência encontrada para devolução.");
           setCpf("");
+          setNomeColab("");
           cpfInputRef.current?.focus();
         } else {
           setFuncTrauma(resultado.trauma);
@@ -413,6 +418,7 @@ function LeitorQrCode() {
         if (response.success) {
           showTemporaryPopup(`Saída de kit registrada! Tamanho: ${kitSize}`);
           setCpf("");
+          setNomeColab("");
           setIsSuccess(true);
           setShowModal(false);
           setMostrarModalSimNao(false);
@@ -459,6 +465,7 @@ function LeitorQrCode() {
         setMostrarModalSimNao(false);
         setPopupMessage("Devolução de kit registrada!");
         setCpf("");
+        setNomeColab("");
         setIsSuccess(true);
         setPendenciaSelecionada(null);
       } else if (response.expired) {
@@ -573,14 +580,14 @@ function LeitorQrCode() {
         />
       )}
 
-      {/* Modal de seleção de KIT sem fundo preto */}
+      {/* Modal de seleção de KIT */}
       {showModal && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm ">
           <div className="bg-white p-6 rounded-2xl shadow-2xl w-96">
             <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
               Selecione o KIT
             </h2>
-            <h3 className=" text-md font-bold mb-6 text-center text-gray-800  ">
+            <h3 className="text-center text-2xl font-semibold text-blue-600 mb-4">
               {nomeColab}
             </h3>
             <div className="grid grid-cols-4 gap-4 justify-center mb-6">

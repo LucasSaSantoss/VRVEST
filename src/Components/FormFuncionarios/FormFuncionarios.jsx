@@ -7,6 +7,7 @@ import ImpressaoCracha from "../ImpCracha/ImpressaoCracha";
 import { useReactToPrint } from "react-to-print";
 import { LuQrCode } from "react-icons/lu";
 import { FaRegEdit } from "react-icons/fa";
+import { jwtDecode } from "jwt-decode";
 
 export default function ListaFuncionarios() {
   const [funcionarios, setFuncionarios] = useState([]);
@@ -20,6 +21,8 @@ export default function ListaFuncionarios() {
   const [showModalCracha, setShowModalCracha] = useState(false);
   const [funcSelecionado, setFuncSelecionado] = useState(null);
   const [showImportFunc, setShowImportFunc] = useState(false);
+  // ---------------------------------------------------------------
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Popup de feedback
   const [popup, setPopup] = useState({
@@ -39,6 +42,41 @@ export default function ListaFuncionarios() {
     contentRef,
     documentTitle: "Crachá Funcionário",
   });
+
+  const criarLog = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        Navigate("/");
+        return;
+      }
+      const decodedToken = jwtDecode(token);
+      const usuarioID = decodedToken.id;
+
+      await fetch(`${API_URL}/log/createLog`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: usuarioID,
+          action: "Impressão de crachá",
+          changes: { cpf: funcSelecionado.cpf, nome: funcSelecionado.name },
+          createdAt: getBrazilDateISO(),
+        }),
+      });
+      console.log("✔ Log registrado");
+    } catch (err) {
+      console.error("❌ Erro ao registrar log:", err);
+    }
+  };
+
+  function getBrazilDateISO() {
+    const now = new Date();
+    const offset = -3; // Brasil (GMT-3)
+    now.setHours(now.getHours() + offset);
+    return now.toISOString();
+  }
 
   // Carregar lista
   const listarFuncionarios = async () => {
@@ -359,6 +397,7 @@ export default function ListaFuncionarios() {
               className="bg-green-500 text-white rounded-xl w-40 h-12 font-bold hover:text-green-700 hover:scale-110 transition mt-4 mb-4"
               onClick={() => {
                 ReactToPrintFn();
+                criarLog();
                 setShowModalCracha(false);
               }}
             >

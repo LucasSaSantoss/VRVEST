@@ -10,10 +10,11 @@ import sectorRoutes from "./routes/sectorRoutes.js";
 import modalityRoutes from "./routes/modalityRoutes.js";
 import itemsRoutes from "./routes/itemsRoutes.js";
 import specialtyRoutes from "./routes/specialtyRoutes.js";
+import logRoutes from "./routes/logRoutes.js";
 
 import dotenv from "dotenv";
 dotenv.config();
-validaFuncTemp(); // Executa na inicialização
+validaFuncTemp();
 
 const app = express();
 app.use(cors());
@@ -27,5 +28,6 @@ app.use("/api/sec", sectorRoutes);
 app.use("/api/mod", modalityRoutes);
 app.use("/api/spe", specialtyRoutes);
 app.use("/api/items", itemsRoutes);
+app.use("/api/log", logRoutes);
 
 app.listen(3000, () => console.log("Server rodando na porta 3000"));
