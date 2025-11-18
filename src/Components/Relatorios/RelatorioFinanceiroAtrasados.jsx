@@ -250,8 +250,16 @@ export default function RelatoriosPendencias() {
           p.employee?.cpf || "-",
           p.employee?.matricula || "-",
           p.kitSize || "-",
-          formatarDataHora(p.date),
-          formatarDataHora(p.devolDate),
+          p.date
+            ? new Date(
+                new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+              ).toLocaleString("pt-BR")
+            : null,
+          p.devolDate
+            ? new Date(
+                new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+              ).toLocaleString("pt-BR")
+            : null,
           definirStatus(p),
         ];
 
