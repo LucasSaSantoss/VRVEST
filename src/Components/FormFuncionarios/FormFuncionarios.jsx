@@ -193,7 +193,7 @@ export default function ListaFuncionarios() {
                 <th className="py-3 px-2 sm:px-4">Email</th>
                 <th className="py-3 px-2 sm:px-4">CPF</th>
                 <th className="py-3 px-2 sm:px-4">Setor</th>
-                <th className="py-3 px-2 sm:px-4">Cargo</th>
+                <th className="py-3 px-2 sm:px-4">Especialidade</th>
                 <th className="py-3 px-2 sm:px-4">Ativo</th>
                 <th className="py-3 px-2 sm:px-4">Temporário</th>
                 <th className="py-3 px-2 sm:px-4">Ações</th>
