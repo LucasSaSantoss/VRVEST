@@ -27,7 +27,6 @@ import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
 
-
 export default function Dashboard() {
   const navigate = useNavigate();
   const [hovered, setHovered] = useState(false);
@@ -88,12 +87,14 @@ export default function Dashboard() {
           setTimeout(() => navigate("/"), 3000);
         } else {
           const nivel = decodedToken.level;
+          console.log(nivel);
           setLevelUser(nivel);
           setUserName(decodedToken.name || decodedToken.username || "Usuário");
           setSelected((atual) => {
             if (!atual) {
               switch (nivel) {
                 case 4:
+                  return "home";
                 case 3:
                   return "funcionarios";
                 case 2:
@@ -227,7 +228,7 @@ export default function Dashboard() {
                 </li>
               </>
             )}
-            
+
             {levelUser !== 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200

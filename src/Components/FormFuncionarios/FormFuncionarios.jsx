@@ -43,40 +43,40 @@ export default function ListaFuncionarios() {
     documentTitle: "Crachá Funcionário",
   });
 
-  const criarLog = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        Navigate("/");
-        return;
-      }
-      const decodedToken = jwtDecode(token);
-      const usuarioID = decodedToken.id;
+  // const criarLog = async () => {
+  //   try {
+  //     const token = localStorage.getItem("token");
+  //     if (!token) {
+  //       Navigate("/");
+  //       return;
+  //     }
+  //     const decodedToken = jwtDecode(token);
+  //     const usuarioID = decodedToken.id;
 
-      await fetch(`${API_URL}/log/createLog`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          userId: usuarioID,
-          action: "Impressão de crachá",
-          changes: { cpf: funcSelecionado.cpf, nome: funcSelecionado.name },
-          createdAt: getBrazilDateISO(),
-        }),
-      });
-      console.log("✔ Log registrado");
-    } catch (err) {
-      console.error("❌ Erro ao registrar log:", err);
-    }
-  };
+  //     await fetch(`${API_URL}/log/createLog`, {
+  //       method: "POST",
+  //       headers: {
+  //         "Content-Type": "application/json",
+  //       },
+  //       body: JSON.stringify({
+  //         userId: usuarioID,
+  //         action: "Impressão de crachá",
+  //         changes: { cpf: funcSelecionado.cpf, nome: funcSelecionado.name },
+  //         createdAt: getBrazilDateISO(),
+  //       }),
+  //     });
+  //     console.log("✔ Log registrado");
+  //   } catch (err) {
+  //     console.error("❌ Erro ao registrar log:", err);
+  //   }
+  // };
 
-  function getBrazilDateISO() {
-    const now = new Date();
-    const offset = -3; // Brasil (GMT-3)
-    now.setHours(now.getHours() + offset);
-    return now.toISOString();
-  }
+  // function getBrazilDateISO() {
+  //   const now = new Date();
+  //   const offset = -3; // Brasil (GMT-3)
+  //   now.setHours(now.getHours() + offset);
+  //   return now.toISOString();
+  // }
 
   // Carregar lista
   const listarFuncionarios = async () => {
@@ -235,7 +235,7 @@ export default function ListaFuncionarios() {
                       </button>
 
                       {/* QR Code */}
-                      <button
+                      {/* <button
                         onClick={() => {
                           setShowModalCracha(true);
                           setFuncSelecionado(employee);
@@ -246,7 +246,7 @@ export default function ListaFuncionarios() {
                           className="h-5 w-6 text-t-700"
                           title="Gerar QR Code"
                         />
-                      </button>
+                      </button> */}
                     </div>
                   </td>
                 </tr>
@@ -376,7 +376,7 @@ export default function ListaFuncionarios() {
       )}
 
       {/* Modal Impressão de Crachá */}
-      {showModalCracha && funcSelecionado && (
+      {/* {showModalCracha && funcSelecionado && (
         <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
           <div className="bg-[rgb(23,110,150)] p-3 rounded-lg shadow-lg w-[90vw] sm:w-[350px] max-h-[100vh] overflow-y-auto text-center border-2 border-gray-200">
             <div className="flex justify-end items-center">
@@ -405,7 +405,7 @@ export default function ListaFuncionarios() {
             </button>
           </div>
         </div>
-      )}
+      )} */}
     </>
   );
 }

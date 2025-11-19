@@ -24,7 +24,6 @@ function LeitorQrCode() {
   const [pendenciaSelecionada, setPendenciaSelecionada] = useState(null);
   const [simNaoComNumero, setSimNaoComNumero] = useState(true);
   const [mostrarPopupEmail, setMostrarPopupEmail] = useState(false);
-  const [email, setEmail] = useState("");
   const [showModalKitTrauma, setShowModalKitTrauma] = useState(false);
   const [tipoKitTrauma, setTipoKitTrauma] = useState(null);
   const [funcTrauma, setFuncTrauma] = useState(false);
@@ -636,6 +635,9 @@ function LeitorQrCode() {
             <h2 className="text-xl font-bold mb-6 text-center text-gray-800">
               Escolha o tipo de KIT
             </h2>
+            <h3 className="text-center text-2xl font-semibold text-blue-600 mb-4">
+              {nomeColab}
+            </h3>
 
             <div className="flex flex-col items-center gap-6">
               {/* GRID COM OS 2 TIPOS DE KIT */}

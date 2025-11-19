@@ -30,6 +30,8 @@ export default function CreateFunc({ onClose }) {
   const [sectors, setSectors] = useState([]);
   const [mods, setMods] = useState([]);
   const [specialties, setSpecialties] = useState([]);
+  const [filtroSpecial, setFiltroSpecial] = useState("");
+  const [showLista, setShowLista] = useState(false);
 
   useEffect(() => {
     const carregarSetores = async () => {
@@ -106,6 +108,10 @@ export default function CreateFunc({ onClose }) {
 
     carregarEspecialidades();
   }, []);
+
+  const especialidadeFiltrada = specialties.filter((u) =>
+    u.name.toLowerCase().includes(filtroSpecial.toLowerCase())
+  );
 
   const cancelarOperacao = () => {
     console.log("Operação Cancelada");
@@ -290,26 +296,51 @@ export default function CreateFunc({ onClose }) {
           </div>
 
           {/* Cargo */}
-          <div className="flex-1 min-w-[200px]">
+          <div className="flex-1 min-w-[200px] relative">
             <label htmlFor="cargo" className="block text-sm font-semibold mb-1">
               Especialidade:
             </label>
-            <select
+
+            <input
+              type="text"
               id="especialidade"
               value={position}
-              onChange={(e) => setPosition(e.target.value)}
+              onChange={(e) => {
+                setPosition(e.target.value);
+                setFiltroSpecial(e.target.value);
+                setShowLista(true);
+              }}
+              onBlur={() => setTimeout(() => setShowLista(false), 150)}
+              className="w-full p-2 mb-1 border border-gray-300 rounded-lg text-sm"
+              placeholder="Digite para filtrar..."
+              autoComplete="off"
               required
-              className="w-full p-2 mb-5 border border-gray-300 rounded-lg text-sm"
-            >
-              <option value="">Selecione a especialidade</option>
-              {specialties.map((mod) => (
-                <option key={mod.id} value={mod.name}>
-                  {mod.name}
-                </option>
-              ))}
-            </select>
-          </div>
+            />
 
+            {showLista && filtroSpecial.length > 0 && (
+              <ul className="absolute z-10 w-full bg-white border border-gray-300 rounded-lg max-h-40 overflow-auto shadow-lg">
+                {especialidadeFiltrada.length > 0 ? (
+                  especialidadeFiltrada.map((esp) => (
+                    <li
+                      key={esp.id}
+                      className="p-2 hover:bg-gray-100 cursor-pointer"
+                      onClick={() => {
+                        setPosition(esp.name);
+                        setFiltroSpecial(esp.name);
+                        setShowLista(false);
+                      }}
+                    >
+                      {esp.name}
+                    </li>
+                  ))
+                ) : (
+                  <li className="p-2 text-gray-400">
+                    Nenhum resultado encontrado
+                  </li>
+                )}
+              </ul>
+            )}
+          </div>
           {/* Setor  */}
           <div className="flex-1 min-w-[200px]">
             <label htmlFor="setor" className="block text-sm font-semibold mb-1">
