@@ -67,7 +67,7 @@ export const baixarPendencias = async (req, res) => {
     const usuario = await prisma.user.findUnique({
       where: { id: usuarioID },
     });
-  
+
     // Atualiza apenas a pendência correspondente
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: Number(id) },
@@ -75,7 +75,7 @@ export const baixarPendencias = async (req, res) => {
         status: 2, //Baixado;
         devolUserId: usuarioID,
         devolUserName: usuarioName,
-        devolDate: new Date(),
+        devolDate: new Date(new Date().getTime() - 3 * 60 * 60 * 1000),
         devolType: 3, //Devolvido por meio da tela de baixa financeira;
       },
       include: {
@@ -98,8 +98,8 @@ export const baixarPendencias = async (req, res) => {
     // --------------------------------------
 
     // Envia e-mail automaticamente
-    const limiteVenc = new Date();
-    limiteVenc.setHours(limiteVenc.getHours() + 36);
+    // const limiteVenc = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    // limiteVenc.setHours(limiteVenc.getHours() + 36);
 
     if (usuario.level >= 4) {
       await enviarEmail(
@@ -109,11 +109,11 @@ export const baixarPendencias = async (req, res) => {
 
         Informamos que foi realizada a baixa financeira referente a uma pendência vinculada ao seu nome. 
         O procedimento registrou o valor de R$ ${oldPend.kitPrice || "0,00"} na data ${new Date(
-          pendenciaAtualizada.devolDate
+          pendenciaAtualizada.devolDate,
         ).toLocaleString("pt-BR")}.
 
       \n\nCaso tenha alguma dúvida, estamos à disposição.`,
-        emailCopiado
+        emailCopiado,
       );
     }
 
