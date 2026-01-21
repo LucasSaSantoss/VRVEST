@@ -131,7 +131,7 @@ function LeitorQrCode() {
       const pendData = await getOpenPendencies({ cpf });
       if (pendData.success && pendData.total > 0) {
         const limite = new Date();
-        limite.setHours(limite.getHours() - 40); // 36 horas + 4 horas de tolerância
+        limite.setHours(limite.getHours() - 38); // 36 horas + 2 horas de tolerância
 
         setPendPopupMessage(
           <div className="fixed inset-0 flex items-center justify-center z-50 backdrop-blur-sm">
