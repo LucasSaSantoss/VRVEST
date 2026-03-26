@@ -41,9 +41,10 @@ export default function RelatoriosPendencias() {
 
       const dados = await carregarPendencias(
         ajustarDataInicial(inicioValido),
-        ajustarDataFinal(fimValido)
+        ajustarDataFinal(fimValido),
       );
 
+      console.log(dados);
       if (dados?.success) setPendencias(dados.data);
       else mostrarPopup(dados.message, "error");
     } catch (err) {
@@ -138,24 +139,25 @@ export default function RelatoriosPendencias() {
   }, {});
 
   const totalPaginas = Math.ceil(
-    Object.values(pendenciasAgrupadas).length / regPorPagina
+    Object.values(pendenciasAgrupadas).length / regPorPagina,
   );
   const indiceUltimoRegistro = paginaAtual * regPorPagina;
   const indicePrimeiroRegistro = indiceUltimoRegistro - regPorPagina;
   const registrosAgrupadosPag = Object.values(pendenciasAgrupadas).slice(
     indicePrimeiroRegistro,
-    indiceUltimoRegistro
+    indiceUltimoRegistro,
   );
 
+  console.log(registrosAgrupadosPag);
   // -------------------- Estatísticas ---------------------------
   const pendAbertas = pendencias.filter(
-    (p) => definirStatus(p) === "Em aberto"
+    (p) => definirStatus(p) === "Em aberto",
   ).length;
   const pendBaixadas = pendencias.filter(
-    (p) => definirStatus(p) === "Devolvido"
+    (p) => definirStatus(p) === "Devolvido",
   ).length;
   const pendAtrasadas = pendencias.filter(
-    (p) => definirStatus(p) === "Atrasado"
+    (p) => definirStatus(p) === "Atrasado",
   ).length;
 
   // -------------------- Exportação PDF / Excel ---------------------------
@@ -178,13 +180,13 @@ export default function RelatoriosPendencias() {
         fim ? new Date(ajustarDataFinal(fim)).toLocaleDateString("pt-BR") : "-"
       }`,
       margemEsq,
-      margemTopo + 8
+      margemTopo + 8,
     );
 
     doc.text(
       `Gerado em: ${new Date().toLocaleString("pt-BR")}`,
       margemEsq,
-      margemTopo + 13
+      margemTopo + 13,
     );
 
     // -------------------- Linha de separação ---------------------
@@ -193,7 +195,7 @@ export default function RelatoriosPendencias() {
       margemEsq,
       margemTopo + 17,
       margemEsq + larguraPagina,
-      margemTopo + 17
+      margemTopo + 17,
     );
 
     let y = margemTopo + 25;
@@ -202,6 +204,8 @@ export default function RelatoriosPendencias() {
     const colunas = [
       { titulo: "CPF", largura: 28 },
       { titulo: "Matrícula", largura: 40 },
+      { titulo: "Vínculo", largura: 40 },
+      { titulo: "Especialidade", largura: 40 },
       { titulo: "Kit Cirúrgico", largura: 25 },
       { titulo: "Data Retirada", largura: 37 },
       { titulo: "Data Baixa", largura: 37 },
@@ -252,12 +256,12 @@ export default function RelatoriosPendencias() {
           p.kitSize || "-",
           p.date
             ? new Date(
-                new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+                new Date(p.date).getTime() + 3 * 60 * 60 * 1000,
               ).toLocaleString("pt-BR")
             : null,
           p.devolDate
             ? new Date(
-                new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+                new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000,
               ).toLocaleString("pt-BR")
             : null,
           definirStatus(p),
@@ -286,7 +290,7 @@ export default function RelatoriosPendencias() {
     doc.text(
       `Total de pendências: ${pendenciasFiltradas.length}`,
       margemEsq,
-      290
+      290,
     );
     // doc.text(`Página 1`, 180, 290);
 
@@ -301,17 +305,19 @@ export default function RelatoriosPendencias() {
           Colaborador: nome,
           cpf: p.employee.cpf,
           Matricula: p.employee.matricula,
+          Vínculo: p.employee.modality,
+          Especialidade: p.employee.position,
           Kit: p.kitSize,
           Data: new Date(
-            p.date ? new Date(p.date).getTime() + 3 * 60 * 60 * 1000 : null
+            p.date ? new Date(p.date).getTime() + 3 * 60 * 60 * 1000 : null,
           ).toLocaleString("pt-BR"),
           DataDevol: new Date(
             p.devolDate
               ? new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
-              : null
+              : null,
           ).toLocaleString("pt-BR"),
           Status: definirStatus(p),
-        }))
+        })),
     );
     const ws = XLSX.utils.json_to_sheet(linhas);
     const wb = XLSX.utils.book_new();
@@ -423,6 +429,8 @@ export default function RelatoriosPendencias() {
             <tr className="text-center border-t shadow-lg text-lg">
               <th className="py-2 px-2 sm:px-4">CPF</th>
               <th className="py-2 px-2 sm:px-4">Matrícula</th>
+              <th className="py-2 px-2 sm:px-4">Vínculo</th>
+              <th className="py-2 px-2 sm:px-4">Especialidade</th>
               <th className="py-2 px-2 sm:px-4">Kit Cirúrgico</th>
               <th className="py-2 px-2 sm:px-4">Data Retirada</th>
               <th className="py-2 px-2 sm:px-4">Data Baixa</th>
@@ -432,8 +440,8 @@ export default function RelatoriosPendencias() {
           <tbody>
             {registrosAgrupadosPag.map(({ nome, lista }) => (
               <React.Fragment key={nome}>
-                <tr className="bg-linear-to-r/hsl from-indigo-600 to-blue-400 font-bold text-left">
-                  <td colSpan={6} className="p-2 text-white">
+                <tr className="bg-linear-to-r/hsl from-gray-500 to-blue-400 font-bold text-left">
+                  <td colSpan={8} className="p-1 text-white">
                     {nome}
                   </td>
                 </tr>
@@ -441,17 +449,20 @@ export default function RelatoriosPendencias() {
                   <tr key={i} className="border-b hover:bg-gray-50 text-center">
                     <td className="py-2 px-2">{p.employee.cpf}</td>
                     <td className="py-2 px-2">{p.employee.matricula}</td>
+                    <td className="py-2 px-2">{p.employee.modality}</td>
+                    <td className="py-2 px-2">{p.employee.position}</td>
                     <td className="py-2 px-2">{p.kitSize}</td>
                     <td className="py-2 px-2">
                       {" "}
                       {new Date(
-                        new Date(p.date).getTime() + 3 * 60 * 60 * 1000
+                        new Date(p.date).getTime() + 3 * 60 * 60 * 1000,
                       ).toLocaleString("pt-BR")}
                     </td>
                     <td className="py-2 px-2">
                       {p.devolDate
                         ? new Date(
-                            new Date(p.devolDate).getTime() + 3 * 60 * 60 * 1000
+                            new Date(p.devolDate).getTime() +
+                              3 * 60 * 60 * 1000,
                           ).toLocaleString("pt-BR")
                         : "-"}
                     </td>

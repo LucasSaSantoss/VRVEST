@@ -33,10 +33,18 @@ export const getRegistros = async (req, res) => {
       orderBy: { date: "desc" },
       include: {
         employee: {
-          select: { cpf: true, name: true, sector: true, matricula: true },
+          select: {
+            cpf: true,
+            name: true,
+            sector: true,
+            matricula: true,
+            modality: true,
+            position: true,
+          },
         },
       },
     });
+    console.log(registros);
     return res.json({
       success: true,
       message: "Registros carregados com sucesso",
