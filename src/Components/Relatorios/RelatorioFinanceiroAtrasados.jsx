@@ -203,11 +203,10 @@ export default function RelatoriosPendencias() {
     // -------------------- Cabeçalho da tabela --------------------
     const colunas = [
       { titulo: "CPF", largura: 28 },
-      { titulo: "Matrícula", largura: 40 },
-      { titulo: "Vínculo", largura: 40 },
-      { titulo: "Especialidade", largura: 40 },
-      { titulo: "Kit Cirúrgico", largura: 25 },
-      { titulo: "Data Retirada", largura: 37 },
+      { titulo: "Matrícula", largura: 30 },
+      { titulo: "Vínculo", largura: 20 },
+      { titulo: "Kit", largura: 20 },
+      { titulo: "Data Retirada", largura: 38 },
       { titulo: "Data Baixa", largura: 37 },
       { titulo: "Status", largura: 25 },
     ];
@@ -253,6 +252,7 @@ export default function RelatoriosPendencias() {
         const linha = [
           p.employee?.cpf || "-",
           p.employee?.matricula || "-",
+          p.employee?.modality || "-",
           p.kitSize || "-",
           p.date
             ? new Date(
