@@ -252,7 +252,7 @@ export default function RelatoriosPendencias() {
         const linha = [
           p.employee?.cpf || "-",
           p.employee?.matricula || "-",
-          p.employee?.modality || "-",
+          p.employee?.modality.slice(0, 5) || "-",
           p.kitSize || "-",
           p.date
             ? new Date(
