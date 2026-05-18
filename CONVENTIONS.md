@@ -18,6 +18,17 @@ Registrar padrões observados no projeto para manutenção incremental com menor
 
 - Não existe padrão estrito formalizado em lint/arquitetura para separação de serviços de domínio no backend.
 
+### Regra obrigatória de evolução incremental
+
+1. Criar novas funcionalidades em arquivos separados sempre que tecnicamente viável.
+2. Evitar misturar implementação nova com refatoração ampla em arquivos críticos existentes.
+3. Se for inevitável alterar arquivo/script existente, comentar o trecho alterado com anotação clara de manutenção.
+4. A anotação deve indicar:
+   - objetivo da alteração;
+   - impacto esperado no fluxo;
+   - data da alteração.
+5. O template oficial está em `PADRAO_COMENTARIOS_MANUTENCAO.md`.
+
 ## 2) Convenções de Nomes
 
 ### Confirmado no código
@@ -66,6 +77,7 @@ Registrar padrões observados no projeto para manutenção incremental com menor
 4. Aplicar `authMiddleware` quando necessário.
 5. Registrar `UserLog` em operações críticas.
 6. Atualizar consumo no `src/services/api.jsx`.
+7. Se houver alteração em script existente, comentar bloco alterado com marcação de manutenção.
 
 ## 6) Como Lidar com Validações
 

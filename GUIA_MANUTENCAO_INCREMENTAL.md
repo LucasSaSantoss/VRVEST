@@ -12,6 +12,16 @@ Orientar manutenção incremental com segurança, sem quebrar fluxos críticos d
 4. Testar ponta a ponta.
 5. Atualizar documentação (`BUSINESS_RULES.md`, `DATA_FLOW.md`, `AI_CONTEXT.md`, `ARCHITECTURE.md`, `CONVENTIONS.md`).
 
+## Regra de implementação (obrigatória)
+
+1. Implementações novas devem ser feitas em arquivos separados, sempre que possível.
+2. Alterações em arquivos existentes devem ser mínimas e focadas.
+3. Sempre comentar os blocos alterados em arquivos existentes para rastrear exatamente o que foi modificado.
+4. O comentário deve incluir:
+   - motivo da mudança;
+   - impacto funcional esperado;
+   - data da alteração.
+
 ## 1) Alterar regras de retirada
 
 Arquivos principais:

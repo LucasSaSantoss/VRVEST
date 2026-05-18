@@ -19,6 +19,8 @@ Definir regras operacionais para qualquer manutenção neste projeto, priorizand
    - confirmado no código;
    - inferido;
    - pendente de validação com usuários.
+6. Toda nova funcionalidade deve ser criada, preferencialmente, em arquivos separados.
+7. Quando houver necessidade de ajuste em script/arquivo existente, comentar explicitamente os blocos alterados com marcação de manutenção para rastreabilidade.
 
 ## Segurança, Autenticação, Autorização e Auditoria
 
@@ -42,6 +44,7 @@ Definir regras operacionais para qualquer manutenção neste projeto, priorizand
 3. Implementar alteração mínima necessária.
 4. Executar teste manual do fluxo ponta a ponta.
 5. Atualizar documentação correspondente (`AI_CONTEXT.md`, `ARCHITECTURE.md`, `BUSINESS_RULES.md`, `DATA_FLOW.md`, `CONVENTIONS.md`).
+6. Em arquivo existente, adicionar comentário de alteração no ponto modificado, contendo motivo e referência da mudança.
 
 ## Checklist Mínimo Antes de Entregar Alteração
 
