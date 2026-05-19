@@ -104,3 +104,31 @@ Documentar regras de negócio do sistema, separando:
 ### Validar com usuários
 
 - Permissão backend por endpoint ainda precisa de matriz formal validada.
+
+## 8) Regras Definidas para o Módulo de Uniformes
+
+### Confirmado com produto/operação
+
+1. Quem retira uniforme: mesmos colaboradores da base `Employee`.
+2. Uniforme não usará fluxo de `Pendency`.
+3. Limite anual por vínculo:
+   - plantonista: 1 uniforme/ano;
+   - diarista: 2 uniformes/ano.
+4. Excedente sem justificativa: uniforme cobrável.
+5. Excedente com justificativa de não entrega: isento de cobrança.
+6. Deve haver controle de estoque por tamanho.
+7. Uniforme devolvido vai para estoque de empréstimos.
+8. Deve existir operação de descarte de peças.
+9. O módulo de retirada deve informar a última retirada do colaborador.
+10. Deve existir módulo específico de entrada de estoque.
+
+### Inferido
+
+1. A cobrança poderá ser tratada por status da retirada (`cobrável`/`isento`/`regular`).
+2. O histórico de retirada será referência para processos de desligamento.
+
+### Validar com usuários
+
+1. Critério formal para aceitar justificativa de isenção.
+2. Regras de autorização para aprovar isenção e descarte.
+3. Lista oficial de tamanhos e tipos de uniforme.

@@ -28,6 +28,7 @@ Registrar padrões observados no projeto para manutenção incremental com menor
    - impacto esperado no fluxo;
    - data da alteração.
 5. O template oficial está em `PADRAO_COMENTARIOS_MANUTENCAO.md`.
+6. Em modelagem nova, seguir normalização: com FK definida, não replicar campos já existentes na entidade de origem.
 
 ## 2) Convenções de Nomes
 

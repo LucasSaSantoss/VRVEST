@@ -21,6 +21,7 @@ Definir regras operacionais para qualquer manutenção neste projeto, priorizand
    - pendente de validação com usuários.
 6. Toda nova funcionalidade deve ser criada, preferencialmente, em arquivos separados.
 7. Quando houver necessidade de ajuste em script/arquivo existente, comentar explicitamente os blocos alterados com marcação de manutenção para rastreabilidade.
+8. Em tabelas novas com chave estrangeira, não duplicar campos já existentes na tabela de origem (ex.: não repetir nome/CPF se já há `employeeId`).
 
 ## Segurança, Autenticação, Autorização e Auditoria
 

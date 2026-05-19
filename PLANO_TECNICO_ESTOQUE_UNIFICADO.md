@@ -5,270 +5,248 @@
 Definir a implementação incremental de:
 
 1. Controle de retirada de uniformes.
-2. Controle de estoque unificado para múltiplos módulos.
-3. Preparação para futuro módulo de enxoval.
+2. Módulo de entrada de estoque.
+3. Controle de estoque com saldos por tamanho.
+4. Preparação para futuro módulo de enxoval usando o mesmo núcleo de estoque.
 
-Premissas confirmadas:
+## 2. Premissas confirmadas
 
-- Uniformes usam os mesmos colaboradores já cadastrados (`Employee`).
-- Uniformes não seguem fluxo de devolução operacional como pijama.
-- Será necessário consultar histórico para desligamento (devolver/descontar).
+1. A retirada de uniforme usará os mesmos colaboradores de `Employee`.
+2. Não usar `Pendency` para o módulo de uniformes.
+3. Em tabelas novas com FK, não duplicar dados da tabela de origem.
+4. O cadastro base de itens pode reaproveitar `itemsCloth` (simples).
+5. Uniformes devolvidos não retornam ao estoque principal; vão para estoque de empréstimos.
+6. Deve existir operação de descarte de peças.
+7. O módulo de retirada deve mostrar a última retirada do colaborador.
 
-## 2. Princípios de implementação
+## 3. Regras de negócio do módulo uniformes
 
-1. Não reutilizar `Pendency` para uniformes.
-2. Construir núcleo de estoque único e independente do módulo.
-3. Manter implementação nova em arquivos separados sempre que viável.
-4. Se alterar arquivo existente, comentar trecho com padrão de manutenção.
-5. Preservar logs/auditoria e autorização por perfil.
+1. Limite anual condicional por vínculo:
+   - plantonista: 1 uniforme/ano;
+   - diarista: 2 uniformes/ano.
+2. Se exceder limite:
+   - com justificativa de não entrega: isento de cobrança;
+   - sem justificativa: marcar como cobrável.
+3. Para diarista, enquanto ainda houver saldo dentro do limite anual, não há cobrança.
+4. Retirada pode conter múltiplos itens e tamanhos.
+5. Deve existir histórico para consulta e apoio a desligamento.
 
-## 3. Arquitetura proposta
+## 4. Modelo de dados sugerido
 
-### 3.1 Núcleo de estoque (comum)
+## 4.1 Reaproveitamento de tabela legada
 
-Responsável por:
+### `itemsCloth` (existente)
 
-- cadastro de itens;
-- saldo atual;
-- movimentações;
-- rastreabilidade por origem.
+Uso:
 
-### 3.2 Módulo de uniformes
+- cadastro base do item de uniforme.
 
-Responsável por:
+Evolução sugerida (sem impacto no legado, default seguro):
 
-- regras funcionais de retirada por colaborador;
-- limite anual global por colaborador;
-- consulta histórica por colaborador;
-- marcação de acerto (devolvido/descontado) no desligamento.
+- `minStock` (int, default 0 ou nullable)
+- `isUniform` (int/bool, default 0)
 
-### 3.3 Módulo enxoval (futuro)
+Observação:
 
-Responsável por suas regras próprias, usando o mesmo núcleo de estoque.
+- campos novos só serão usados pelas rotinas novas de estoque/uniforme.
 
-## 4. Modelo de dados sugerido (Prisma)
+## 4.2 Tabelas novas
 
-## 4.1 Tabelas do núcleo de estoque
+### `UniformStockSize`
 
-### `StockItem`
+Controle de saldo por tamanho:
 
-- `id` (PK)
-- `moduleType` (`UNIFORME`, `ENXOVAL`, etc.)
-- `category` (ex.: camisa, calça, lençol)
-- `name`
-- `size` (P, M, G, GG, etc.)
-- `sku` (opcional)
-- `isActive` (boolean/int)
-- `createdAt`, `updatedAt`
-
-### `StockBalance`
-
-- `id` (PK)
-- `stockItemId` (FK `StockItem`)
-- `quantity` (int >= 0)
+- `id`
+- `itemId` (FK `itemsCloth`)
+- `size` (P, M, G, GG...)
+- `qtyMainStock` (estoque principal)
+- `qtyLoanStock` (estoque empréstimos)
+- `minStock` (opcional; default 0)
 - `updatedAt`
-
-### `StockMovement`
-
-- `id` (PK)
-- `stockItemId` (FK `StockItem`)
-- `movementType` (`ENTRY`, `EXIT`, `ADJUSTMENT`, `RETURN`)
-- `originType` (`UNIFORM_WITHDRAW`, `UNIFORM_SETTLEMENT`, `ENXOVAL_*`, `MANUAL`)
-- `referenceType` (string; ex.: `UniformWithdrawal`)
-- `referenceId` (int opcional)
-- `quantity` (int > 0)
-- `userId` (FK `User`)
-- `userNameSnapshot`
-- `notes` (opcional)
-- `createdAt`
-
-### `StockConfig`
-
-- `id` (PK único lógico, ex.: 1)
-- `uniformAnnualLimit` (int)
-- `updatedByUserId` (FK `User`)
-- `updatedAt`
-
-## 4.2 Tabelas do módulo uniformes
 
 ### `UniformWithdrawal`
 
-- `id` (PK)
+Cabeçalho da retirada:
+
+- `id`
 - `employeeId` (FK `Employee`)
-- `employeeNameSnapshot`
-- `employeeCpfSnapshot`
 - `userId` (FK `User`)
-- `userNameSnapshot`
-- `year` (int)
+- `year`
 - `withdrawDate`
 - `totalQuantity`
-- `status` (`ACTIVE`, `SETTLED_RETURN`, `SETTLED_DISCOUNT`)
-- `settlementDate` (opcional)
-- `settlementType` (`RETURN`, `DISCOUNT`, opcional)
-- `notes` (opcional)
-- `createdAt`, `updatedAt`
+- `limitApplied` (1 ou 2)
+- `status` (`REGULAR`, `CHARGEABLE`, `EXEMPT`)
+- `nonDeliveryJustification` (opcional)
+- `chargeReason` (opcional)
+- `createdAt`
+- `updatedAt`
 
 ### `UniformWithdrawalItem`
 
-- `id` (PK)
+Itens/tamanhos da retirada:
+
+- `id`
 - `uniformWithdrawalId` (FK `UniformWithdrawal`)
-- `stockItemId` (FK `StockItem`)
-- `itemNameSnapshot`
-- `sizeSnapshot`
+- `uniformStockSizeId` (FK `UniformStockSize`)
 - `quantity`
 
-## 5. Regras de negócio (uniformes)
+### `UniformMovement`
 
-1. Apenas colaborador válido/ativo pode retirar.
-2. Limite anual é global (parametrização única) e aplicado por colaborador.
-3. Uma retirada pode ter múltiplos itens/tamanhos.
-4. Cada retirada gera saída de estoque por item (`StockMovement` `EXIT`).
-5. Sem devolução operacional de rotina.
-6. Em desligamento, retirada pode ser liquidada como:
-   - devolvido (`SETTLED_RETURN`), gerando movimento `RETURN`;
-   - descontado (`SETTLED_DISCOUNT`), sem retorno físico ao estoque.
+Livro de movimentação de estoque:
 
-## 6. Endpoints sugeridos
+- `id`
+- `uniformStockSizeId` (FK `UniformStockSize`)
+- `movementType` (`ENTRY`, `EXIT`, `RETURN_TO_LOAN`, `DISCARD`, `ADJUSTMENT`)
+- `quantity`
+- `originType` (`WITHDRAWAL`, `SETTLEMENT`, `MANUAL_ENTRY`, `MANUAL_ADJUSTMENT`)
+- `referenceType` (opcional)
+- `referenceId` (opcional)
+- `userId` (FK `User`)
+- `notes` (opcional)
+- `createdAt`
 
-## 6.1 Configuração
+### `EmployeeWorkType` (opção preferida)
 
-- `GET /api/uniforms/config`
-- `PUT /api/uniforms/config`
+Para não alterar sem necessidade o modelo legado `Employee`:
 
-## 6.2 Consulta do colaborador para retirada
+- `id`
+- `employeeId` (FK `Employee`, unique)
+- `workType` (`PLANTONISTA`, `DIARISTA`)
+- `updatedByUserId` (FK `User`)
+- `updatedAt`
+
+## 5. Endpoints sugeridos
+
+## 5.1 Módulo de entrada de estoque (obrigatório)
+
+- `POST /api/uniform-stock/entry`
+  - entrada no estoque principal por item+tamanho.
+- `POST /api/uniform-stock/loan-entry`
+  - entrada direta no estoque de empréstimos (quando aplicável).
+- `POST /api/uniform-stock/discard`
+  - descarte do estoque principal ou empréstimo (motivo obrigatório).
+- `POST /api/uniform-stock/adjustment`
+  - ajuste manual (com motivo obrigatório).
+
+## 5.2 Módulo de retirada de uniformes
 
 - `GET /api/uniforms/employee/:cpf/summary?year=2026`
-- Retorno: dados do colaborador + retirado no ano + limite + saldo disponível.
-
-## 6.3 Retirada de uniforme
-
+  - colaborador, vínculo, limite anual, total retirado no ano, saldo e última retirada.
 - `POST /api/uniforms/withdraw`
-- Payload:
-  - `cpf`
-  - `items`: array de `{ stockItemId, quantity }`
-  - `notes` (opcional)
+  - registra retirada com múltiplos itens/tamanhos.
+- `GET /api/uniforms/withdrawals?...`
+  - consulta histórica para operação e desligamento.
 
-## 6.4 Consulta operacional/histórica
-
-- `GET /api/uniforms/withdrawals?status=&from=&to=&cpf=&name=`
-
-## 6.5 Liquidação no desligamento
+## 5.3 Liquidação em desligamento
 
 - `PUT /api/uniforms/withdrawals/:id/settlement`
-- Payload:
-  - `settlementType`: `RETURN` ou `DISCOUNT`
-  - `notes` (opcional)
+  - marcar devolvido (vai para empréstimos) ou descontado.
 
-## 6.6 Estoque unificado
+## 6. Regras de validação de retirada
 
-- `GET /api/stock/items?moduleType=UNIFORME`
-- `POST /api/stock/items`
-- `PUT /api/stock/items/:id`
-- `GET /api/stock/movements?...`
-- `POST /api/stock/entry` (entrada manual)
-- `POST /api/stock/adjustment` (ajuste manual)
+1. Validar colaborador ativo.
+2. Validar vínculo (`PLANTONISTA`/`DIARISTA`).
+3. Calcular limite anual aplicável.
+4. Somar retiradas do ano.
+5. Se exceder:
+   - exigir justificativa para isenção;
+   - sem justificativa, marcar como cobrável.
+6. Validar saldo por item+tamanho antes de confirmar.
+7. Gerar baixa no estoque principal e registrar movimentação.
 
 ## 7. Frontend sugerido
 
-## 7.1 Módulo Uniformes
+## 7.1 Tela de retirada de uniformes
 
-Tela “Retirada de Uniformes”:
-
-1. Identificação do colaborador por CPF (padrão atual).
-2. Card de resumo anual:
-   - limite global;
+1. Buscar funcionário por CPF.
+2. Exibir resumo:
+   - vínculo;
+   - limite anual;
    - total retirado no ano;
-   - saldo disponível.
-3. Lista dinâmica de itens:
-   - tipo uniforme;
+   - saldo;
+   - última retirada.
+3. Lista dinâmica de retirada:
+   - item;
    - tamanho;
    - quantidade;
    - adicionar/remover linha.
-4. Confirmar retirada.
+4. Se exceder limite:
+   - informar cobrança;
+   - permitir justificativa de não entrega para isenção.
 
-Tela “Consulta de Retiradas”:
+## 7.2 Tela de entrada de estoque
 
-- filtros por período/cpf/status;
-- ação de liquidação (devolvido/descontado).
+1. Selecionar item e tamanho.
+2. Informar quantidade de entrada.
+3. Informar destino:
+   - estoque principal;
+   - estoque empréstimos.
+4. Confirmar operação com registro de movimentação.
 
-## 7.2 Módulo Estoque
+## 7.3 Tela de descarte/ajuste
 
-Tela “Estoque”:
+1. Selecionar item+tamanho e origem do estoque.
+2. Informar quantidade.
+3. Informar motivo (obrigatório).
 
-- saldo por item (com filtro por módulo);
-- entrada/ajuste manual;
-- histórico de movimentações.
+## 8. Estratégia incremental por fases
 
-## 8. Segurança e autorização
+## Fase 1 — Banco e backend base
 
-1. Validar permissão no backend por endpoint.
-2. Operador:
-   - registrar retirada;
-   - consultar retiradas.
-3. Supervisor/Admin:
-   - ajustar limite global;
-   - realizar ajustes de estoque;
-   - liquidar desligamentos.
-
-## 9. Estratégia de implementação por fases
-
-## Fase 1 — Banco + backend base
-
-1. Criar modelos Prisma de estoque e uniformes.
-2. Gerar migration.
+1. Evoluir `itemsCloth` com campos opcionais para estoque.
+2. Criar tabelas: `UniformStockSize`, `UniformWithdrawal`, `UniformWithdrawalItem`, `UniformMovement`, `EmployeeWorkType`.
 3. Criar rotas/controllers novos:
-   - `stockRoutes`, `stockController`;
-   - `uniformRoutes`, `uniformController`.
+   - `uniformStockRoutes` / `uniformStockController`;
+   - `uniformRoutes` / `uniformController`.
 
 Critério de aceite:
 
-- endpoints de configuração, retirada e consulta funcionando via Postman.
+- entrada, retirada, descarte e consulta funcionando via API.
 
-## Fase 2 — Integração frontend mínima
+## Fase 2 — Frontend operacional mínimo
 
-1. Criar serviços em `src/services/api.jsx` (ou novo `uniformApi.jsx`).
-2. Criar tela de retirada com lista de itens.
-3. Exibir resumo anual antes da confirmação.
-
-Critério de aceite:
-
-- retirada com múltiplos itens baixa saldo corretamente e respeita limite anual.
-
-## Fase 3 — Consulta e liquidação
-
-1. Tela de consulta de retiradas.
-2. Ação de liquidação por devolução/desconto.
-3. Ajustes de estoque para cenário de devolução no desligamento.
+1. Tela de entrada de estoque.
+2. Tela de retirada com múltiplos itens/tamanhos.
+3. Exibição de última retirada.
 
 Critério de aceite:
 
-- cenário de desligamento registrado sem inconsistência de saldo.
+- operador consegue dar entrada e registrar retirada com validações.
 
-## Fase 4 — Hardening
+## Fase 3 — Cobrança/isencão e desligamento
 
-1. Revisão de permissões.
-2. Revisão de logs e auditoria.
-3. Documentação final.
+1. Regra completa de excedente com cobrança/isenção.
+2. Liquidação de retiradas no desligamento.
+3. Devolução para estoque de empréstimos.
 
 Critério de aceite:
 
-- fluxos críticos validados com operação.
+- cenários de limite e desligamento cobertos sem inconsistência.
 
-## 10. Riscos e mitigação
+## Fase 4 — Preparação enxoval
 
-1. Misturar regra de uniforme com `Pendency`:
+1. Definir enum/tipos de módulo no núcleo de estoque.
+2. Garantir que consultas e movimentos suportem filtros por módulo.
+
+Critério de aceite:
+
+- estrutura pronta para módulo enxoval sem retrabalho de base.
+
+## 9. Riscos e mitigação
+
+1. Misturar uniforme com `Pendency`:
    - mitigação: módulo separado.
-2. Inconsistência de estoque:
-   - mitigação: toda saída/entrada gera `StockMovement` + atualização de saldo transacional.
-3. Permissão apenas em frontend:
-   - mitigação: validação obrigatória em backend.
-4. Regressão no sistema atual:
-   - mitigação: novas rotas/arquivos separados e mudanças incrementais.
+2. Inconsistência de saldo por tamanho:
+   - mitigação: movimentação obrigatória + validação transacional.
+3. Cobrança aplicada incorretamente:
+   - mitigação: regra explícita por vínculo + testes de cenário.
+4. Mudança em tabela legada:
+   - mitigação: campos opcionais/default seguro e uso isolado nas novas rotinas.
 
-## 11. Decisões pendentes para validação com negócio
+## 10. Decisões pendentes para validação final com negócio
 
-1. Lista oficial de tipos e tamanhos de uniforme.
-2. Regra de limite anual (por peça total ou por categoria).
-3. Quem pode liquidar desligamento com desconto.
-4. Se devolução em desligamento repõe estoque sempre ou sob condições.
-5. Se haverá relatórios financeiros vinculados a desconto.
+1. Lista final de tamanhos e nomenclatura oficial.
+2. Taxonomia de itens de uniforme.
+3. Política de aceite para justificativa de isenção.
+4. Perfil autorizado para liquidar/forçar isenção.
+5. Relatórios necessários para cobrança e desligamento.

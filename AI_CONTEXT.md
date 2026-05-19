@@ -90,6 +90,24 @@ O sistema opera com autenticação por usuário interno. Após login, o operador
 4. Papel da especialidade (`Specialties.permiteKitTrauma`) no processo real.
 5. Se o valor de item (`itemsCloth.itemVal`) é histórico por retirada ou apenas valor corrente.
 
+## Direção Definida para Nova Evolução (Uniformes)
+
+### Confirmado com produto/operação
+
+1. Uniformes usarão os mesmos colaboradores já existentes em `Employee`.
+2. Não será utilizado `Pendency` para uniformes.
+3. Cadastro base de uniforme poderá reaproveitar `itemsCloth`.
+4. Controle de estoque será por tamanho, em estrutura nova.
+5. Haverá módulo de entrada de estoque.
+6. Uniforme devolvido irá para estoque de empréstimos (não volta direto ao principal).
+7. Deve existir operação de descarte de peças.
+8. A retirada deve exibir a última retirada do colaborador.
+9. Limite anual é condicional:
+   - plantonista: 1;
+   - diarista: 2.
+10. Excedente sem justificativa deve ser marcado como cobrável.
+11. Deve existir justificativa para isenção de cobrança por não entrega.
+
 ## Paralelos com Laravel/Vue
 
 - `User`, `Employee`, `Pendency` (Prisma) ~= Models Eloquent.

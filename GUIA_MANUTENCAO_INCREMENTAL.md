@@ -21,6 +21,7 @@ Orientar manutenção incremental com segurança, sem quebrar fluxos críticos d
    - motivo da mudança;
    - impacto funcional esperado;
    - data da alteração.
+5. Em novas tabelas relacionais, não duplicar atributos já existentes na tabela referenciada por FK.
 
 ## 1) Alterar regras de retirada
 
