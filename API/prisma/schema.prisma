@@ -23,6 +23,10 @@ model User {
   position String @db.VarChar(100) 
   level Int @default(1)
   active Int @default(1)
+  uniformWithdrawals UniformWithdrawal[]
+  uniformMovements UniformMovement[]
+  employeeWorkTypeUpdates EmployeeWorkType[]
+  updatedUniformSettings UniformSetting[]
 }
 
 
@@ -45,6 +49,8 @@ model Employee {
   tempCreatedDate DateTime? 
   tempAlterDate DateTime? 
   pendencies Pendency[]
+  uniformWithdrawals UniformWithdrawal[]
+  employeeWorkType EmployeeWorkType?
 }
 
 model Pendency {
@@ -87,11 +93,100 @@ model Modalities {
 model itemsCloth{
   id        Int      @id @default(autoincrement())
   itemName  String @db.VarChar(100)
-  itemVal     String @db.VarChar(10) 
+  itemVal     String @db.VarChar(10)
+  // [MANUTENCAO] Motivo: preparar cadastro legado para módulo de estoque de uniformes sem impacto no fluxo atual.
+  // [MANUTENCAO] Impacto: campos opcionais/default para uso apenas em novas rotinas de uniformes/estoque.
+  // [MANUTENCAO] Data: 2026-05-19
+  // [MANUTENCAO] Autor: Márlon Etiene
+  minStock Int @default(0)
+  isUniform Int @default(0)
+  uniformStockSizes UniformStockSize[]
 }
 
 model Specialties {
   id        Int      @id @default(autoincrement())
   name      String @unique @db.VarChar(100)
   permiteKitTrauma Int @default(0)
+}
+
+model UniformStockSize {
+  id           Int      @id @default(autoincrement())
+  itemId        Int
+  size         String   @db.VarChar(10)
+  qtyMainStock Int      @default(0)
+  qtyLoanStock Int      @default(0)
+  minStock     Int      @default(0)
+  updatedAt    DateTime @updatedAt
+
+  item         itemsCloth @relation(fields: [itemId], references: [id])
+  withdrawalItems UniformWithdrawalItem[]
+  movements    UniformMovement[]
+
+  @@unique([itemId, size])
+}
+
+model UniformWithdrawal {
+  id                     Int      @id @default(autoincrement())
+  employeeId             Int
+  userId                 Int
+  year                   Int
+  withdrawDate           DateTime
+  totalQuantity          Int
+  limitApplied           Int
+  status                 String   @db.VarChar(30)
+  nonDeliveryJustification String? @db.VarChar(500)
+  chargeReason           String?  @db.VarChar(500)
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+
+  employee               Employee @relation(fields: [employeeId], references: [id])
+  user                   User @relation(fields: [userId], references: [id])
+  items                  UniformWithdrawalItem[]
+}
+
+model UniformWithdrawalItem {
+  id                 Int      @id @default(autoincrement())
+  uniformWithdrawalId Int
+  uniformStockSizeId Int
+  quantity           Int
+
+  withdrawal         UniformWithdrawal @relation(fields: [uniformWithdrawalId], references: [id])
+  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
+}
+
+model UniformMovement {
+  id                 Int      @id @default(autoincrement())
+  uniformStockSizeId Int
+  movementType       String   @db.VarChar(30)
+  originType         String   @db.VarChar(50)
+  referenceType      String?  @db.VarChar(50)
+  referenceId        Int?
+  quantity           Int
+  userId             Int
+  notes              String?  @db.VarChar(500)
+  createdAt          DateTime @default(now())
+
+  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
+  user               User @relation(fields: [userId], references: [id])
+}
+
+model EmployeeWorkType {
+  id              Int      @id @default(autoincrement())
+  employeeId      Int      @unique
+  workType        String   @db.VarChar(20)
+  updatedByUserId Int
+  updatedAt       DateTime @updatedAt
+
+  employee        Employee @relation(fields: [employeeId], references: [id])
+  updatedBy       User @relation(fields: [updatedByUserId], references: [id])
+}
+
+model UniformSetting {
+  id               Int      @id @default(autoincrement())
+  annualLimit      Int      @default(2)
+  updatedByUserId  Int?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  updatedBy        User?    @relation(fields: [updatedByUserId], references: [id])
 }

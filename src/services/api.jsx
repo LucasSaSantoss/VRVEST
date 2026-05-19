@@ -433,6 +433,85 @@ export const alterarItens = async (idUser, pijamaValue) => {
   }
 };
 
+// [MANUTENCAO] Motivo: adicionar serviços de frontend para módulo de estoque de uniformes (Fase 1).
+// [MANUTENCAO] Impacto: habilita telas novas de cadastro por tamanho, entrada, descarte e ajuste sem alterar fluxo legado.
+// [MANUTENCAO] Data: 2026-05-19
+// [MANUTENCAO] Autor: Márlon Etiene
+export const listarEstoqueUniformePorTamanho = async () => {
+  try {
+    const response = await api.get("/uniform-stock/sizes");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao listar estoque de uniformes:", error);
+    return { success: false, data: [] };
+  }
+};
+
+export const cadastrarTamanhoUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/sizes", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao cadastrar tamanho de uniforme:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const entradaEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/entry", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar entrada de estoque:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const entradaEmprestimoUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/loan-entry", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar entrada em empréstimos:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const descartarEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/discard", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar descarte:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const ajustarEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/adjustment", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao ajustar estoque de uniforme:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
 // ------------------------------ Verificação de Token ----------------------------
 
 const api = axios.create({

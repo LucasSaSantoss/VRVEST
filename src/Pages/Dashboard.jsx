@@ -1,11 +1,12 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect, useMemo } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import {
   LuLayoutGrid,
   LuClipboardList,
   LuQrCode,
   LuUserCog,
+  LuBox,
 } from "react-icons/lu";
 import {
   FaHospitalUser,
@@ -26,16 +27,17 @@ import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios"
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
+import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUniformes";
 
 export default function Dashboard() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [hovered, setHovered] = useState(false);
   const [selected, setSelected] = useState("");
   const [locked, setLocked] = useState(false);
   const [levelUser, setLevelUser] = useState(0);
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
-  const [instantClose, setInstantClose] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
 
@@ -55,14 +57,40 @@ export default function Dashboard() {
 
   const handleToggleLock = () => {
     if (locked) {
-      setInstantClose(true);
       setLocked(false);
       setHovered(false);
-      setTimeout(() => setInstantClose(false), 50);
     } else {
       setLocked(true);
     }
   };
+
+  // [MANUTENCAO] Motivo: manter estado da aba selecionada sincronizado com URL para facilitar navegação e compartilhamento.
+  // [MANUTENCAO] Impacto: URL passa a refletir módulo ativo usando query param (?tab=...).
+  // [MANUTENCAO] Data: 2026-05-19
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const selectTab = (tab) => {
+    setSelected(tab);
+    setSearchParams((prev) => {
+      const params = new URLSearchParams(prev);
+      params.set("tab", tab);
+      return params;
+    });
+  };
+
+  const pages = useMemo(
+    () => ({
+      home: <DashBoardVRVest />,
+      relatorios: <RelatorioFinanceiroAtrasados />,
+      qrcode: <QrCodeVRVest />,
+      funcionarioTemp: <CreateFuncTemp />,
+      usuarios: <TabelaUsuarios />,
+      funcionarios: <TabelaFuncionarios />,
+      baixa: <ListaPendencias />,
+      perfil: <ProfileContainer />,
+      estoqueUniformes: <EntradaEstoqueUniformes />,
+    }),
+    []
+  );
 
   const showTemporaryPopup = (msg) => {
     setPopupMessage(msg);
@@ -90,23 +118,35 @@ export default function Dashboard() {
           console.log(nivel);
           setLevelUser(nivel);
           setUserName(decodedToken.name || decodedToken.username || "Usuário");
-          setSelected((atual) => {
-            if (!atual) {
-              switch (nivel) {
-                case 4:
-                  return "home";
-                case 3:
-                  return "funcionarios";
-                case 2:
-                  return "funcionarios";
-                case 1:
-                  return "qrcode";
-                default:
-                  return "home";
-              }
+          const requestedTab = searchParams.get("tab");
+          const hasRequestedTab =
+            requestedTab && Object.prototype.hasOwnProperty.call(pages, requestedTab);
+
+          const defaultTab = (() => {
+            switch (nivel) {
+              case 4:
+                return "home";
+              case 3:
+                return "funcionarios";
+              case 2:
+                return "funcionarios";
+              case 1:
+                return "qrcode";
+              default:
+                return "home";
             }
-            return atual;
-          });
+          })();
+
+          const initialTab = hasRequestedTab ? requestedTab : defaultTab;
+          setSelected(initialTab);
+
+          if (!hasRequestedTab) {
+            setSearchParams((prev) => {
+              const params = new URLSearchParams(prev);
+              params.set("tab", initialTab);
+              return params;
+            });
+          }
         }
       } catch (err) {
         console.error("Erro ao verificar token:", err);
@@ -119,22 +159,11 @@ export default function Dashboard() {
     validarToken();
     const intervalo = setInterval(validarToken, 60 * 1000);
     return () => clearInterval(intervalo);
-  }, [navigate]);
+  }, [navigate, pages, searchParams, setSearchParams]);
 
   const handleLogoff = () => {
     localStorage.removeItem("token");
     navigate("/");
-  };
-
-  const pages = {
-    home: <DashBoardVRVest />,
-    relatorios: <RelatorioFinanceiroAtrasados />,
-    qrcode: <QrCodeVRVest />,
-    funcionarioTemp: <CreateFuncTemp />,
-    usuarios: <TabelaUsuarios />,
-    funcionarios: <TabelaFuncionarios />,
-    baixa: <ListaPendencias />,
-    perfil: <ProfileContainer />,
   };
 
   return (
@@ -177,7 +206,7 @@ export default function Dashboard() {
                     ? "bg-white text-gray-800"
                     : "hover:bg-white hover:text-gray-800"
                 }`}
-                onClick={() => setSelected("home")}
+                onClick={() => selectTab("home")}
               >
                 <LuLayoutGrid className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
@@ -190,7 +219,7 @@ export default function Dashboard() {
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "qrcode" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("qrcode")}
+                onClick={() => selectTab("qrcode")}
               >
                 <LuQrCode className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
@@ -203,7 +232,7 @@ export default function Dashboard() {
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                 ${selected === "usuarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("usuarios")}
+                onClick={() => selectTab("usuarios")}
               >
                 <LuUserCog className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
@@ -217,7 +246,7 @@ export default function Dashboard() {
                 <li
                   className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                   ${selected === "funcionarios" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => setSelected("funcionarios")}
+                  onClick={() => selectTab("funcionarios")}
                 >
                   <FaHospitalUser className="text-xl" />
                   <span
@@ -233,7 +262,7 @@ export default function Dashboard() {
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                   ${selected === "funcionarioTemp" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                onClick={() => setSelected("funcionarioTemp")}
+                onClick={() => selectTab("funcionarioTemp")}
               >
                 <FaBusinessTime className="text-xl" />
                 <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
@@ -243,10 +272,27 @@ export default function Dashboard() {
             )}
             {levelUser >= 3 && (
               <>
+                {/* [MANUTENCAO] Motivo: adicionar acesso ao módulo de entrada de estoque de uniformes.
+                    [MANUTENCAO] Impacto: nova opção de menu para operação de estoque sem impacto no fluxo legado.
+                    [MANUTENCAO] Data: 2026-05-19
+                    [MANUTENCAO] Autor: Márlon Etiene */}
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "estoqueUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => selectTab("estoqueUniformes")}
+                >
+                  <LuBox className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Estoque Uniformes
+                  </span>
+                </li>
+
                 <li
                   className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                   ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => setSelected("baixa")}
+                  onClick={() => selectTab("baixa")}
                 >
                   <HiOutlineReceiptTax className="text-xl" />
                   <span
@@ -282,7 +328,7 @@ export default function Dashboard() {
                     <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
                       <li
                         className="cursor-pointer hover:text-gray-300"
-                        onClick={() => setSelected("relatorios")}
+                        onClick={() => selectTab("relatorios")}
                       >
                         Relatório de Pendências
                       </li>
@@ -297,7 +343,7 @@ export default function Dashboard() {
           <div className="w-full">
             <div
               className="p-3 border-t border-white/20 flex items-center cursor-pointer hover:text-green-400"
-              onClick={() => setSelected("perfil")}
+              onClick={() => selectTab("perfil")}
             >
               <FaUserGear className="text-xl" />
               <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
@@ -323,7 +369,7 @@ export default function Dashboard() {
     p-3 sm:p-5 md:p-6 lg:p-5
     transition-all duration-300
     overflow-y-auto
-    mt-[70px] sm:mt-[80px] md:mt-[90px] lg:mt-[50px] ml-[50px]
+    mt-[110px] ml-[50px]
   "
         >
           {pages[selected]}
