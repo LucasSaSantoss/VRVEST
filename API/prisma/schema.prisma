@@ -25,7 +25,6 @@ model User {
   active Int @default(1)
   uniformWithdrawals UniformWithdrawal[]
   uniformMovements UniformMovement[]
-  employeeWorkTypeUpdates EmployeeWorkType[]
   updatedUniformSettings UniformSetting[]
 }
 
@@ -50,7 +49,6 @@ model Employee {
   tempAlterDate DateTime? 
   pendencies Pendency[]
   uniformWithdrawals UniformWithdrawal[]
-  employeeWorkType EmployeeWorkType?
 }
 
 model Pendency {
@@ -100,6 +98,7 @@ model itemsCloth{
   // [MANUTENCAO] Autor: Márlon Etiene
   minStock Int @default(0)
   isUniform Int @default(0)
+  active Int @default(1)
   uniformStockSizes UniformStockSize[]
 }
 
@@ -136,6 +135,7 @@ model UniformWithdrawal {
   status                 String   @db.VarChar(30)
   nonDeliveryJustification String? @db.VarChar(500)
   chargeReason           String?  @db.VarChar(500)
+  notes                  String?  @db.VarChar(500)
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
 
@@ -149,6 +149,8 @@ model UniformWithdrawalItem {
   uniformWithdrawalId Int
   uniformStockSizeId Int
   quantity           Int
+  returnedQuantity   Int      @default(0)
+  discountedQuantity Int      @default(0)
 
   withdrawal         UniformWithdrawal @relation(fields: [uniformWithdrawalId], references: [id])
   uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
@@ -170,17 +172,6 @@ model UniformMovement {
   user               User @relation(fields: [userId], references: [id])
 }
 
-model EmployeeWorkType {
-  id              Int      @id @default(autoincrement())
-  employeeId      Int      @unique
-  workType        String   @db.VarChar(20)
-  updatedByUserId Int
-  updatedAt       DateTime @updatedAt
-
-  employee        Employee @relation(fields: [employeeId], references: [id])
-  updatedBy       User @relation(fields: [updatedByUserId], references: [id])
-}
-
 model UniformSetting {
   id               Int      @id @default(autoincrement())
   annualLimit      Int      @default(2)
@@ -189,4 +180,12 @@ model UniformSetting {
   updatedAt        DateTime @updatedAt
 
   updatedBy        User?    @relation(fields: [updatedByUserId], references: [id])
+}
+
+model UniformSize {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique @db.VarChar(10)
+  active    Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

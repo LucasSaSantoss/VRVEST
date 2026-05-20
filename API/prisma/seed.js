@@ -1,8 +1,9 @@
-import "dotenv/config";
+﻿import "dotenv/config";
 import bcrypt from "bcrypt";
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const TAMANHOS_PADRAO_UNIFORME = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
 
 async function main() {
   const name = process.env.SEED_USER_NAME || "Administrador";
@@ -42,8 +43,17 @@ async function main() {
     },
   });
 
-  console.log("Seed concluído com sucesso.");
-  console.log(`Usuário pronto para login: ${user.email} (id: ${user.id})`);
+  for (const code of TAMANHOS_PADRAO_UNIFORME) {
+    await prisma.uniformSize.upsert({
+      where: { code },
+      update: { active: 1 },
+      create: { code, active: 1 },
+    });
+  }
+
+  console.log("Seed concluido com sucesso.");
+  console.log(`Usuario pronto para login: ${user.email} (id: ${user.id})`);
+  console.log(`Tamanhos padrao garantidos: ${TAMANHOS_PADRAO_UNIFORME.join(", ")}`);
 }
 
 main()

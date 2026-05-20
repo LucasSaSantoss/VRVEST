@@ -6,6 +6,7 @@ import {
   discardStock,
   listStockSizes,
   listMovements,
+  listUniformSizesCatalog,
   loanStockEntry,
   stockEntry,
   transferMainToLoan,
@@ -15,6 +16,7 @@ import {
 const router = express.Router();
 
 router.get("/sizes", authMiddleware, listStockSizes);
+router.get("/sizes-catalog", authMiddleware, listUniformSizesCatalog);
 router.post("/sizes", authMiddleware, createStockSize);
 router.post("/entry", authMiddleware, stockEntry);
 router.post("/loan-entry", authMiddleware, loanStockEntry);

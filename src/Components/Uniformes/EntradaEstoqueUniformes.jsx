@@ -1,9 +1,11 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from "react";
 import { listarItems } from "../../services/api";
 import { api } from "../../services/api";
+import { obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 const INITIAL_MODAL = { open: false, type: "" };
+const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
 
 function Modal({ open, title, children, onClose }) {
   if (!open) return null;
@@ -28,6 +30,7 @@ function Modal({ open, title, children, onClose }) {
 export default function EntradaEstoqueUniformes() {
   const [items, setItems] = useState([]);
   const [sizes, setSizes] = useState([]);
+  const [sizeCatalog, setSizeCatalog] = useState([]);
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const [modal, setModal] = useState(INITIAL_MODAL);
@@ -73,15 +76,24 @@ export default function EntradaEstoqueUniformes() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [itemsRes, stockRes, settingsRes] = await Promise.all([
+      const [itemsRes, stockRes, catalogRes, settingsRes] = await Promise.all([
         listarItems(),
         api.get("/uniform-stock/sizes"),
+        api.get("/uniform-stock/sizes-catalog"),
         api.get("/uniforms/settings"),
       ]);
       if (itemsRes?.success) setItems(itemsRes.data || []);
       if (stockRes?.data?.success) {
         const list = stockRes.data.data || [];
         setSizes(list);
+      }
+      if (catalogRes?.data?.success) {
+        const apiCatalog = catalogRes.data.data || [];
+        setSizeCatalog(
+          apiCatalog.length > 0
+            ? apiCatalog
+            : DEFAULT_SIZE_CODES.map((code, index) => ({ id: `fallback-${index}`, code }))
+        );
       }
       if (settingsRes?.data?.success) {
         const limit = Number(settingsRes.data.data?.annualLimit || 2);
@@ -162,7 +174,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao cadastrar tamanho.",
+        obterMensagemErroApi(error, "Erro ao cadastrar tamanho."),
         "error"
       );
     }
@@ -190,7 +202,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao registrar entrada.",
+        obterMensagemErroApi(error, "Erro ao registrar entrada."),
         "error"
       );
     }
@@ -220,7 +232,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao ajustar estoque principal.",
+        obterMensagemErroApi(error, "Erro ao ajustar estoque principal."),
         "error"
       );
     }
@@ -250,7 +262,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao ajustar empréstimos.",
+        obterMensagemErroApi(error, "Erro ao ajustar empréstimos."),
         "error"
       );
     }
@@ -279,7 +291,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao transferir estoque.",
+        obterMensagemErroApi(error, "Erro ao transferir estoque."),
         "error"
       );
     }
@@ -309,7 +321,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao registrar descarte.",
+        obterMensagemErroApi(error, "Erro ao registrar descarte."),
         "error"
       );
     }
@@ -383,7 +395,7 @@ export default function EntradaEstoqueUniformes() {
       }
     } catch (error) {
       showTemporaryPopup(
-        error.response?.data?.message || "Erro ao desfazer movimentação.",
+        obterMensagemErroApi(error, "Erro ao desfazer movimentação."),
         "error"
       );
     } finally {
@@ -582,7 +594,8 @@ export default function EntradaEstoqueUniformes() {
 
       <Modal open={modal.open && modal.type === "size"} title="Cadastrar Novo Tamanho" onClose={closeModal}>
         <div className="space-y-3">
-          <div>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+            <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">Produto/Uniforme</label>
             <select
               className="border rounded px-3 py-2 w-full"
@@ -596,15 +609,22 @@ export default function EntradaEstoqueUniformes() {
                 </option>
               ))}
             </select>
-          </div>
-          <div>
+            </div>
+            <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho</label>
-            <input
+            <select
               className="border rounded px-3 py-2 w-full"
               value={sizeValue}
               onChange={(e) => setSizeValue(e.target.value)}
-              placeholder="Ex.: P, M, G, GG"
-            />
+            >
+              <option value="">Selecione</option>
+              {sizeCatalog.map((s) => (
+                <option key={s.id} value={s.code}>
+                  {s.code}
+                </option>
+              ))}
+            </select>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div>

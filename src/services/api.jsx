@@ -2,6 +2,20 @@ import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+export const obterMensagemErroApi = (error, fallback = "Erro no servidor") => {
+  const backendMessage = error?.response?.data?.message;
+  const backendDetail = error?.response?.data?.detail;
+  const status = error?.response?.status;
+
+  if (backendMessage && backendDetail) {
+    return `${backendMessage} Detalhe: ${backendDetail}`;
+  }
+  if (backendMessage) return backendMessage;
+  if (backendDetail) return `Detalhe: ${backendDetail}`;
+  if (status) return `${fallback} (HTTP ${status})`;
+  return fallback;
+};
+
 // ------------------------------ Funções de API ----------------------------
 
 // 🔹 Carregar lista de funcionários

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+﻿import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import {
@@ -28,6 +28,9 @@ import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
 import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUniformes";
+import RetiradaDevolucaoUniformes from "../Components/Uniformes/RetiradaDevolucaoUniformes";
+import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
+import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -40,6 +43,7 @@ export default function Dashboard() {
   const [showPopup, setShowPopup] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const sidebarExpanded = hovered || locked;
 
   let timeoutId;
 
@@ -88,6 +92,9 @@ export default function Dashboard() {
       baixa: <ListaPendencias />,
       perfil: <ProfileContainer />,
       estoqueUniformes: <EntradaEstoqueUniformes />,
+      retiradaUniformes: <RetiradaDevolucaoUniformes />,
+      cadastroUniformes: <CadastroUniformes />,
+      baixaDpUniformes: <BaixaDpUniformes />,
     }),
     []
   );
@@ -174,7 +181,7 @@ export default function Dashboard() {
         {/* Sidebar */}
         <aside
           className={`fixed top-[100px] left-0  shadow-lg z-30 flex flex-col justify-between items-center text-white bg-[#16607a]
-         ${hovered || locked ? "w-56 sm:w-64" : "w-14 sm:w-16"}
+         ${sidebarExpanded ? "w-14 md:w-64" : "w-14 md:w-16"}
          h-[calc(100vh-95px)] transition-all duration-300 rounded-tr-2xl `}
           onMouseEnter={handleMouseEnter}
           onMouseLeave={handleMouseLeave}
@@ -197,7 +204,12 @@ export default function Dashboard() {
           </div>
 
           {/* Menu principal */}
-          <ul className="p-2 sm:p-3 space-y-1 overflow-y-auto flex-1 w-full">
+          <ul
+            className={`p-2 sm:p-3 space-y-1 flex-1 w-full overflow-y-auto overflow-x-hidden
+              scrollbar-thin scrollbar-thumb-slate-500/70 scrollbar-track-transparent
+              ${sidebarExpanded ? "pr-1" : "pr-0 scrollbar-thumb-transparent"}`}
+            style={sidebarExpanded ? { scrollbarGutter: "stable" } : undefined}
+          >
             {levelUser >= 4 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded 
@@ -272,6 +284,47 @@ export default function Dashboard() {
             )}
             {levelUser >= 3 && (
               <>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "retiradaUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => selectTab("retiradaUniformes")}
+                >
+                  <FaHospitalUser className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Retirada Uniformes
+                  </span>
+                </li>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "baixaDpUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => selectTab("baixaDpUniformes")}
+                >
+                  <HiOutlineReceiptTax className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Baixa Uniformes DP
+                  </span>
+                </li>
+              </>
+            )}
+            {levelUser >= 4 && (
+              <>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "cadastroUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => selectTab("cadastroUniformes")}
+                >
+                  <LuUserCog className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Cadastro Uniformes
+                  </span>
+                </li>
+
                 {/* [MANUTENCAO] Motivo: adicionar acesso ao módulo de entrada de estoque de uniformes.
                     [MANUTENCAO] Impacto: nova opção de menu para operação de estoque sem impacto no fluxo legado.
                     [MANUTENCAO] Data: 2026-05-19
@@ -364,13 +417,9 @@ export default function Dashboard() {
 
         {/* Main */}
         <main
-          className="
-    flex-1
-    p-3 sm:p-5 md:p-6 lg:p-5
-    transition-all duration-300
-    overflow-y-auto
-    mt-[110px] ml-[50px]
-  "
+          className={`flex-1 p-3 sm:p-5 md:p-6 lg:p-5 transition-all duration-300 overflow-y-auto mt-[110px] ml-[56px] ${
+            sidebarExpanded ? "md:ml-[256px]" : "md:ml-[64px]"
+          }`}
         >
           {pages[selected]}
         </main>
@@ -385,3 +434,5 @@ export default function Dashboard() {
     </>
   );
 }
+
+

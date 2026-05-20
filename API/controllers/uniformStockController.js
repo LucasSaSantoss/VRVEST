@@ -1,9 +1,22 @@
-import { PrismaClient } from "@prisma/client";
+﻿import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 const parseQty = (value) => Number(value || 0);
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+const ADMIN_LEVEL = 4;
+const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
+
+const requireAdmin = (req, res) => {
+  if (Number(req.user?.level) < ADMIN_LEVEL) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas administrador pode operar o estoque de uniformes.",
+    });
+    return false;
+  }
+  return true;
+};
 
 const getStockSizeOrFail = async (stockSizeId) => {
   const stockSize = await prisma.uniformStockSize.findUnique({
@@ -57,25 +70,77 @@ const applyMovementEffect = (stockSize, movement) => {
   return { mainDelta, loanDelta, finalMain, finalLoan };
 };
 
+const ensureDefaultUniformSizes = async () => {
+  const existing = await prisma.uniformSize.findMany();
+  if (existing.length > 0) return;
+
+  await prisma.uniformSize.createMany({
+    data: DEFAULT_SIZE_CODES.map((code) => ({ code, active: 1 })),
+    skipDuplicates: true,
+  });
+};
+
+export const listUniformSizesCatalog = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    await ensureDefaultUniformSizes();
+    const data = await prisma.uniformSize.findMany({
+      where: { active: 1 },
+      orderBy: { id: "asc" },
+    });
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Erro ao listar catálogo de tamanhos:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
 export const createStockSize = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { itemId, size, qtyMainStock, qtyLoanStock, minStock } = req.body;
     if (!itemId || !size) {
       return res.status(400).json({
         success: false,
-        message: "itemId e size são obrigatórios.",
+        message: "itemId e size sÃ£o obrigatÃ³rios.",
       });
     }
 
     const item = await prisma.itemsCloth.findUnique({ where: { id: Number(itemId) } });
     if (!item) {
-      return res.status(404).json({ success: false, message: "Item não encontrado." });
+      return res.status(404).json({ success: false, message: "Item nÃ£o encontrado." });
+    }
+
+    await ensureDefaultUniformSizes();
+    const normalizedSize = String(size).trim().toUpperCase();
+    const sizeInCatalog = await prisma.uniformSize.findFirst({
+      where: { code: normalizedSize, active: 1 },
+    });
+    if (!sizeInCatalog) {
+      return res.status(400).json({
+        success: false,
+        message: "Tamanho inválido para o catálogo do hospital.",
+      });
+    }
+
+    const exists = await prisma.uniformStockSize.findFirst({
+      where: {
+        itemId: Number(itemId),
+        size: normalizedSize,
+      },
+    });
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: "Este produto já possui cadastro para o tamanho selecionado.",
+      });
     }
 
     const created = await prisma.uniformStockSize.create({
       data: {
         itemId: Number(itemId),
-        size: String(size).trim().toUpperCase(),
+        size: normalizedSize,
         qtyMainStock: parseQty(qtyMainStock),
         qtyLoanStock: parseQty(qtyLoanStock),
         minStock: parseQty(minStock),
@@ -93,25 +158,32 @@ export const createStockSize = async (req, res) => {
 
     return res.status(201).json({ success: true, data: created });
   } catch (error) {
-    console.error("Erro ao criar variação de estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    console.error("Erro ao criar variaÃ§Ã£o de estoque:", error);
+    if (error?.code === "P2002") {
+      return res.status(400).json({
+        success: false,
+        message: "Este produto já possui cadastro para o tamanho selecionado.",
+      });
+    }
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const stockEntry = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, quantity, notes } = req.body;
     const qty = parseQty(quantity);
     if (!uniformStockSizeId || qty <= 0) {
       return res.status(400).json({
         success: false,
-        message: "uniformStockSizeId e quantity>0 são obrigatórios.",
+        message: "uniformStockSizeId e quantity>0 sÃ£o obrigatÃ³rios.",
       });
     }
 
     const stockSize = await getStockSizeOrFail(uniformStockSizeId);
     if (!stockSize) {
-      return res.status(404).json({ success: false, message: "Registro de estoque não encontrado." });
+      return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
     const userId = req.user.id;
@@ -144,24 +216,25 @@ export const stockEntry = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Erro ao registrar entrada de estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const loanStockEntry = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, quantity, notes } = req.body;
     const qty = parseQty(quantity);
     if (!uniformStockSizeId || qty <= 0) {
       return res.status(400).json({
         success: false,
-        message: "uniformStockSizeId e quantity>0 são obrigatórios.",
+        message: "uniformStockSizeId e quantity>0 sÃ£o obrigatÃ³rios.",
       });
     }
 
     const stockSize = await getStockSizeOrFail(uniformStockSizeId);
     if (!stockSize) {
-      return res.status(404).json({ success: false, message: "Registro de estoque não encontrado." });
+      return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
     const userId = req.user.id;
@@ -178,7 +251,7 @@ export const loanStockEntry = async (req, res) => {
           originType: "MANUAL_ENTRY",
           quantity: qty,
           userId,
-          notes: notes || "Entrada no estoque de empréstimos.",
+          notes: notes || "Entrada no estoque de emprÃ©stimos.",
         },
       });
 
@@ -193,12 +266,13 @@ export const loanStockEntry = async (req, res) => {
 
     return res.json({ success: true, data: result });
   } catch (error) {
-    console.error("Erro ao registrar entrada no estoque de empréstimos:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    console.error("Erro ao registrar entrada no estoque de emprÃ©stimos:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const discardStock = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, quantity, source, notes } = req.body;
     const qty = parseQty(quantity);
@@ -214,13 +288,13 @@ export const discardStock = async (req, res) => {
     if (!notes || !String(notes).trim()) {
       return res.status(400).json({
         success: false,
-        message: "Motivo do descarte é obrigatório.",
+        message: "Motivo do descarte Ã© obrigatÃ³rio.",
       });
     }
 
     const stockSize = await getStockSizeOrFail(uniformStockSizeId);
     if (!stockSize) {
-      return res.status(404).json({ success: false, message: "Registro de estoque não encontrado." });
+      return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
     const available = sourceNormalized === "MAIN" ? stockSize.qtyMainStock : stockSize.qtyLoanStock;
@@ -262,11 +336,12 @@ export const discardStock = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Erro ao descartar estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const adjustStock = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, quantityDeltaMain, quantityDeltaLoan, notes } = req.body;
     const mainDelta = Number(quantityDeltaMain || 0);
@@ -278,12 +353,12 @@ export const adjustStock = async (req, res) => {
       });
     }
     if (!notes || !String(notes).trim()) {
-      return res.status(400).json({ success: false, message: "Motivo do ajuste é obrigatório." });
+      return res.status(400).json({ success: false, message: "Motivo do ajuste Ã© obrigatÃ³rio." });
     }
 
     const stockSize = await getStockSizeOrFail(uniformStockSizeId);
     if (!stockSize) {
-      return res.status(404).json({ success: false, message: "Registro de estoque não encontrado." });
+      return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
     const finalMain = stockSize.qtyMainStock + mainDelta;
@@ -291,7 +366,7 @@ export const adjustStock = async (req, res) => {
     if (finalMain < 0 || finalLoan < 0) {
       return res.status(400).json({
         success: false,
-        message: "Ajuste inválido: saldo não pode ficar negativo.",
+        message: "Ajuste invÃ¡lido: saldo nÃ£o pode ficar negativo.",
       });
     }
 
@@ -329,11 +404,13 @@ export const adjustStock = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Erro ao ajustar estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const listStockSizes = async (_req, res) => {
+  const req = _req;
+  if (!requireAdmin(req, res)) return;
   try {
     const data = await prisma.uniformStockSize.findMany({
       orderBy: [{ itemId: "asc" }, { size: "asc" }],
@@ -342,11 +419,12 @@ export const listStockSizes = async (_req, res) => {
     return res.json({ success: true, data });
   } catch (error) {
     console.error("Erro ao listar estoque por tamanho:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const transferMainToLoan = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, quantity, notes } = req.body;
     const qty = parseQty(quantity);
@@ -360,7 +438,7 @@ export const transferMainToLoan = async (req, res) => {
     if (!notes || !String(notes).trim()) {
       return res.status(400).json({
         success: false,
-        message: "Justificativa da transferência é obrigatória.",
+        message: "Justificativa da transferÃªncia Ã© obrigatÃ³ria.",
       });
     }
 
@@ -368,13 +446,13 @@ export const transferMainToLoan = async (req, res) => {
     if (!stockSize) {
       return res.status(404).json({
         success: false,
-        message: "Registro de estoque não encontrado.",
+        message: "Registro de estoque nÃ£o encontrado.",
       });
     }
     if (stockSize.qtyMainStock < qty) {
       return res.status(400).json({
         success: false,
-        message: "Saldo insuficiente no estoque principal para transferência.",
+        message: "Saldo insuficiente no estoque principal para transferÃªncia.",
       });
     }
 
@@ -395,7 +473,7 @@ export const transferMainToLoan = async (req, res) => {
           originType: "MANUAL_ADJUSTMENT",
           quantity: qty,
           userId,
-          notes: `Transferência principal -> empréstimos. ${notes}`,
+          notes: `TransferÃªncia principal -> emprÃ©stimos. ${notes}`,
         },
       });
 
@@ -410,12 +488,13 @@ export const transferMainToLoan = async (req, res) => {
 
     return res.json({ success: true, data: result });
   } catch (error) {
-    console.error("Erro ao transferir estoque principal para empréstimos:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    console.error("Erro ao transferir estoque principal para emprÃ©stimos:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const listMovements = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const { uniformStockSizeId, limit = 100 } = req.query;
     const where = {};
@@ -437,12 +516,13 @@ export const listMovements = async (req, res) => {
 
     return res.json({ success: true, data });
   } catch (error) {
-    console.error("Erro ao listar movimentações de estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    console.error("Erro ao listar movimentaÃ§Ãµes de estoque:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
 
 export const reverseMovement = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
   try {
     const movementId = Number(req.params.id);
     const { reason } = req.body;
@@ -557,6 +637,9 @@ export const reverseMovement = async (req, res) => {
     return res.json({ success: true, data: result });
   } catch (error) {
     console.error("Erro ao desfazer movimentacao de estoque:", error);
-    return res.status(500).json({ success: false, message: "Erro no servidor." });
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
+
+
+
