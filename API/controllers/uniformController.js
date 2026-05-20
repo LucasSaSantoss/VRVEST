@@ -2,6 +2,17 @@
 
 const prisma = new PrismaClient();
 
+const EMPLOYEE_SAFE_SELECT = {
+  id: true,
+  name: true,
+  cpf: true,
+  email: true,
+  sector: true,
+  position: true,
+  modality: true,
+  active: true,
+};
+
 const isOperatorOrAdmin = (level) => Number(level) >= 3;
 const isDpOrAdmin = (level) => Number(level) >= 2;
 
@@ -115,6 +126,7 @@ export const getEmployeeUniformSummary = async (req, res) => {
 
     const employee = await prisma.employee.findUnique({
       where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
     });
 
     if (!employee) {
@@ -193,6 +205,7 @@ export const createUniformWithdrawal = async (req, res) => {
 
     const employee = await prisma.employee.findUnique({
       where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
     });
 
     if (!employee || employee.active !== 1) {
@@ -607,7 +620,10 @@ export const getEmployeeUniformDpPendencies = async (req, res) => {
 
   try {
     const { cpf } = req.params;
-    const employee = await prisma.employee.findUnique({ where: { cpf } });
+    const employee = await prisma.employee.findUnique({
+      where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
+    });
     if (!employee) {
       return res.status(404).json({ success: false, message: "Colaborador não encontrado." });
     }
@@ -680,7 +696,10 @@ export const listUniformWithdrawals = async (req, res) => {
     if (year) where.year = Number(year);
 
     if (cpf) {
-      const employee = await prisma.employee.findUnique({ where: { cpf } });
+      const employee = await prisma.employee.findUnique({
+        where: { cpf },
+        select: { id: true },
+      });
       if (!employee) {
         return res.json({ success: true, data: [] });
       }

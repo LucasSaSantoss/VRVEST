@@ -6,6 +6,12 @@ import { obterMensagemErroApi } from "../../services/api";
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 const INITIAL_MODAL = { open: false, type: "" };
 const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
+const TIPO_MOVIMENTACAO_LABEL = {
+  ENTRY: "Entrada",
+  DISCARD: "Descarte",
+  ADJUSTMENT: "Ajuste",
+  REVERSAL: "Desfazer",
+};
 
 function Modal({ open, title, children, onClose }) {
   if (!open) return null;
@@ -146,6 +152,10 @@ export default function EntradaEstoqueUniformes() {
   const selectedStock = useMemo(
     () => sizes.find((s) => String(s.id) === String(selectedStockId)),
     [sizes, selectedStockId]
+  );
+  const uniformItems = useMemo(
+    () => (items || []).filter((item) => Number(item?.isUniform) === 1),
+    [items]
   );
 
   const handleCreateSize = async () => {
@@ -403,16 +413,19 @@ export default function EntradaEstoqueUniformes() {
     }
   };
 
+  const formatarTipoMovimentacao = (movementType) =>
+    TIPO_MOVIMENTACAO_LABEL[movementType] || movementType || "-";
+
   return (
-    <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
-      <div className="mb-4 border-l-4 border-blue-500 pl-3">
-        <h2 className="text-xl font-bold text-gray-800">Estoque de Uniformes</h2>
-        <p className="text-gray-600 text-sm">
+    <div className="w-full max-w-6xl mx-auto mt-2 pb-4">
+      <div className="mb-3 border-l-4 border-blue-500 pl-3">
+        <h2 className="text-lg font-bold text-gray-800">Estoque de Uniformes</h2>
+        <p className="text-gray-600 text-xs sm:text-sm">
           Entrada no estoque principal, ajustes por estoque, transferência e descarte.
         </p>
       </div>
 
-      <section className="bg-white rounded-xl shadow p-4 mb-3">
+      <section className="bg-white rounded-xl shadow p-3 mb-2">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold text-gray-700">Configuração de Limite Anual</h3>
@@ -422,19 +435,19 @@ export default function EntradaEstoqueUniformes() {
           </div>
           <button
             onClick={() => openModal("annualLimit")}
-            className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-3 py-2 rounded"
+            className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded text-sm"
           >
             Alterar Limite Anual
           </button>
         </div>
       </section>
 
-      <section className="bg-white rounded-xl shadow p-4 mb-3">
-        <div className="flex flex-wrap items-center justify-between gap-3 mb-3">
+      <section className="bg-white rounded-xl shadow p-3 mb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
           <h3 className="font-semibold text-gray-700">Produto/Uniforme</h3>
           <button
             onClick={() => openModal("size")}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-2 rounded"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-1.5 rounded text-sm"
           >
             Cadastrar Novo Tamanho
           </button>
@@ -444,7 +457,7 @@ export default function EntradaEstoqueUniformes() {
           Selecione o produto/uniforme (com tamanho)
         </label>
         <select
-          className="border rounded px-3 py-2 w-full"
+          className="border rounded px-3 py-1.5 w-full text-sm"
           value={selectedStockId}
           onChange={(e) => setSelectedStockId(e.target.value)}
         >
@@ -458,7 +471,7 @@ export default function EntradaEstoqueUniformes() {
       </section>
 
       {!selectedStock && (
-        <section className="bg-yellow-50 border border-yellow-200 rounded-xl p-3 mb-3">
+        <section className="bg-yellow-50 border border-yellow-200 rounded-xl p-2.5 mb-2">
           <p className="text-sm text-yellow-800">
             Selecione um produto/uniforme para visualizar o estoque atual e liberar as operações.
           </p>
@@ -467,31 +480,31 @@ export default function EntradaEstoqueUniformes() {
 
       {selectedStock && (
         <>
-          <section className="bg-white rounded-xl shadow p-4 mb-3">
+          <section className="bg-white rounded-xl shadow p-2.5 mb-2">
             <h3 className="font-semibold text-gray-700 mb-2">Estoque Atual</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              <div className="bg-gray-50 rounded p-3">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+              <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Principal</p>
-                <p className="text-2xl font-bold text-gray-800">{selectedStock.qtyMainStock}</p>
+                <p className="text-lg font-bold text-gray-800 leading-tight">{selectedStock.qtyMainStock}</p>
               </div>
-              <div className="bg-gray-50 rounded p-3">
+              <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Empréstimos</p>
-                <p className="text-2xl font-bold text-gray-800">{selectedStock.qtyLoanStock}</p>
+                <p className="text-lg font-bold text-gray-800 leading-tight">{selectedStock.qtyLoanStock}</p>
               </div>
-              <div className="bg-gray-50 rounded p-3">
+              <div className="bg-gray-50 rounded p-2">
                 <p className="text-xs text-gray-500">Mínimo</p>
-                <p className="text-2xl font-bold text-gray-800">{selectedStock.minStock}</p>
+                <p className="text-lg font-bold text-gray-800 leading-tight">{selectedStock.minStock}</p>
               </div>
             </div>
           </section>
 
-          <section className="bg-white rounded-xl shadow p-4 mb-3">
-            <h3 className="font-semibold text-gray-700 mb-3">Entrada no Estoque Principal</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <section className="bg-white rounded-xl shadow p-3 mb-2">
+            <h3 className="font-semibold text-gray-700 mb-2">Entrada no Estoque Principal</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Número da NF</label>
                 <input
-                  className="border rounded px-3 py-2 w-full"
+                  className="border rounded px-3 py-1.5 w-full text-sm"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
                   placeholder="Ex.: NF-12345"
@@ -503,7 +516,7 @@ export default function EntradaEstoqueUniformes() {
                 </label>
                 <input
                   type="number"
-                  className="border rounded px-3 py-2 w-full"
+                  className="border rounded px-3 py-1.5 w-full text-sm"
                   value={entryQty}
                   onChange={(e) => setEntryQty(e.target.value)}
                   placeholder="Ex.: 10"
@@ -512,46 +525,46 @@ export default function EntradaEstoqueUniformes() {
             </div>
             <button
               onClick={handleMainEntry}
-              className="mt-3 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded"
+              className="mt-2 bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-1.5 rounded text-sm"
             >
               Confirmar Entrada Principal
             </button>
           </section>
 
-          <section className="bg-white rounded-xl shadow p-4 mb-3">
-            <h3 className="font-semibold text-gray-700 mb-3">Ações Complementares</h3>
+          <section className="bg-white rounded-xl shadow p-3 mb-2">
+            <h3 className="font-semibold text-gray-700 mb-2">Ações Complementares</h3>
             {/* [MANUTENCAO] Motivo: separar operações por estoque, incluir transferência explícita e histórico de movimentações.
                 [MANUTENCAO] Impacto: reduz confusão operacional e aumenta rastreabilidade por usuário no módulo de estoque.
                 [MANUTENCAO] Data: 2026-05-19
                 [MANUTENCAO] Autor: Márlon Etiene */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-1.5">
               <button
                 onClick={() => openModal("loanAdjust")}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-4 py-2 rounded"
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-3 py-1.5 rounded text-sm"
               >
                 Ajustar Estoque de Empréstimos
               </button>
               <button
                 onClick={() => openModal("mainAdjust")}
-                className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-4 py-2 rounded"
+                className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-3 py-1.5 rounded text-sm"
               >
                 Ajustar Estoque Principal
               </button>
               <button
                 onClick={() => openModal("transfer")}
-                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-4 py-2 rounded"
+                className="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-3 py-1.5 rounded text-sm"
               >
                 Transferir p/ Empréstimos
               </button>
               <button
                 onClick={() => openModal("discard")}
-                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded"
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1.5 rounded text-sm"
               >
                 Descartar Peças
               </button>
               <button
                 onClick={openHistoryModal}
-                className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-4 py-2 rounded"
+                className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded text-sm"
               >
                 Histórico de Movimentações
               </button>
@@ -559,38 +572,6 @@ export default function EntradaEstoqueUniformes() {
           </section>
         </>
       )}
-
-      <section className="bg-white rounded-xl shadow p-4">
-        <h3 className="font-semibold text-gray-700 mb-3">Resumo do Estoque por Tamanho</h3>
-        {loading ? (
-          <p className="text-gray-600">Carregando...</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="text-left border-b">
-                  <th className="py-2">Produto</th>
-                  <th>Tamanho</th>
-                  <th>Principal</th>
-                  <th>Empréstimos</th>
-                  <th>Mínimo</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sizes.map((s) => (
-                  <tr key={s.id} className="border-b">
-                    <td className="py-2">{s.item?.itemName}</td>
-                    <td>{s.size}</td>
-                    <td>{s.qtyMainStock}</td>
-                    <td>{s.qtyLoanStock}</td>
-                    <td>{s.minStock}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </section>
 
       <Modal open={modal.open && modal.type === "size"} title="Cadastrar Novo Tamanho" onClose={closeModal}>
         <div className="space-y-3">
@@ -603,7 +584,7 @@ export default function EntradaEstoqueUniformes() {
               onChange={(e) => setSizeItemId(e.target.value)}
             >
               <option value="">Selecione</option>
-              {items.map((item) => (
+              {uniformItems.map((item) => (
                 <option key={item.id} value={item.id}>
                   {item.itemName}
                 </option>
@@ -853,7 +834,7 @@ export default function EntradaEstoqueUniformes() {
                       </td>
                       <td className="py-3 pr-3">
                         <span className="inline-block bg-slate-100 text-slate-700 px-2 py-1 rounded text-xs font-semibold">
-                          {m.movementType}
+                          {formatarTipoMovimentacao(m.movementType)}
                         </span>
                       </td>
                       <td className="py-3 pr-3 font-semibold text-gray-800">{m.quantity}</td>

@@ -4,6 +4,15 @@ import { LuPlus } from "react-icons/lu";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
+const STATUS_RETIRADA_LABEL = {
+  OPEN: "Aberta",
+  PARTIAL_RETURN: "Devolução Parcial",
+  RETURNED: "Devolvida",
+  CHARGEABLE: "Com Cobrança",
+  EXEMPT: "Isenta",
+  SETTLED: "Baixa Financeira Concluída",
+};
+
 export default function RetiradaDevolucaoUniformes() {
   const [cpf, setCpf] = useState("");
   const [summary, setSummary] = useState(null);
@@ -14,10 +23,9 @@ export default function RetiradaDevolucaoUniformes() {
   const [observacoesRetirada, setObservacoesRetirada] = useState("");
   const [cart, setCart] = useState([]);
   const [returnQtyMap, setReturnQtyMap] = useState({});
-  const [discountQtyMap, setDiscountQtyMap] = useState({});
-  const [discountModal, setDiscountModal] = useState({ open: false, withdrawal: null });
   const [loading, setLoading] = useState(false);
   const [popup, setPopup] = useState(INITIAL_POPUP);
+  const [lastAutoCpfSearched, setLastAutoCpfSearched] = useState("");
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -39,6 +47,14 @@ export default function RetiradaDevolucaoUniformes() {
   useEffect(() => {
     loadStockOptions();
   }, []);
+
+  useEffect(() => {
+    const cpfDigits = String(cpf || "").replace(/\D/g, "");
+    if (cpfDigits.length === 11 && cpfDigits !== lastAutoCpfSearched) {
+      setLastAutoCpfSearched(cpfDigits);
+      loadSummary(cpfDigits);
+    }
+  }, [cpf, lastAutoCpfSearched]);
 
   const loadSummary = async (cpfValue) => {
     if (!cpfValue?.trim()) {
@@ -177,6 +193,8 @@ export default function RetiradaDevolucaoUniformes() {
       if (res.data?.success) {
         showTemporaryPopup("Retirada registrada com sucesso.", "success");
         setCart([]);
+        setSelectedItemId("");
+        setSelectedStockId("");
         setJustificativaExcedente("");
         setObservacoesRetirada("");
         await loadStockOptions();
@@ -225,43 +243,9 @@ export default function RetiradaDevolucaoUniformes() {
     }
   };
 
-  const handleDiscount = async (withdrawal) => {
-    setDiscountQtyMap({});
-    setDiscountModal({ open: true, withdrawal });
-  };
 
-  const handleConfirmDiscount = async () => {
-    const withdrawal = discountModal.withdrawal;
-    if (!withdrawal) return;
-
-    const payloadItems = withdrawal.items
-      .map((item) => ({
-        uniformWithdrawalItemId: item.id,
-        quantity: Number(discountQtyMap[item.id] || 0),
-      }))
-      .filter((i) => i.quantity > 0);
-
-    if (payloadItems.length === 0) {
-      showTemporaryPopup("Informe ao menos uma quantidade para baixa financeira.", "error");
-      return;
-    }
-
-    try {
-      const res = await api.put(`/uniforms/withdrawals/${withdrawal.id}/settlement`, {
-        items: payloadItems,
-      });
-      if (res.data?.success) {
-        showTemporaryPopup(res.data.message || "Baixa financeira registrada.", "success");
-        setDiscountModal({ open: false, withdrawal: null });
-        await loadSummary(summary.employee.cpf);
-      }
-    } catch (error) {
-      showTemporaryPopup(
-        obterMensagemErroApi(error, "Erro ao registrar baixa financeira."),
-        "error"
-      );
-    }
-  };
+  const formatarStatusRetirada = (status) =>
+    STATUS_RETIRADA_LABEL[status] || status || "-";
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
@@ -279,7 +263,15 @@ export default function RetiradaDevolucaoUniformes() {
             className="border rounded px-3 py-2"
             placeholder="CPF (somente números)"
             value={cpf}
-            onChange={(e) => setCpf(e.target.value)}
+            onChange={(e) => {
+              const digits = String(e.target.value || "")
+                .replace(/\D/g, "")
+                .slice(0, 11);
+              setCpf(digits);
+              if (digits.length < 11) {
+                setLastAutoCpfSearched("");
+              }
+            }}
           />
           <button
             onClick={() => loadSummary(cpf)}
@@ -360,19 +352,35 @@ export default function RetiradaDevolucaoUniformes() {
               </button>
             </div>
 
-            <div className="space-y-2 mb-3">
-              {cart.length === 0 && <p className="text-sm text-gray-600">Carrinho vazio.</p>}
-              {cart.map((c) => (
-                <div key={c.uniformStockSizeId} className="flex items-center justify-between bg-gray-50 rounded p-2">
-                  <span>{c.label} - Qtd: {c.quantity}</span>
-                  <button
-                    onClick={() => removeFromCart(c.uniformStockSizeId)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
-                  >
-                    Remover
-                  </button>
+            <div className="mb-3 border border-gray-200 rounded-lg bg-gray-50/70">
+              <div className="px-3 py-2 border-b border-gray-200 flex items-center justify-between">
+                <h4 className="text-sm font-semibold text-gray-700">Carrinho da Retirada</h4>
+                <span className="text-xs text-gray-500">
+                  Itens: <strong>{cart.length}</strong>
+                </span>
+              </div>
+              {cart.length === 0 ? (
+                <p className="text-sm text-gray-600 px-3 py-2.5">Carrinho vazio.</p>
+              ) : (
+                <div className="divide-y divide-gray-200">
+                  {cart.map((c) => (
+                    <div
+                      key={c.uniformStockSizeId}
+                      className="px-3 py-2 flex items-center justify-between gap-2"
+                    >
+                      <span className="text-sm text-gray-800">
+                        {c.label} - Qtd: {c.quantity}
+                      </span>
+                      <button
+                        onClick={() => removeFromCart(c.uniformStockSizeId)}
+                        className="bg-red-600 hover:bg-red-700 text-white px-2 py-1 rounded text-xs"
+                      >
+                        Remover
+                      </button>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              )}
             </div>
 
             {cart.length > 0 && (
@@ -420,7 +428,7 @@ export default function RetiradaDevolucaoUniformes() {
                     <div className="flex flex-wrap gap-3 text-sm mb-2">
                       <span><strong>Retirada:</strong> #{w.id}</span>
                       <span><strong>Data:</strong> {new Date(w.withdrawDate).toLocaleString("pt-BR")}</span>
-                      <span><strong>Status:</strong> {w.status}</span>
+                      <span><strong>Status:</strong> {formatarStatusRetirada(w.status)}</span>
                     </div>
                     <div className="space-y-2 mb-2">
                       {w.items.map((item) => (
@@ -453,12 +461,6 @@ export default function RetiradaDevolucaoUniformes() {
                       >
                         Registrar Devolução
                       </button>
-                      <button
-                        onClick={() => handleDiscount(w)}
-                        className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-2 rounded"
-                      >
-                        Baixa Financeira (Desconto)
-                      </button>
                     </div>
                   </div>
                 ))}
@@ -475,63 +477,6 @@ export default function RetiradaDevolucaoUniformes() {
           }`}
         >
           {popup.message}
-        </div>
-      )}
-
-      {discountModal.open && discountModal.withdrawal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-3xl">
-            <div className="flex items-center justify-between border-b px-4 py-3">
-              <h3 className="font-semibold text-gray-800">
-                Confirmar Baixa Financeira - Retirada #{discountModal.withdrawal.id}
-              </h3>
-              <button
-                onClick={() => setDiscountModal({ open: false, withdrawal: null })}
-                className="text-gray-500 hover:text-gray-700 font-bold"
-              >
-                X
-              </button>
-            </div>
-            <div className="p-4 space-y-3">
-              {discountModal.withdrawal.items.map((item) => (
-                <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
-                  <span className="md:col-span-3">
-                    {item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size}
-                  </span>
-                  <span>Pendente: {item.pendingQuantity}</span>
-                  <input
-                    type="number"
-                    min="0"
-                    max={item.pendingQuantity}
-                    className="border rounded px-2 py-1"
-                    placeholder="Qtd desconto"
-                    value={discountQtyMap[item.id] || ""}
-                    onChange={(e) =>
-                      setDiscountQtyMap((prev) => ({
-                        ...prev,
-                        [item.id]: e.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              ))}
-
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={handleConfirmDiscount}
-                  className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded"
-                >
-                  Confirmar Baixa Financeira
-                </button>
-                <button
-                  onClick={() => setDiscountModal({ open: false, withdrawal: null })}
-                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
     </div>

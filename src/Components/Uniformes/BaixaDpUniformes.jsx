@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+﻿import { useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
@@ -9,20 +9,22 @@ export default function BaixaDpUniformes() {
   const [loading, setLoading] = useState(false);
   const [discountQtyMap, setDiscountQtyMap] = useState({});
   const [popup, setPopup] = useState(INITIAL_POPUP);
+  const [lastAutoCpfSearched, setLastAutoCpfSearched] = useState("");
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
     setTimeout(() => setPopup(INITIAL_POPUP), 3500);
   };
 
-  const buscarPendencias = async () => {
-    if (!cpf.trim()) {
+  const buscarPendencias = async (cpfValue) => {
+    const cpfBusca = String(cpfValue ?? cpf).trim();
+    if (!cpfBusca) {
       showTemporaryPopup("Informe o CPF do colaborador.", "error");
       return;
     }
     setLoading(true);
     try {
-      const res = await api.get(`/uniforms/dp/employee/${cpf.trim()}/pendencies`);
+      const res = await api.get(`/uniforms/dp/employee/${cpfBusca}/pendencies`);
       if (res.data?.success) {
         setResult(res.data.data);
         setDiscountQtyMap({});
@@ -34,6 +36,14 @@ export default function BaixaDpUniformes() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const cpfDigits = String(cpf || "").replace(/\D/g, "");
+    if (cpfDigits.length === 11 && cpfDigits !== lastAutoCpfSearched) {
+      setLastAutoCpfSearched(cpfDigits);
+      buscarPendencias(cpfDigits);
+    }
+  }, [cpf, lastAutoCpfSearched]);
 
   const confirmarBaixa = async (withdrawal) => {
     const items = withdrawal.items
@@ -69,8 +79,21 @@ export default function BaixaDpUniformes() {
       <section className="bg-white rounded-xl shadow p-4 mb-3">
         <h3 className="font-semibold text-gray-700 mb-2">Buscar Pendências</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <input className="border rounded px-3 py-2" placeholder="CPF" value={cpf} onChange={(e) => setCpf(e.target.value)} />
-          <button onClick={buscarPendencias} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">{loading ? "Buscando..." : "Buscar"}</button>
+          <input
+            className="border rounded px-3 py-2"
+            placeholder="CPF"
+            value={cpf}
+            onChange={(e) => {
+              const digits = String(e.target.value || "")
+                .replace(/\D/g, "")
+                .slice(0, 11);
+              setCpf(digits);
+              if (digits.length < 11) {
+                setLastAutoCpfSearched("");
+              }
+            }}
+          />
+          <button onClick={() => buscarPendencias()} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">{loading ? "Buscando..." : "Buscar"}</button>
         </div>
       </section>
 
