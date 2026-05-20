@@ -13,6 +13,21 @@ const EMPLOYEE_SAFE_SELECT = {
   active: true,
 };
 
+const UNIFORM_WITHDRAWAL_SAFE_SELECT = {
+  id: true,
+  employeeId: true,
+  userId: true,
+  year: true,
+  withdrawDate: true,
+  totalQuantity: true,
+  limitApplied: true,
+  status: true,
+  nonDeliveryJustification: true,
+  chargeReason: true,
+  notes: true,
+  createdAt: true,
+};
+
 const isOperatorOrAdmin = (level) => Number(level) >= 3;
 const isDpOrAdmin = (level) => Number(level) >= 2;
 
@@ -147,7 +162,8 @@ export const getEmployeeUniformSummary = async (req, res) => {
         status: { in: ["REGULAR", "EXEMPT", "CHARGEABLE", "PARTIAL_RETURN"] },
       },
       orderBy: { withdrawDate: "desc" },
-      include: {
+      select: {
+        ...UNIFORM_WITHDRAWAL_SAFE_SELECT,
         items: {
           include: {
             uniformStockSize: {
@@ -634,7 +650,8 @@ export const getEmployeeUniformDpPendencies = async (req, res) => {
         status: { in: ["REGULAR", "EXEMPT", "CHARGEABLE", "PARTIAL_RETURN"] },
       },
       orderBy: { withdrawDate: "desc" },
-      include: {
+      select: {
+        ...UNIFORM_WITHDRAWAL_SAFE_SELECT,
         items: {
           include: {
             uniformStockSize: {
