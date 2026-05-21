@@ -29,7 +29,8 @@ const UNIFORM_WITHDRAWAL_SAFE_SELECT = {
 };
 
 const isOperatorOrAdmin = (level) => Number(level) >= 3;
-const isDpOrAdmin = (level) => Number(level) >= 2;
+const isAdmin = (level) => Number(level) >= 4;
+const isRhOrAdmin = (level) => Number(level) === 2 || isAdmin(level);
 
 const requireOperatorOrAdmin = (req, res) => {
   if (!isOperatorOrAdmin(req.user?.level)) {
@@ -42,11 +43,22 @@ const requireOperatorOrAdmin = (req, res) => {
   return true;
 };
 
-const requireDpOrAdmin = (req, res) => {
-  if (!isDpOrAdmin(req.user?.level)) {
+const requireRhOrAdmin = (req, res) => {
+  if (!isRhOrAdmin(req.user?.level)) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas DP ou administrador.",
+      message: "Acesso negado. Apenas RH ou administrador.",
+    });
+    return false;
+  }
+  return true;
+};
+
+const requireAdmin = (req, res) => {
+  if (!isAdmin(req.user?.level)) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas administrador.",
     });
     return false;
   }
@@ -58,7 +70,7 @@ const getOrCreateUniformSetting = async (tx = prisma) => {
   if (existing) return existing;
 
   return tx.uniformSetting.create({
-    data: { annualLimit: 2 },
+    data: { annualLimit: 2, allowZeroOrNegativeStockMovement: 0 },
   });
 };
 
@@ -74,8 +86,11 @@ const getPendingQuantity = (withdrawalItem) =>
   Number(withdrawalItem.returnedQuantity || 0) -
   Number(withdrawalItem.discountedQuantity || 0);
 
+const isStockMovementWithoutBalanceAllowed = (settings) =>
+  Number(settings?.allowZeroOrNegativeStockMovement || 0) === 1;
+
 export const getUniformSettings = async (req, res) => {
-  if (!requireOperatorOrAdmin(req, res)) return;
+  if (!requireAdmin(req, res)) return;
 
   try {
     const settings = await getOrCreateUniformSetting();
@@ -87,7 +102,7 @@ export const getUniformSettings = async (req, res) => {
 };
 
 export const updateUniformAnnualLimit = async (req, res) => {
-  if (!requireOperatorOrAdmin(req, res)) return;
+  if (!requireAdmin(req, res)) return;
 
   try {
     const annualLimit = Number(req.body?.annualLimit);
@@ -132,6 +147,49 @@ export const updateUniformAnnualLimit = async (req, res) => {
   }
 };
 
+export const updateUniformStockMovementPolicy = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const allowFlag = Number(req.body?.allowZeroOrNegativeStockMovement ? 1 : 0);
+    const userId = req.user?.id ? Number(req.user.id) : null;
+
+    const updated = await prisma.$transaction(async (tx) => {
+      const settings = await getOrCreateUniformSetting(tx);
+      const result = await tx.uniformSetting.update({
+        where: { id: settings.id },
+        data: {
+          allowZeroOrNegativeStockMovement: allowFlag,
+          updatedByUserId: userId,
+        },
+      });
+
+      await tx.userLog.create({
+        data: {
+          userId,
+          action: "UNIFORM_UPDATE_STOCK_MOVEMENT_POLICY",
+          changes: { allowZeroOrNegativeStockMovement: allowFlag },
+          newData: {
+            uniformSettingId: result.id,
+            allowZeroOrNegativeStockMovement: result.allowZeroOrNegativeStockMovement,
+          },
+        },
+      });
+
+      return result;
+    });
+
+    return res.json({
+      success: true,
+      message: "Política de movimentação de estoque atualizada com sucesso.",
+      data: updated,
+    });
+  } catch (error) {
+    console.error("Erro ao atualizar política de movimentação de estoque:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
 export const getEmployeeUniformSummary = async (req, res) => {
   if (!requireOperatorOrAdmin(req, res)) return;
 
@@ -150,6 +208,8 @@ export const getEmployeeUniformSummary = async (req, res) => {
 
     const settings = await getOrCreateUniformSetting();
     const limitApplied = Number(settings.annualLimit || 2);
+    const allowZeroOrNegativeStockMovement =
+      isStockMovementWithoutBalanceAllowed(settings);
 
     const withdrawnInYear = await prisma.uniformWithdrawal.count({
       where: { employeeId: employee.id, year },
@@ -233,6 +293,8 @@ export const createUniformWithdrawal = async (req, res) => {
 
     const settings = await getOrCreateUniformSetting();
     const limitApplied = Number(settings.annualLimit || 2);
+    const allowZeroOrNegativeStockMovement =
+      isStockMovementWithoutBalanceAllowed(settings);
 
     const year = new Date().getFullYear();
     const now = new Date();
@@ -274,7 +336,7 @@ export const createUniformWithdrawal = async (req, res) => {
       if (!stock || quantity <= 0) {
         return res.status(400).json({ success: false, message: "Item de estoque inválido na retirada." });
       }
-      if (stock.qtyMainStock < quantity) {
+      if (!allowZeroOrNegativeStockMovement && stock.qtyMainStock < quantity) {
         return res.status(400).json({ success: false, message: `Saldo insuficiente para item ${stockId}.` });
       }
     }
@@ -487,7 +549,7 @@ export const returnUniformWithdrawalItems = async (req, res) => {
 };
 
 export const settleUniformWithdrawal = async (req, res) => {
-  if (!requireDpOrAdmin(req, res)) return;
+  if (!requireRhOrAdmin(req, res)) return;
 
   try {
     const withdrawalId = Number(req.params.id);
@@ -632,7 +694,7 @@ export const settleUniformWithdrawal = async (req, res) => {
 };
 
 export const getEmployeeUniformDpPendencies = async (req, res) => {
-  if (!requireDpOrAdmin(req, res)) return;
+  if (!requireRhOrAdmin(req, res)) return;
 
   try {
     const { cpf } = req.params;
@@ -750,11 +812,19 @@ export const listUniformStockOptions = async (req, res) => {
   if (!requireOperatorOrAdmin(req, res)) return;
 
   try {
+    const settings = await getOrCreateUniformSetting();
+    const allowZeroOrNegativeStockMovement =
+      isStockMovementWithoutBalanceAllowed(settings);
+
     const data = await prisma.uniformStockSize.findMany({
       where: {
-        qtyMainStock: {
-          gt: 0,
-        },
+        ...(allowZeroOrNegativeStockMovement
+          ? {}
+          : {
+              qtyMainStock: {
+                gt: 0,
+              },
+            }),
         item: {
           isUniform: 1,
           active: 1,
@@ -766,12 +836,15 @@ export const listUniformStockOptions = async (req, res) => {
       },
     });
 
-    return res.json({ success: true, data });
+    return res.json({
+      success: true,
+      data,
+      allowZeroOrNegativeStockMovement,
+    });
   } catch (error) {
     console.error("Erro ao listar opções de uniforme para retirada:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
-
 
 

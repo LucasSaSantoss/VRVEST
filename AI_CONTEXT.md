@@ -1,116 +1,54 @@
-# AI_CONTEXT.md
+﻿# AI_CONTEXT.md
 
 ## Objetivo do Projeto
 
-Sistema de controle da rouparia hospitalar para:
+Sistema de controle da rouparia hospitalar para cadastro de colaboradores, controle de retirada/devolução de pijamas, controle de pendências e controle de uniformes (cadastro, estoque, retirada/devolução e baixa DP), com auditoria.
 
-- cadastro de colaboradores autorizados;
-- registro de retirada de pijamas cirúrgicos;
-- registro de devolução;
-- controle de pendências;
-- suporte operacional com auditoria e relatórios.
-
-## Resumo Funcional
-
-O sistema opera com autenticação por usuário interno. Após login, o operador executa fluxos de cadastro, retirada, devolução e baixa financeira. O backend registra eventos e grava dados em MySQL via Prisma.
-
-## Perfis de Usuário Identificados
+## Perfis de Usuário (`User.level`)
 
 ### Confirmado no código
 
-- Existe campo `level` no modelo `User` e no token JWT.
-- A interface (`Dashboard`) exibe menus diferentes por `level`:
-  - `level >= 4`: acesso a dashboard, usuários, relatórios e baixa financeira.
-  - `level >= 3`: acesso a baixa financeira e relatórios.
-  - `level >= 2`: acesso a colaboradores.
-  - `level === 1` ou `level >= 4`: acesso ao módulo de QR Code.
+1. `level = 4` (Admin):
+   - estoque de uniformes;
+   - cadastro de uniformes;
+   - retirada/devolução de uniformes;
+   - baixa DP de uniformes;
+   - módulos administrativos existentes.
+2. `level = 3` (Operador):
+   - retirada/devolução de uniformes.
+3. `level = 2` (RH/DP):
+   - baixa DP de uniformes.
+4. `level = 1`:
+   - perfil básico legado (QR Code).
 
-### Inferido
+## Fluxos Principais (Uniformes)
 
-- `level` representa hierarquia de permissões entre operador e administrador.
+1. Estoque (`/api/uniform-stock/*`): somente admin.
+2. Retirada/devolução (`/api/uniforms/*`): operador/admin.
+3. Baixa DP (`/api/uniforms/dp/*` e settlement): RH/admin.
 
-### Validar com usuários
+## Glossário de Status (Uniformes)
 
-- Nome oficial de cada perfil e matriz completa de permissões.
-- Se `level = 5` é reservado/bloqueado (há filtro `level not 5` em listagem).
+### `UniformWithdrawal.status`
 
-## Entidades Principais do Domínio
+- `REGULAR`: retirada dentro da regra.
+- `EXEMPT`: retirada acima do limite com justificativa aceita.
+- `CHARGEABLE`: retirada acima do limite sem justificativa.
+- `PARTIAL_RETURN`: retirada parcialmente regularizada.
+- `SETTLED_RETURN`: retirada regularizada por devolução física.
+- `SETTLED_DISCOUNT`: retirada regularizada por baixa financeira (desconto no DP/RH).
 
-### Confirmado no código (Prisma)
+### `UniformMovement.movementType`
 
-- `User`
-- `Employee`
-- `Pendency`
-- `UserLog`
-- `Sectors`
-- `Modalities`
-- `Specialties`
-- `itemsCloth`
+- `ENTRY`: entrada no estoque.
+- `EXIT`: saída por retirada.
+- `RETURN_TO_LOAN`: devolução para empréstimos.
+- `ADJUSTMENT`: ajuste manual/transferência.
+- `DISCARD`: descarte.
+- `DISCOUNT`: baixa financeira.
+- `REVERSAL`: desfazer movimentação.
 
-### Inferido
+## Pontos de Atenção
 
-- `itemsCloth` representa cadastro de itens/pijamas e valor de referência.
-
-### Validar com usuários
-
-- Se cada registro em `Pendency` equivale a 1 retirada unitária ou lote de itens.
-
-## Fluxos Principais
-
-### Confirmado no código
-
-1. Login:
-   - Front chama `POST /api/login`.
-   - Backend valida senha com `bcrypt`, verifica `active`, retorna JWT.
-2. Retirada:
-   - Front chama `POST /api/empl/registrarKit`.
-   - Backend cria `Pendency` com `status = 1` e registra log.
-3. Devolução:
-   - Front chama `POST /api/empl/devolver`.
-   - Backend valida pendência e marca `status = 2`, com log.
-4. Baixa financeira:
-   - Front chama `PUT /api/pend/baixar`.
-   - Backend marca `status = 2` com `devolType = 3` e registra log.
-5. Consulta de pendências:
-   - Front chama `POST /api/empl/pendencias` e recebe pendências abertas.
-
-### Inferido
-
-- O sistema diferencia devolução física direta (`devolType = 2`) e baixa financeira (`devolType = 3`).
-
-### Validar com usuários
-
-- Significado oficial de todos os valores possíveis de `devolType` e `status`.
-
-## Pontos Ainda Incertos
-
-1. Regra exata de bloqueio de nova retirada quando há pendência em aberto.
-2. Regra operacional para `kitType` e possíveis tipos de kit.
-3. Critério oficial de colaborador ativo/inativo (`active` em `Employee` e `User`).
-4. Papel da especialidade (`Specialties.permiteKitTrauma`) no processo real.
-5. Se o valor de item (`itemsCloth.itemVal`) é histórico por retirada ou apenas valor corrente.
-
-## Direção Definida para Nova Evolução (Uniformes)
-
-### Confirmado com produto/operação
-
-1. Uniformes usarão os mesmos colaboradores já existentes em `Employee`.
-2. Não será utilizado `Pendency` para uniformes.
-3. Cadastro base de uniforme poderá reaproveitar `itemsCloth`.
-4. Controle de estoque será por tamanho, em estrutura nova.
-5. Haverá módulo de entrada de estoque.
-6. Uniforme devolvido irá para estoque de empréstimos (não volta direto ao principal).
-7. Deve existir operação de descarte de peças.
-8. A retirada deve exibir a última retirada do colaborador.
-9. Limite anual é condicional:
-   - plantonista: 1;
-   - diarista: 2.
-10. Excedente sem justificativa deve ser marcado como cobrável.
-11. Deve existir justificativa para isenção de cobrança por não entrega.
-
-## Paralelos com Laravel/Vue
-
-- `User`, `Employee`, `Pendency` (Prisma) ~= Models Eloquent.
-- Controllers Node acumulam lógica que, em Laravel, muitas vezes iria para Service classes.
-- `src/services/api.jsx` centraliza HTTP, similar a um serviço/composable no Vue.
-- `Dashboard.jsx` concentra controle de sessão e menus, equivalente a layout + guards de rota no Vue Router (aqui feito de forma manual).
+1. Em base legada importada, datas inválidas (`0000-00-00`) podem quebrar consultas Prisma.
+2. Manter saneamento pós-importação para estabilidade operacional.

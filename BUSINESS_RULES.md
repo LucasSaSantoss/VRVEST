@@ -1,134 +1,82 @@
-# BUSINESS_RULES.md
+﻿# BUSINESS_RULES.md
 
 ## Objetivo
 
-Documentar regras de negócio do sistema, separando:
+Consolidar regras de negócio do módulo de uniformes, separando o que está confirmado no código, o que é inferido e o que ainda depende de validação.
 
-- confirmado no código;
-- inferido;
-- pendente de validação com usuários.
+## Regras Confirmadas no Código
 
-## 1) Regras Confirmadas no Código
+1. Login exige usuário ativo e senha válida.
+2. Autorização usa `User.level` no JWT.
+3. Estoque de uniformes:
+   - acesso somente admin (`level >= 4`);
+   - operações com registro de auditoria.
+4. Retirada/devolução de uniformes:
+   - acesso para operador e admin (`level >= 3`);
+   - retirada por CPF;
+   - quantidade fixa `1` por item da retirada;
+   - não permite repetir o mesmo uniforme no carrinho da mesma retirada.
+5. Baixa de uniformes no DP:
+   - acesso para RH e admin (`level === 2` ou `level >= 4`);
+   - baixa financeira por item/quantidade pendente.
+6. Estoque por tamanho:
+   - estoque principal e empréstimos;
+   - entrada, ajuste, transferência e descarte;
+   - histórico de movimentações.
+7. Limite anual:
+   - controlado por configuração global (`UniformSetting`).
 
-1. Login só é aceito com:
-   - e-mail existente;
-   - senha válida (`bcrypt`);
-   - usuário ativo (`user.active === 1`).
-2. Na retirada de kit (`registrarKit`):
-   - colaborador deve existir por CPF;
-   - é criada uma pendência (`Pendency`) com `status = 1`;
-   - registra log em `UserLog`;
-   - envia e-mail ao colaborador.
-3. Na devolução (`devolverKit`):
-   - colaborador deve existir;
-   - pendência deve existir;
-   - pendência deve pertencer ao colaborador informado;
-   - atualização para `status = 2` e `devolType = 2`;
-   - registra log e envia e-mail.
-4. Na baixa financeira (`baixarPendencias`):
-   - exige ID da pendência;
-   - atualiza para `status = 2` e `devolType = 3`;
-   - registra log;
-   - envia e-mail condicionalmente (`usuario.level >= 4`).
-5. Consulta de pendências abertas (`getOpenPendencies`):
-   - filtra por `emplID` e `status = 1`.
-6. Colaborador temporário:
-   - pode ser criado com foto obrigatória (`createTempEmpl`);
-   - há cron de validação que inativa temporários após 36h sem atualização.
-7. Controle de acesso de interface:
-   - menus e telas exibidos conforme `level` do JWT no `Dashboard`.
+## Regras Inferidas
 
-## 2) Regras Inferidas a Partir do Contexto + Código
+1. Separação operacional por setor:
+   - rouparia: retirada/devolução;
+   - RH/DP: baixa financeira.
+2. A trilha de auditoria principal do módulo é `UniformMovement` + `UserLog`.
 
-1. Cada retirada gera uma nova pendência até ocorrer devolução ou baixa.
-2. `devolType` diferencia origem da baixa:
-   - `2`: devolução direta;
-   - `3`: baixa financeira.
-3. O valor de cobrança de kit é lido do cadastro de item (`itemsCloth`, ID 1).
-4. `Specialties.permiteKitTrauma` influencia permissão de tipo de kit trauma.
+## Regras Pendentes de Validação
 
-## 3) Regras que Precisam Ser Validadas com Usuários
+1. Nomenclatura oficial dos perfis por `level`.
+2. Política formal para exceções de limite e isenções.
+3. Regras finais para futura integração com módulo de enxoval.
 
-1. Se colaborador com pendência em aberto deve ser bloqueado de nova retirada ou apenas alertado.
-2. Significado completo de `status` e `devolType` (todos os valores possíveis).
-3. Regra oficial de prazo de devolução (36h aparece em mensagens e cálculos).
-4. Política de cobrança: quando há desconto, quem autoriza, e qual cálculo oficial.
-5. Regra de exceção do CPF específico (`13863000714`) presente no código.
-6. Definição funcional de níveis (`level 1,2,3,4,5`) e responsabilidades de cada perfil.
+## Permissões por Perfil (Uniformes)
 
-## 4) Fluxo de Retirada de Pijama (Confirmado no Código)
+1. `level = 4` (Admin):
+   - estoque de uniformes;
+   - cadastro de uniformes;
+   - retirada/devolução;
+   - baixa DP.
+2. `level = 3` (Operador):
+   - retirada/devolução.
+3. `level = 2` (RH/DP):
+   - baixa DP.
+4. `level = 1`:
+   - não participa do fluxo de uniformes.
 
-1. Operador autenticado envia CPF e dados do kit.
-2. Sistema valida existência do colaborador.
-3. Sistema cria pendência com status em aberto.
-4. Sistema registra log de auditoria.
-5. Sistema envia e-mail com data de retirada e prazo.
+## Glossário de Status (Uniformes)
 
-## 5) Fluxo de Devolução de Pijama (Confirmado no Código)
+### Status da retirada (`UniformWithdrawal.status`)
 
-1. Operador autenticado envia CPF e ID da pendência.
-2. Sistema valida colaborador, pendência e vínculo entre ambos.
-3. Sistema marca pendência como devolvida (`status = 2`, `devolType = 2`).
-4. Sistema registra log.
-5. Sistema envia confirmação por e-mail.
+1. `REGULAR`:
+   - retirada dentro da regra, sem exceção de limite.
+2. `EXEMPT`:
+   - retirada acima do limite com justificativa aceita (isenta de cobrança).
+3. `CHARGEABLE`:
+   - retirada acima do limite sem justificativa (passível de cobrança).
+4. `PARTIAL_RETURN`:
+   - parte dos itens foi devolvida/baixada, mas ainda há pendência.
+5. `SETTLED_RETURN`:
+   - retirada totalmente regularizada por devolução física.
+6. `SETTLED_DISCOUNT`:
+   - retirada totalmente regularizada por baixa financeira.
+   - significa que os itens pendentes foram encerrados por desconto no DP/RH, não por devolução física.
 
-## 6) Tratamento de Pendências
+### Tipos de movimentação (`UniformMovement.movementType`)
 
-### Confirmado no código
-
-- Pendências abertas são `status = 1`.
-- Devolução/baixa fecham pendência com `status = 2`.
-- Dashboard classifica como “Em aberto”, “Atrasado” e “Devolvido” com base em tempo e status.
-
-### Inferido
-
-- “Atrasado” ocorre quando pendência aberta ultrapassa 36h.
-
-### Validar com usuários
-
-- Se o critério de atraso de 36h é regra oficial de negócio ou provisório.
-
-## 7) Permissões por Tipo de Usuário
-
-### Confirmado no código (frontend)
-
-- `level >= 4`: mais amplo (dashboard, usuários, relatórios, baixa).
-- `level >= 3`: inclui baixa financeira e relatórios.
-- `level >= 2`: acesso a colaboradores.
-- `level === 1`: acesso a QR Code.
-
-### Inferido
-
-- `level >= 4` aparenta perfil administrativo/supervisor.
-
-### Validar com usuários
-
-- Permissão backend por endpoint ainda precisa de matriz formal validada.
-
-## 8) Regras Definidas para o Módulo de Uniformes
-
-### Confirmado com produto/operação
-
-1. Quem retira uniforme: mesmos colaboradores da base `Employee`.
-2. Uniforme não usará fluxo de `Pendency`.
-3. Limite anual por vínculo:
-   - plantonista: 1 uniforme/ano;
-   - diarista: 2 uniformes/ano.
-4. Excedente sem justificativa: uniforme cobrável.
-5. Excedente com justificativa de não entrega: isento de cobrança.
-6. Deve haver controle de estoque por tamanho.
-7. Uniforme devolvido vai para estoque de empréstimos.
-8. Deve existir operação de descarte de peças.
-9. O módulo de retirada deve informar a última retirada do colaborador.
-10. Deve existir módulo específico de entrada de estoque.
-
-### Inferido
-
-1. A cobrança poderá ser tratada por status da retirada (`cobrável`/`isento`/`regular`).
-2. O histórico de retirada será referência para processos de desligamento.
-
-### Validar com usuários
-
-1. Critério formal para aceitar justificativa de isenção.
-2. Regras de autorização para aprovar isenção e descarte.
-3. Lista oficial de tamanhos e tipos de uniforme.
+1. `ENTRY`: entrada de estoque.
+2. `EXIT`: saída por retirada.
+3. `RETURN_TO_LOAN`: devolução para estoque de empréstimos.
+4. `ADJUSTMENT`: ajuste manual/transferência.
+5. `DISCARD`: descarte de peça.
+6. `DISCOUNT`: baixa financeira de pendência.
+7. `REVERSAL`: desfazimento de movimentação.

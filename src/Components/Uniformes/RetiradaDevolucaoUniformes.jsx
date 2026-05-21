@@ -10,13 +10,14 @@ const STATUS_RETIRADA_LABEL = {
   RETURNED: "Devolvida",
   CHARGEABLE: "Com Cobrança",
   EXEMPT: "Isenta",
-  SETTLED: "Baixa Financeira Concluída",
+  SETTLED: "Baixa Financeira",
 };
 
 export default function RetiradaDevolucaoUniformes() {
   const [cpf, setCpf] = useState("");
   const [summary, setSummary] = useState(null);
   const [stockOptions, setStockOptions] = useState([]);
+  const [allowZeroOrNegativeStockMovement, setAllowZeroOrNegativeStockMovement] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState("");
   const [selectedStockId, setSelectedStockId] = useState("");
   const [justificativaExcedente, setJustificativaExcedente] = useState("");
@@ -35,7 +36,12 @@ export default function RetiradaDevolucaoUniformes() {
   const loadStockOptions = async () => {
     try {
       const res = await api.get("/uniforms/stock-options");
-      if (res.data?.success) setStockOptions(res.data.data || []);
+      if (res.data?.success) {
+        setStockOptions(res.data.data || []);
+        setAllowZeroOrNegativeStockMovement(
+          Boolean(res.data.allowZeroOrNegativeStockMovement)
+        );
+      }
     } catch (error) {
       showTemporaryPopup(
         obterMensagemErroApi(error, "Erro ao carregar opções de uniforme."),
@@ -145,7 +151,7 @@ export default function RetiradaDevolucaoUniformes() {
       return;
     }
 
-    if (Number(selected.qtyMainStock) < 1) {
+    if (!allowZeroOrNegativeStockMovement && Number(selected.qtyMainStock) < 1) {
       showTemporaryPopup("Sem saldo disponível para este tamanho.", "error");
       return;
     }
@@ -252,7 +258,7 @@ export default function RetiradaDevolucaoUniformes() {
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
         <h2 className="text-xl font-bold text-gray-800">Retirada e Devolução de Uniformes</h2>
         <p className="text-gray-600 text-sm">
-          Busca por CPF, retirada com múltiplos itens, devolução parcial e baixa financeira.
+          Busca por CPF, retirada com múltiplos itens e devolução parcial.
         </p>
       </div>
 
@@ -472,7 +478,7 @@ export default function RetiradaDevolucaoUniformes() {
 
       {popup.show && (
         <div
-          className={`fixed bottom-5 right-5 px-4 py-2 rounded shadow text-white ${
+          className={`fixed top-5 right-5 z-[70] px-4 py-2 rounded shadow text-white ${
             popup.type === "success" ? "bg-green-600" : "bg-red-600"
           }`}
         >
@@ -482,3 +488,4 @@ export default function RetiradaDevolucaoUniformes() {
     </div>
   );
 }
+

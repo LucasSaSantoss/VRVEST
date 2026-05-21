@@ -80,6 +80,15 @@ const ensureDefaultUniformSizes = async () => {
   });
 };
 
+const getOrCreateUniformSetting = async (tx = prisma) => {
+  const existing = await tx.uniformSetting.findFirst({ orderBy: { id: "asc" } });
+  if (existing) return existing;
+
+  return tx.uniformSetting.create({
+    data: { annualLimit: 2, allowZeroOrNegativeStockMovement: 0 },
+  });
+};
+
 export const listUniformSizesCatalog = async (req, res) => {
   if (!requireAdmin(req, res)) return;
 
@@ -297,8 +306,12 @@ export const discardStock = async (req, res) => {
       return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
+    const settings = await getOrCreateUniformSetting();
+    const allowZeroOrNegativeStockMovement =
+      Number(settings.allowZeroOrNegativeStockMovement || 0) === 1;
+
     const available = sourceNormalized === "MAIN" ? stockSize.qtyMainStock : stockSize.qtyLoanStock;
-    if (available < qty) {
+    if (!allowZeroOrNegativeStockMovement && available < qty) {
       return res.status(400).json({ success: false, message: "Saldo insuficiente para descarte." });
     }
 
@@ -361,9 +374,13 @@ export const adjustStock = async (req, res) => {
       return res.status(404).json({ success: false, message: "Registro de estoque nÃ£o encontrado." });
     }
 
+    const settings = await getOrCreateUniformSetting();
+    const allowZeroOrNegativeStockMovement =
+      Number(settings.allowZeroOrNegativeStockMovement || 0) === 1;
+
     const finalMain = stockSize.qtyMainStock + mainDelta;
     const finalLoan = stockSize.qtyLoanStock + loanDelta;
-    if (finalMain < 0 || finalLoan < 0) {
+    if (!allowZeroOrNegativeStockMovement && (finalMain < 0 || finalLoan < 0)) {
       return res.status(400).json({
         success: false,
         message: "Ajuste invÃ¡lido: saldo nÃ£o pode ficar negativo.",
@@ -449,7 +466,11 @@ export const transferMainToLoan = async (req, res) => {
         message: "Registro de estoque nÃ£o encontrado.",
       });
     }
-    if (stockSize.qtyMainStock < qty) {
+    const settings = await getOrCreateUniformSetting();
+    const allowZeroOrNegativeStockMovement =
+      Number(settings.allowZeroOrNegativeStockMovement || 0) === 1;
+
+    if (!allowZeroOrNegativeStockMovement && stockSize.qtyMainStock < qty) {
       return res.status(400).json({
         success: false,
         message: "Saldo insuficiente no estoque principal para transferÃªncia.",

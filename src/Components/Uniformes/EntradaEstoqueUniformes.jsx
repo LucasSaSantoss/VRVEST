@@ -8,7 +8,10 @@ const INITIAL_MODAL = { open: false, type: "" };
 const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
 const TIPO_MOVIMENTACAO_LABEL = {
   ENTRY: "Entrada",
+  EXIT: "Saída",
+  RETURN_TO_LOAN: "Devolução para Empréstimos",
   DISCARD: "Descarte",
+  DISCOUNT: "Baixa Financeira",
   ADJUSTMENT: "Ajuste",
   REVERSAL: "Desfazer",
 };
@@ -22,7 +25,7 @@ function Modal({ open, title, children, onClose }) {
           <h3 className="font-semibold text-gray-800">{title}</h3>
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-gray-700 font-bold"
+            className="rounded-md h-6 w-6 text-gray-500 hover:text-gray-700 font-bold hover:bg-red-400"
           >
             X
           </button>
@@ -44,9 +47,6 @@ export default function EntradaEstoqueUniformes() {
   const [reversingMovementId, setReversingMovementId] = useState(null);
   const [reverseTarget, setReverseTarget] = useState(null);
   const [reverseReason, setReverseReason] = useState("");
-  const [annualLimit, setAnnualLimit] = useState(2);
-  const [annualLimitInput, setAnnualLimitInput] = useState("2");
-  const [savingAnnualLimit, setSavingAnnualLimit] = useState(false);
 
   const [selectedStockId, setSelectedStockId] = useState("");
   const [entryQty, setEntryQty] = useState("");
@@ -82,11 +82,10 @@ export default function EntradaEstoqueUniformes() {
   const loadData = useCallback(async () => {
     setLoading(true);
     try {
-      const [itemsRes, stockRes, catalogRes, settingsRes] = await Promise.all([
+      const [itemsRes, stockRes, catalogRes] = await Promise.all([
         listarItems(),
         api.get("/uniform-stock/sizes"),
         api.get("/uniform-stock/sizes-catalog"),
-        api.get("/uniforms/settings"),
       ]);
       if (itemsRes?.success) setItems(itemsRes.data || []);
       if (stockRes?.data?.success) {
@@ -101,11 +100,6 @@ export default function EntradaEstoqueUniformes() {
             : DEFAULT_SIZE_CODES.map((code, index) => ({ id: `fallback-${index}`, code }))
         );
       }
-      if (settingsRes?.data?.success) {
-        const limit = Number(settingsRes.data.data?.annualLimit || 2);
-        setAnnualLimit(limit);
-        setAnnualLimitInput(String(limit));
-      }
     } catch (error) {
       console.error("Erro ao carregar estoque de uniformes:", error);
       showTemporaryPopup("Erro ao carregar dados do estoque.", "error");
@@ -113,37 +107,6 @@ export default function EntradaEstoqueUniformes() {
       setLoading(false);
     }
   }, []);
-
-  const handleSaveAnnualLimit = async () => {
-    try {
-      const parsed = Number(annualLimitInput);
-      if (!Number.isInteger(parsed) || parsed <= 0) {
-        showTemporaryPopup("Informe um limite anual inteiro maior que zero.", "error");
-        return;
-      }
-
-      setSavingAnnualLimit(true);
-      const res = await api.put("/uniforms/settings/annual-limit", {
-        annualLimit: parsed,
-      });
-      if (res.data?.success) {
-        setAnnualLimit(parsed);
-        closeModal();
-        showTemporaryPopup("Limite anual atualizado com sucesso.", "success");
-      }
-    } catch (error) {
-      const backendMessage = error?.response?.data?.message;
-      const statusCode = error?.response?.status;
-      showTemporaryPopup(
-        backendMessage
-          ? `Erro ao atualizar limite anual: ${backendMessage}`
-          : `Erro ao atualizar limite anual${statusCode ? ` (HTTP ${statusCode})` : ""}.`,
-        "error"
-      );
-    } finally {
-      setSavingAnnualLimit(false);
-    }
-  };
 
   useEffect(() => {
     loadData();
@@ -416,6 +379,19 @@ export default function EntradaEstoqueUniformes() {
   const formatarTipoMovimentacao = (movementType) =>
     TIPO_MOVIMENTACAO_LABEL[movementType] || movementType || "-";
 
+  const formatarObservacaoMovimentacao = (notes) => {
+    if (!notes) return "-";
+    let texto = String(notes);
+
+    texto = texto.replace(/MainDelta=/gi, "Variação estoque principal: ");
+    texto = texto.replace(/LoanDelta=/gi, "Variação estoque empréstimos: ");
+    texto = texto.replace(/ItemRetirada=/gi, "Item da retirada nº ");
+    texto = texto.replace(/\bMAIN\b/g, "Estoque Principal");
+    texto = texto.replace(/\bLOAN\b/g, "Estoque Empréstimos");
+
+    return texto;
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-2 pb-4">
       <div className="mb-3 border-l-4 border-blue-500 pl-3">
@@ -424,23 +400,6 @@ export default function EntradaEstoqueUniformes() {
           Entrada no estoque principal, ajustes por estoque, transferência e descarte.
         </p>
       </div>
-
-      <section className="bg-white rounded-xl shadow p-3 mb-2">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-semibold text-gray-700">Configuração de Limite Anual</h3>
-            <p className="text-sm text-gray-600">
-              Limite atual por funcionário/ano: <strong>{annualLimit}</strong>
-            </p>
-          </div>
-          <button
-            onClick={() => openModal("annualLimit")}
-            className="bg-slate-700 hover:bg-slate-800 text-white font-semibold px-3 py-1.5 rounded text-sm"
-          >
-            Alterar Limite Anual
-          </button>
-        </div>
-      </section>
 
       <section className="bg-white rounded-xl shadow p-3 mb-2">
         <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
@@ -845,7 +804,7 @@ export default function EntradaEstoqueUniformes() {
                         )}
                       </td>
                       <td className="py-3 pr-3 break-words text-gray-700 leading-relaxed">
-                        {m.notes || "-"}
+                        {formatarObservacaoMovimentacao(m.notes)}
                       </td>
                       <td className="py-3">
                         {canReverse ? (
@@ -868,44 +827,6 @@ export default function EntradaEstoqueUniformes() {
               </tbody>
             </table>
           )}
-        </div>
-      </Modal>
-
-      <Modal
-        open={modal.open && modal.type === "annualLimit"}
-        title="Configurar Limite Anual por Funcionário"
-        onClose={closeModal}
-      >
-        <div className="space-y-3">
-          <p className="text-sm text-gray-700">
-            Defina o limite padrão de retirada de uniformes por funcionário no ano.
-          </p>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Limite anual</label>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              className="border rounded px-3 py-2 w-full"
-              value={annualLimitInput}
-              onChange={(e) => setAnnualLimitInput(e.target.value)}
-            />
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={handleSaveAnnualLimit}
-              disabled={savingAnnualLimit}
-              className="bg-slate-700 hover:bg-slate-800 disabled:bg-slate-400 text-white font-semibold px-4 py-2 rounded"
-            >
-              {savingAnnualLimit ? "Salvando..." : "Salvar Configuração"}
-            </button>
-            <button
-              onClick={closeModal}
-              className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded"
-            >
-              Cancelar
-            </button>
-          </div>
         </div>
       </Modal>
 
@@ -949,7 +870,7 @@ export default function EntradaEstoqueUniformes() {
 
       {popup.show && (
         <div
-          className={`fixed bottom-5 right-5 px-4 py-2 rounded shadow text-white ${
+          className={`fixed top-5 right-5 z-[70] px-4 py-2 rounded shadow text-white ${
             popup.type === "success" ? "bg-green-600" : "bg-red-600"
           }`}
         >
@@ -959,3 +880,4 @@ export default function EntradaEstoqueUniformes() {
     </div>
   );
 }
+

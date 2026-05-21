@@ -145,10 +145,11 @@ export default function BaixaDpUniformes() {
       )}
 
       {popup.show && (
-        <div className={`fixed bottom-5 right-5 px-4 py-2 rounded shadow text-white ${popup.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
+        <div className={`fixed top-5 right-5 z-[70] px-4 py-2 rounded shadow text-white ${popup.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
           {popup.message}
         </div>
       )}
     </div>
   );
 }
+

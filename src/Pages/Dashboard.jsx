@@ -20,6 +20,7 @@ import { FaUserGear } from "react-icons/fa6";
 
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
+import RelatorioRetiradasUniformes from "../Components/Relatorios/RelatorioRetiradasUniformes";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -31,6 +32,36 @@ import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUnifo
 import RetiradaDevolucaoUniformes from "../Components/Uniformes/RetiradaDevolucaoUniformes";
 import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
+
+const canAccessTabByLevel = (level, tab) => {
+  const userLevel = Number(level || 0);
+  switch (tab) {
+    case "home":
+      return userLevel >= 4;
+    case "qrcode":
+      return userLevel === 1 || userLevel >= 4;
+    case "usuarios":
+      return userLevel > 3;
+    case "funcionarios":
+      return userLevel >= 2;
+    case "funcionarioTemp":
+      return userLevel !== 2;
+    case "retiradaUniformes":
+      return userLevel >= 3; // operador e admin
+    case "baixaDpUniformes":
+      return userLevel === 2 || userLevel >= 4; // RH e admin
+    case "cadastroUniformes":
+    case "estoqueUniformes":
+    case "baixa":
+    case "relatorios":
+    case "relatorioRetiradasUniformes":
+      return userLevel >= 4;
+    case "perfil":
+      return true;
+    default:
+      return false;
+  }
+};
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -85,6 +116,7 @@ export default function Dashboard() {
     () => ({
       home: <DashBoardVRVest />,
       relatorios: <RelatorioFinanceiroAtrasados />,
+      relatorioRetiradasUniformes: <RelatorioRetiradasUniformes />,
       qrcode: <QrCodeVRVest />,
       funcionarioTemp: <CreateFuncTemp />,
       usuarios: <TabelaUsuarios />,
@@ -145,12 +177,15 @@ export default function Dashboard() {
           })();
 
           const initialTab = hasRequestedTab ? requestedTab : defaultTab;
-          setSelected(initialTab);
+          const allowedInitialTab = canAccessTabByLevel(nivel, initialTab)
+            ? initialTab
+            : defaultTab;
+          setSelected(allowedInitialTab);
 
-          if (!hasRequestedTab) {
+          if (!hasRequestedTab || !canAccessTabByLevel(nivel, initialTab)) {
             setSearchParams((prev) => {
               const params = new URLSearchParams(prev);
-              params.set("tab", initialTab);
+              params.set("tab", defaultTab);
               return params;
             });
           }
@@ -296,6 +331,10 @@ export default function Dashboard() {
                     Retirada Uniformes
                   </span>
                 </li>
+              </>
+            )}
+            {(levelUser === 2 || levelUser >= 4) && (
+              <>
                 <li
                   className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                   ${selected === "baixaDpUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
@@ -384,6 +423,12 @@ export default function Dashboard() {
                         onClick={() => selectTab("relatorios")}
                       >
                         Relatório de Pendências
+                      </li>
+                      <li
+                        className="cursor-pointer hover:text-gray-300"
+                        onClick={() => selectTab("relatorioRetiradasUniformes")}
+                      >
+                        Retiradas de Uniformes
                       </li>
                     </ul>
                   )}
