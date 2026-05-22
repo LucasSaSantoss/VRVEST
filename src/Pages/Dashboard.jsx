@@ -7,6 +7,7 @@ import {
   LuQrCode,
   LuUserCog,
   LuBox,
+  LuUndo2,
 } from "react-icons/lu";
 import {
   FaHospitalUser,
@@ -29,9 +30,10 @@ import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
 import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUniformes";
-import RetiradaDevolucaoUniformes from "../Components/Uniformes/RetiradaDevolucaoUniformes";
+import RetiradaUniformes from "../Components/Uniformes/RetiradaUniformes";
 import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
+import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
 
 const canAccessTabByLevel = (level, tab) => {
   const userLevel = Number(level || 0);
@@ -47,6 +49,7 @@ const canAccessTabByLevel = (level, tab) => {
     case "funcionarioTemp":
       return userLevel !== 2;
     case "retiradaUniformes":
+    case "devolucaoUniformes":
       return userLevel >= 3; // operador e admin
     case "baixaDpUniformes":
       return userLevel === 2 || userLevel >= 4; // RH e admin
@@ -124,7 +127,8 @@ export default function Dashboard() {
       baixa: <ListaPendencias />,
       perfil: <ProfileContainer />,
       estoqueUniformes: <EntradaEstoqueUniformes />,
-      retiradaUniformes: <RetiradaDevolucaoUniformes />,
+      retiradaUniformes: <RetiradaUniformes />,
+      devolucaoUniformes: <DevolucaoUniformes />,
       cadastroUniformes: <CadastroUniformes />,
       baixaDpUniformes: <BaixaDpUniformes />,
     }),
@@ -331,6 +335,18 @@ export default function Dashboard() {
                     Retirada Uniformes
                   </span>
                 </li>
+                <li
+                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "devolucaoUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                  onClick={() => selectTab("devolucaoUniformes")}
+                >
+                  <LuUndo2 className="text-xl" />
+                  <span
+                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                  >
+                    Devolução Uniformes
+                  </span>
+                </li>
               </>
             )}
             {(levelUser === 2 || levelUser >= 4) && (
@@ -479,5 +495,3 @@ export default function Dashboard() {
     </>
   );
 }
-
-

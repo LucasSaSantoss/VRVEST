@@ -7,6 +7,7 @@ export default function BaixaDpUniformes() {
   const [cpf, setCpf] = useState("");
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [discountQtyMap, setDiscountQtyMap] = useState({});
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const [lastAutoCpfSearched, setLastAutoCpfSearched] = useState("");
@@ -58,14 +59,28 @@ export default function BaixaDpUniformes() {
       return;
     }
 
+    setProcessing(true);
     try {
       const res = await api.put(`/uniforms/withdrawals/${withdrawal.id}/settlement`, { items });
       if (res.data?.success) {
-        showTemporaryPopup(res.data.message || "Baixa financeira registrada.", "success");
+        const emailNotification = res.data?.emailNotification;
+        if (emailNotification?.success === false) {
+          showTemporaryPopup(
+            `${res.data.message || "Baixa financeira registrada."} ${emailNotification.message || ""}`.trim(),
+            "error"
+          );
+        } else {
+          showTemporaryPopup(
+            `${res.data.message || "Baixa financeira registrada."} ${emailNotification?.message || ""}`.trim(),
+            "success"
+          );
+        }
         await buscarPendencias();
       }
     } catch (error) {
       showTemporaryPopup(obterMensagemErroApi(error, "Erro ao registrar baixa financeira."), "error");
+    } finally {
+      setProcessing(false);
     }
   };
 
@@ -134,8 +149,8 @@ export default function BaixaDpUniformes() {
                     ))}
                   </div>
 
-                  <button onClick={() => confirmarBaixa(w)} className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded">
-                    Confirmar Baixa com Desconto
+                  <button disabled={processing} onClick={() => confirmarBaixa(w)} className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-4 py-2 rounded">
+                    {processing ? "Aguarde..." : "Confirmar Baixa com Desconto"}
                   </button>
                 </div>
               ))}
@@ -147,6 +162,14 @@ export default function BaixaDpUniformes() {
       {popup.show && (
         <div className={`fixed top-5 right-5 z-[70] px-4 py-2 rounded shadow text-white ${popup.type === "success" ? "bg-green-600" : "bg-red-600"}`}>
           {popup.message}
+        </div>
+      )}
+
+      {processing && (
+        <div className="fixed inset-0 z-[65] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow px-5 py-4 text-sm font-semibold text-gray-700">
+            Aguarde... processando baixa financeira e envio de e-mail.
+          </div>
         </div>
       )}
     </div>

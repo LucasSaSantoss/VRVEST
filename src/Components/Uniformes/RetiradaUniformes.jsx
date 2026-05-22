@@ -4,16 +4,7 @@ import { LuPlus } from "react-icons/lu";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
-const STATUS_RETIRADA_LABEL = {
-  OPEN: "Aberta",
-  PARTIAL_RETURN: "Devolução Parcial",
-  RETURNED: "Devolvida",
-  CHARGEABLE: "Com Cobrança",
-  EXEMPT: "Isenta",
-  SETTLED: "Baixa Financeira",
-};
-
-export default function RetiradaDevolucaoUniformes() {
+export default function RetiradaUniformes() {
   const [cpf, setCpf] = useState("");
   const [summary, setSummary] = useState(null);
   const [stockOptions, setStockOptions] = useState([]);
@@ -23,8 +14,8 @@ export default function RetiradaDevolucaoUniformes() {
   const [justificativaExcedente, setJustificativaExcedente] = useState("");
   const [observacoesRetirada, setObservacoesRetirada] = useState("");
   const [cart, setCart] = useState([]);
-  const [returnQtyMap, setReturnQtyMap] = useState({});
   const [loading, setLoading] = useState(false);
+  const [processing, setProcessing] = useState(false);
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const [lastAutoCpfSearched, setLastAutoCpfSearched] = useState("");
 
@@ -188,6 +179,7 @@ export default function RetiradaDevolucaoUniformes() {
       return;
     }
 
+    setProcessing(true);
     try {
       const res = await api.post("/uniforms/withdraw", {
         cpf: summary.employee.cpf,
@@ -197,7 +189,18 @@ export default function RetiradaDevolucaoUniformes() {
       });
 
       if (res.data?.success) {
-        showTemporaryPopup("Retirada registrada com sucesso.", "success");
+        const emailNotification = res.data?.emailNotification;
+        if (emailNotification?.success === false) {
+          showTemporaryPopup(
+            `${res.data?.message || "Retirada registrada com sucesso."} ${emailNotification.message || ""}`.trim(),
+            "error"
+          );
+        } else {
+          showTemporaryPopup(
+            `${res.data?.message || "Retirada registrada com sucesso."} ${emailNotification?.message || ""}`.trim(),
+            "success"
+          );
+        }
         setCart([]);
         setSelectedItemId("");
         setSelectedStockId("");
@@ -211,54 +214,17 @@ export default function RetiradaDevolucaoUniformes() {
         obterMensagemErroApi(error, "Erro ao registrar retirada."),
         "error"
       );
+    } finally {
+      setProcessing(false);
     }
   };
-
-  const handleReturnItems = async (withdrawal) => {
-    const payloadItems = withdrawal.items
-      .map((item) => {
-        const qty = Number(returnQtyMap[item.id] || 0);
-        return {
-          uniformWithdrawalItemId: item.id,
-          quantity: qty,
-        };
-      })
-      .filter((i) => i.quantity > 0);
-
-    if (payloadItems.length === 0) {
-      showTemporaryPopup("Informe ao menos uma quantidade para devolução.", "error");
-      return;
-    }
-
-    try {
-      const res = await api.post(`/uniforms/withdrawals/${withdrawal.id}/return`, {
-        items: payloadItems,
-      });
-
-      if (res.data?.success) {
-        showTemporaryPopup("Devolução registrada com sucesso.", "success");
-        setReturnQtyMap({});
-        await loadSummary(summary.employee.cpf);
-        await loadStockOptions();
-      }
-    } catch (error) {
-      showTemporaryPopup(
-        obterMensagemErroApi(error, "Erro ao registrar devolução."),
-        "error"
-      );
-    }
-  };
-
-
-  const formatarStatusRetirada = (status) =>
-    STATUS_RETIRADA_LABEL[status] || status || "-";
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
-        <h2 className="text-xl font-bold text-gray-800">Retirada e Devolução de Uniformes</h2>
+        <h2 className="text-xl font-bold text-gray-800">Retirada de Uniformes</h2>
         <p className="text-gray-600 text-sm">
-          Busca por CPF, retirada com múltiplos itens e devolução parcial.
+          Busca por CPF e retirada com múltiplos itens.
         </p>
       </div>
 
@@ -350,7 +316,7 @@ export default function RetiradaDevolucaoUniformes() {
               />
               <button
                 onClick={handleAddToCart}
-                disabled={!selectedItemId || !selectedStockId}
+                disabled={!selectedItemId || !selectedStockId || processing}
                 className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold px-4 py-2 rounded flex items-center justify-center"
                 title="Adicionar ao carrinho"
               >
@@ -415,64 +381,15 @@ export default function RetiradaDevolucaoUniformes() {
 
                 <button
                   onClick={handleCreateWithdrawal}
+                  disabled={processing}
                   className="bg-blue-700 hover:bg-blue-800 text-white font-semibold px-4 py-2 rounded"
                 >
-                  Confirmar Retirada
+                  {processing ? "Aguarde..." : "Confirmar Retirada"}
                 </button>
               </>
             )}
           </section>
 
-          <section className="bg-white rounded-xl shadow p-4">
-            <h3 className="font-semibold text-gray-700 mb-2">Retiradas em Aberto</h3>
-            {(summary.openWithdrawals || []).length === 0 ? (
-              <p className="text-sm text-gray-600">Nenhuma retirada pendente para este colaborador.</p>
-            ) : (
-              <div className="space-y-4">
-                {summary.openWithdrawals.map((w) => (
-                  <div key={w.id} className="border rounded-lg p-3">
-                    <div className="flex flex-wrap gap-3 text-sm mb-2">
-                      <span><strong>Retirada:</strong> #{w.id}</span>
-                      <span><strong>Data:</strong> {new Date(w.withdrawDate).toLocaleString("pt-BR")}</span>
-                      <span><strong>Status:</strong> {formatarStatusRetirada(w.status)}</span>
-                    </div>
-                    <div className="space-y-2 mb-2">
-                      {w.items.map((item) => (
-                        <div key={item.id} className="grid grid-cols-1 md:grid-cols-5 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
-                          <span className="md:col-span-2">
-                            {item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size}
-                          </span>
-                          <span>Pendente: {item.pendingQuantity}</span>
-                          <input
-                            type="number"
-                            min="0"
-                            max={item.pendingQuantity}
-                            className="border rounded px-2 py-1"
-                            placeholder="Qtd devolver"
-                            value={returnQtyMap[item.id] || ""}
-                            onChange={(e) =>
-                              setReturnQtyMap((prev) => ({
-                                ...prev,
-                                [item.id]: e.target.value,
-                              }))
-                            }
-                          />
-                        </div>
-                      ))}
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleReturnItems(w)}
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-2 rounded"
-                      >
-                        Registrar Devolução
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
         </>
       )}
 
@@ -483,6 +400,14 @@ export default function RetiradaDevolucaoUniformes() {
           }`}
         >
           {popup.message}
+        </div>
+      )}
+
+      {processing && (
+        <div className="fixed inset-0 z-[65] bg-black/30 flex items-center justify-center">
+          <div className="bg-white rounded-lg shadow px-5 py-4 text-sm font-semibold text-gray-700">
+            Aguarde... processando retirada e envio de e-mail.
+          </div>
         </div>
       )}
     </div>

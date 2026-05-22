@@ -1,6 +1,8 @@
 ﻿import { PrismaClient } from "@prisma/client";
+import { enviarEmail } from "../emailService/emailService.js";
 
 const prisma = new PrismaClient();
+const emailCopiado = process.env.EMAIL_COPIADO;
 
 const EMPLOYEE_SAFE_SELECT = {
   id: true,
@@ -88,6 +90,104 @@ const getPendingQuantity = (withdrawalItem) =>
 
 const isStockMovementWithoutBalanceAllowed = (settings) =>
   Number(settings?.allowZeroOrNegativeStockMovement || 0) === 1;
+
+const STATUS_RETIRADA_EMAIL_LABEL = {
+  REGULAR: "Retirada",
+  EXEMPT: "Isenta",
+  CHARGEABLE: "Com Cobrança",
+  PARTIAL_RETURN: "Devolução Parcial",
+  SETTLED_RETURN: "Devolução Total",
+  SETTLED_DISCOUNT: "Baixa Financeira",
+};
+
+const formatarStatusParaEmail = (status) =>
+  STATUS_RETIRADA_EMAIL_LABEL[status] || status || "-";
+
+const montarTextoEmailRetirada = ({
+  employee,
+  operatorName,
+  withdrawal,
+  retiradaItems,
+}) => {
+  const dataHora = withdrawal?.withdrawDate
+    ? new Date(withdrawal.withdrawDate).toLocaleString("pt-BR")
+    : "-";
+  const linhasItens = retiradaItems
+    .map((item, idx) => {
+      const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
+      const tamanho = item?.uniformStockSize?.size || "-";
+      const qtd = Number(item?.quantity || 0);
+      return `${idx + 1}. ${nome} | Tam: ${tamanho} | Qtd: ${qtd}`;
+    })
+    .join("\n");
+
+  return `Olá ${employee?.name || "colaborador(a)"},
+
+Informamos o registro de retirada de uniforme em seu nome.
+
+Protocolo da retirada: #${withdrawal?.id || "-"}
+Data/Hora: ${dataHora}
+Colaborador: ${employee?.name || "-"}
+CPF: ${employee?.cpf || "-"}
+Setor: ${employee?.sector || "-"}
+Cargo: ${employee?.position || "-"}
+Operador responsável: ${operatorName || "-"}
+
+Status da retirada: ${formatarStatusParaEmail(withdrawal?.status)}
+Limite anual aplicado: ${withdrawal?.limitApplied ?? "-"}
+Quantidade de uniformes nesta retirada: ${withdrawal?.totalQuantity ?? "-"}
+
+Itens retirados:
+${linhasItens || "-"}
+
+Justificativa de não entrega: ${withdrawal?.nonDeliveryJustification || "Não informada"}
+Motivo de cobrança: ${withdrawal?.chargeReason || "Não se aplica"}
+Observações: ${withdrawal?.notes || "Não informado"}
+
+Este e-mail é um comprovante automático da operação.
+`;
+};
+
+const montarTextoEmailDevolucao = ({
+  employee,
+  operatorName,
+  withdrawal,
+  devolucaoItems,
+  tipoDevolucao,
+  observacoes,
+}) => {
+  const dataHora = new Date().toLocaleString("pt-BR");
+  const linhasItens = devolucaoItems
+    .map((item, idx) => {
+      const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
+      const tamanho = item?.uniformStockSize?.size || "-";
+      const qtd = Number(item?.quantity || 0);
+      return `${idx + 1}. ${nome} | Tam: ${tamanho} | Qtd: ${qtd}`;
+    })
+    .join("\n");
+
+  return `Olá ${employee?.name || "colaborador(a)"},
+
+Informamos o registro de ${tipoDevolucao || "devolução de uniforme"} em seu nome.
+
+Protocolo da retirada: #${withdrawal?.id || "-"}
+Data/Hora da operação: ${dataHora}
+Colaborador: ${employee?.name || "-"}
+CPF: ${employee?.cpf || "-"}
+Setor: ${employee?.sector || "-"}
+Cargo: ${employee?.position || "-"}
+Operador responsável: ${operatorName || "-"}
+
+Status atual da retirada: ${formatarStatusParaEmail(withdrawal?.status)}
+
+Itens movimentados na operação:
+${linhasItens || "-"}
+
+Observações: ${observacoes || "Não informado"}
+
+Este e-mail é um comprovante automático da operação.
+`;
+};
 
 export const getUniformSettings = async (req, res) => {
   if (!requireAdmin(req, res)) return;
@@ -406,10 +506,92 @@ export const createUniformWithdrawal = async (req, res) => {
       return withdrawal;
     });
 
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail da retirada enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const withdrawalDetails = await prisma.uniformWithdrawal.findUnique({
+        where: { id: result.id },
+        include: {
+          items: {
+            include: {
+              uniformStockSize: {
+                include: { item: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (withdrawalDetails) {
+        const textoEmail = montarTextoEmailRetirada({
+          employee,
+          operatorName: req.user?.name || null,
+          withdrawal: withdrawalDetails,
+          retiradaItems: withdrawalDetails.items || [],
+        });
+
+        if (employee?.email) {
+          await enviarEmail(
+            employee.email,
+            `Comprovante de Retirada de Uniforme #${withdrawalDetails.id}`,
+            textoEmail
+          );
+          emailNotification.details.employee = true;
+        }
+
+        if (emailCopiado) {
+          await enviarEmail(
+            emailCopiado,
+            `Aviso de Retirada de Uniforme - ${employee?.name || "Colaborador"} (#${withdrawalDetails.id})`,
+            textoEmail
+          );
+          emailNotification.details.system = true;
+        }
+
+        if (!emailNotification.details.employee && !emailNotification.details.system) {
+          emailNotification = {
+            success: false,
+            message:
+              "Retirada registrada, mas nenhum e-mail foi enviado (destinatários não configurados).",
+            details: emailNotification.details,
+          };
+        }
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Retirada registrada, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de retirada de uniforme:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_WITHDRAWAL_EMAIL_ERROR",
+            changes: { uniformWithdrawalId: result.id },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail de retirada:", logError);
+      }
+    }
+
     return res.status(201).json({
       success: true,
       message: "Retirada registrada com sucesso.",
       data: result,
+      emailNotification,
     });
   } catch (error) {
     console.error("Erro ao registrar retirada de uniforme:", error);
@@ -434,6 +616,9 @@ export const returnUniformWithdrawalItems = async (req, res) => {
     const withdrawal = await prisma.uniformWithdrawal.findUnique({
       where: { id: withdrawalId },
       include: {
+        employee: {
+          select: EMPLOYEE_SAFE_SELECT,
+        },
         items: {
           include: {
             uniformStockSize: {
@@ -537,10 +722,97 @@ export const returnUniformWithdrawalItems = async (req, res) => {
       return updated;
     });
 
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail da devolução enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const devolucaoItems = items
+        .map((entry) => {
+          const withdrawalItemId = Number(entry.uniformWithdrawalItemId);
+          const originalItem = itemMap.get(withdrawalItemId);
+          const quantity = Number(entry.quantity || 0);
+          if (!originalItem || quantity <= 0) return null;
+          return {
+            quantity,
+            uniformStockSize: originalItem.uniformStockSize,
+          };
+        })
+        .filter(Boolean);
+
+      const tipoDevolucao =
+        result.status === "SETTLED_RETURN"
+          ? "devolução total de uniforme"
+          : "devolução parcial de uniforme";
+
+      const textoEmail = montarTextoEmailDevolucao({
+        employee: withdrawal.employee,
+        operatorName: req.user?.name || null,
+        withdrawal: result,
+        devolucaoItems,
+        tipoDevolucao,
+        observacoes: notes || withdrawal.notes || null,
+      });
+
+      if (withdrawal.employee?.email) {
+        await enviarEmail(
+          withdrawal.employee.email,
+          `Comprovante de ${result.status === "SETTLED_RETURN" ? "Devolução Total" : "Devolução Parcial"} de Uniforme #${withdrawal.id}`,
+          textoEmail
+        );
+        emailNotification.details.employee = true;
+      }
+
+      if (emailCopiado) {
+        await enviarEmail(
+          emailCopiado,
+          `Aviso de Devolução de Uniforme - ${withdrawal.employee?.name || "Colaborador"} (#${withdrawal.id})`,
+          textoEmail
+        );
+        emailNotification.details.system = true;
+      }
+
+      if (!emailNotification.details.employee && !emailNotification.details.system) {
+        emailNotification = {
+          success: false,
+          message:
+            "Devolução registrada, mas nenhum e-mail foi enviado (destinatários não configurados).",
+          details: emailNotification.details,
+        };
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Devolução registrada, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de devolução de uniforme:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_RETURN_EMAIL_ERROR",
+            changes: { uniformWithdrawalId: withdrawal.id },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: withdrawal.employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail de devolução:", logError);
+      }
+    }
+
     return res.json({
       success: true,
       message: "Devolução registrada com sucesso.",
       data: result,
+      emailNotification,
     });
   } catch (error) {
     console.error("Erro ao devolver itens da retirada de uniforme:", error);
@@ -558,6 +830,9 @@ export const settleUniformWithdrawal = async (req, res) => {
     const withdrawal = await prisma.uniformWithdrawal.findUnique({
       where: { id: withdrawalId },
       include: {
+        employee: {
+          select: EMPLOYEE_SAFE_SELECT,
+        },
         items: {
           include: {
             uniformStockSize: {
@@ -682,10 +957,84 @@ export const settleUniformWithdrawal = async (req, res) => {
       return updated;
     });
 
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail da baixa financeira enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const devolucaoItems = discountItems.map(({ withdrawalItem, quantity }) => ({
+        quantity,
+        uniformStockSize: withdrawalItem.uniformStockSize,
+      }));
+
+      const textoEmail = montarTextoEmailDevolucao({
+        employee: withdrawal.employee,
+        operatorName: req.user?.name || null,
+        withdrawal: result,
+        devolucaoItems,
+        tipoDevolucao: "baixa financeira de uniforme",
+        observacoes: notes || withdrawal.notes || null,
+      });
+
+      if (withdrawal.employee?.email) {
+        await enviarEmail(
+          withdrawal.employee.email,
+          `Comprovante de Baixa Financeira de Uniforme #${withdrawal.id}`,
+          `${textoEmail}\nValor total da baixa: R$ ${totalToDiscount.toFixed(2)}`
+        );
+        emailNotification.details.employee = true;
+      }
+
+      if (emailCopiado) {
+        await enviarEmail(
+          emailCopiado,
+          `Aviso de Baixa Financeira de Uniforme - ${withdrawal.employee?.name || "Colaborador"} (#${withdrawal.id})`,
+          `${textoEmail}\nValor total da baixa: R$ ${totalToDiscount.toFixed(2)}`
+        );
+        emailNotification.details.system = true;
+      }
+
+      if (!emailNotification.details.employee && !emailNotification.details.system) {
+        emailNotification = {
+          success: false,
+          message:
+            "Baixa financeira registrada, mas nenhum e-mail foi enviado (destinatários não configurados).",
+          details: emailNotification.details,
+        };
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Baixa financeira registrada, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de baixa financeira de uniforme:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_SETTLEMENT_EMAIL_ERROR",
+            changes: { uniformWithdrawalId: withdrawal.id },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: withdrawal.employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail de baixa financeira:", logError);
+      }
+    }
+
     return res.json({
       success: true,
       message: `Baixa financeira registrada com sucesso. Total: R$ ${totalToDiscount.toFixed(2)}.`,
       data: { ...result, totalToDiscount },
+      emailNotification,
     });
   } catch (error) {
     console.error("Erro ao liquidar retirada de uniforme:", error);
@@ -846,5 +1195,8 @@ export const listUniformStockOptions = async (req, res) => {
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
+
+
+
 
 
