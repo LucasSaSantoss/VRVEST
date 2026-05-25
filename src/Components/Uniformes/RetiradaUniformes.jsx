@@ -3,6 +3,14 @@ import { api, obterMensagemErroApi } from "../../services/api";
 import { LuPlus } from "react-icons/lu";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
+const STATUS_RETIRADA_LABEL = {
+  REGULAR: "Retirada",
+  EXEMPT: "Isenta",
+  CHARGEABLE: "Com Cobrança",
+  PARTIAL_RETURN: "Devolução Parcial",
+  SETTLED_RETURN: "Devolução Total",
+  SETTLED_DISCOUNT: "Baixa Financeira",
+};
 
 export default function RetiradaUniformes() {
   const [cpf, setCpf] = useState("");
@@ -23,6 +31,9 @@ export default function RetiradaUniformes() {
     setPopup({ show: true, message, type });
     setTimeout(() => setPopup(INITIAL_POPUP), 3500);
   };
+
+  const formatarStatusRetirada = (status) =>
+    STATUS_RETIRADA_LABEL[status] || status || "-";
 
   const loadStockOptions = async () => {
     try {
@@ -386,6 +397,38 @@ export default function RetiradaUniformes() {
                 >
                   {processing ? "Aguarde..." : "Confirmar Retirada"}
                 </button>
+              </>
+            )}
+          </section>
+
+          <section className="bg-white rounded-xl shadow p-4 mb-3">
+            <h3 className="font-semibold text-gray-700 mb-2">Última Retirada</h3>
+            {!summary.lastWithdrawal ? (
+              <p className="text-sm text-gray-600">Este colaborador ainda não possui retirada registrada.</p>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm mb-2">
+                  <div><strong>Protocolo:</strong> #{summary.lastWithdrawal.id}</div>
+                  <div><strong>Data:</strong> {new Date(summary.lastWithdrawal.withdrawDate).toLocaleString("pt-BR")}</div>
+                  <div><strong>Status:</strong> {formatarStatusRetirada(summary.lastWithdrawal.status)}</div>
+                  <div><strong>Qtd. total:</strong> {summary.lastWithdrawal.totalQuantity}</div>
+                </div>
+                <div className="border border-gray-200 rounded-lg bg-gray-50/70">
+                  <div className="px-3 py-2 border-b border-gray-200">
+                    <h4 className="text-sm font-semibold text-gray-700">Itens da Última Retirada</h4>
+                  </div>
+                  {summary.lastWithdrawal.items?.length ? (
+                    <div className="divide-y divide-gray-200">
+                      {summary.lastWithdrawal.items.map((item) => (
+                        <div key={item.id} className="px-3 py-2 text-sm text-gray-800">
+                          {item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size} - Qtd: {item.quantity}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="px-3 py-2 text-sm text-gray-600">Sem itens detalhados para esta retirada.</p>
+                  )}
+                </div>
               </>
             )}
           </section>

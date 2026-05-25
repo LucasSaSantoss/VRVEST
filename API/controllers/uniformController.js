@@ -348,6 +348,21 @@ export const getEmployeeUniformSummary = async (req, res) => {
       })
       .filter((w) => w.pendingTotal > 0);
 
+    const lastWithdrawal = await prisma.uniformWithdrawal.findFirst({
+      where: { employeeId: employee.id },
+      orderBy: { withdrawDate: "desc" },
+      select: {
+        ...UNIFORM_WITHDRAWAL_SAFE_SELECT,
+        items: {
+          include: {
+            uniformStockSize: {
+              include: { item: true },
+            },
+          },
+        },
+      },
+    });
+
     return res.json({
       success: true,
       data: {
@@ -357,7 +372,7 @@ export const getEmployeeUniformSummary = async (req, res) => {
         withdrawnInYear,
         remaining,
         openWithdrawals: openWithdrawalsNormalized,
-        lastWithdrawal: openWithdrawals[0] || null,
+        lastWithdrawal,
       },
     });
   } catch (error) {
