@@ -6,8 +6,7 @@ import {
   LuClipboardList,
   LuQrCode,
   LuUserCog,
-  LuBox,
-  LuUndo2,
+  LuShirt,
 } from "react-icons/lu";
 import {
   FaHospitalUser,
@@ -34,6 +33,7 @@ import RetiradaUniformes from "../Components/Uniformes/RetiradaUniformes";
 import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
 import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
+import EmprestimoUniformes from "../Components/Uniformes/EmprestimoUniformes";
 
 const canAccessTabByLevel = (level, tab) => {
   const userLevel = Number(level || 0);
@@ -50,6 +50,7 @@ const canAccessTabByLevel = (level, tab) => {
       return userLevel !== 2;
     case "retiradaUniformes":
     case "devolucaoUniformes":
+    case "emprestimoUniformes":
       return userLevel >= 3; // operador e admin
     case "baixaDpUniformes":
       return userLevel === 2 || userLevel >= 4; // RH e admin
@@ -76,6 +77,7 @@ export default function Dashboard() {
   const [popupMessage, setPopupMessage] = useState("");
   const [showPopup, setShowPopup] = useState(false);
   const [submenuOpen, setSubmenuOpen] = useState(false);
+  const [submenuUniformesOpen, setSubmenuUniformesOpen] = useState(false);
   const [userName, setUserName] = useState("");
   const sidebarExpanded = hovered || locked;
 
@@ -129,6 +131,7 @@ export default function Dashboard() {
       estoqueUniformes: <EntradaEstoqueUniformes />,
       retiradaUniformes: <RetiradaUniformes />,
       devolucaoUniformes: <DevolucaoUniformes />,
+      emprestimoUniformes: <EmprestimoUniformes />,
       cadastroUniformes: <CadastroUniformes />,
       baixaDpUniformes: <BaixaDpUniformes />,
     }),
@@ -321,82 +324,48 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {levelUser >= 3 && (
-              <>
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "retiradaUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("retiradaUniformes")}
+            {(levelUser >= 3 || levelUser === 2) && (
+              <li className="px-2.5 mt-2">
+                <div
+                  className="flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 hover:bg-white hover:text-gray-800"
+                  onClick={() => setSubmenuUniformesOpen(!submenuUniformesOpen)}
                 >
-                  <FaHospitalUser className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Retirada Uniformes
-                  </span>
-                </li>
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "devolucaoUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("devolucaoUniformes")}
-                >
-                  <LuUndo2 className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Devolução Uniformes
-                  </span>
-                </li>
-              </>
-            )}
-            {(levelUser === 2 || levelUser >= 4) && (
-              <>
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "baixaDpUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("baixaDpUniformes")}
-                >
-                  <HiOutlineReceiptTax className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Baixa Uniformes DP
-                  </span>
-                </li>
-              </>
+                  <div className="flex items-center">
+                    <LuShirt className="text-xl" />
+                    <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                      Uniformes
+                    </span>
+                  </div>
+                  {hovered && (
+                    <span className="text-sm">{submenuUniformesOpen ? "▲" : "▼"}</span>
+                  )}
+                </div>
+                {submenuUniformesOpen && hovered && (
+                  <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
+                    {canAccessTabByLevel(levelUser, "retiradaUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "devolucaoUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoUniformes")}>Devolução Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "emprestimoUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("emprestimoUniformes")}>Empréstimo Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "baixaDpUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("baixaDpUniformes")}>Baixa Uniformes DP</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque Uniformes</li>
+                    )}
+                  </ul>
+                )}
+              </li>
             )}
             {levelUser >= 4 && (
               <>
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "cadastroUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("cadastroUniformes")}
-                >
-                  <LuUserCog className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Cadastro Uniformes
-                  </span>
-                </li>
-
-                {/* [MANUTENCAO] Motivo: adicionar acesso ao módulo de entrada de estoque de uniformes.
-                    [MANUTENCAO] Impacto: nova opção de menu para operação de estoque sem impacto no fluxo legado.
-                    [MANUTENCAO] Data: 2026-05-19
-                    [MANUTENCAO] Autor: Márlon Etiene */}
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "estoqueUniformes" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("estoqueUniformes")}
-                >
-                  <LuBox className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Estoque Uniformes
-                  </span>
-                </li>
-
                 <li
                   className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
                   ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}

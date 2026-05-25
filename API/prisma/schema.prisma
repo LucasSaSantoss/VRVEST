@@ -24,6 +24,7 @@ model User {
   level Int @default(1)
   active Int @default(1)
   uniformWithdrawals UniformWithdrawal[]
+  uniformLoans UniformLoan[]
   uniformMovements UniformMovement[]
   updatedUniformSettings UniformSetting[]
 }
@@ -49,6 +50,7 @@ model Employee {
   tempAlterDate DateTime? 
   pendencies Pendency[]
   uniformWithdrawals UniformWithdrawal[]
+  uniformLoans UniformLoan[]
 }
 
 model Pendency {
@@ -119,9 +121,36 @@ model UniformStockSize {
 
   item         itemsCloth @relation(fields: [itemId], references: [id])
   withdrawalItems UniformWithdrawalItem[]
+  loanItems UniformLoanItem[]
   movements    UniformMovement[]
 
   @@unique([itemId, size])
+}
+
+model UniformLoan {
+  id           Int      @id @default(autoincrement())
+  employeeId   Int
+  userId       Int
+  loanDate     DateTime
+  status       String   @db.VarChar(30)
+  notes        String?  @db.VarChar(500)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  employee     Employee @relation(fields: [employeeId], references: [id])
+  user         User     @relation(fields: [userId], references: [id])
+  items        UniformLoanItem[]
+}
+
+model UniformLoanItem {
+  id                 Int      @id @default(autoincrement())
+  uniformLoanId      Int
+  uniformStockSizeId Int
+  quantity           Int
+  returnedQuantity   Int      @default(0)
+
+  loan               UniformLoan      @relation(fields: [uniformLoanId], references: [id])
+  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
 }
 
 model UniformWithdrawal {

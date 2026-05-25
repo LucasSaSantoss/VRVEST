@@ -29,9 +29,18 @@
 ### Componentes principais de uniformes
 
 - `src/Components/Uniformes/EntradaEstoqueUniformes.jsx`
-- `src/Components/Uniformes/RetiradaDevolucaoUniformes.jsx`
+- `src/Components/Uniformes/RetiradaUniformes.jsx`
+- `src/Components/Uniformes/DevolucaoUniformes.jsx`
+- `src/Components/Uniformes/EmprestimoUniformes.jsx`
 - `src/Components/Uniformes/CadastroUniformes.jsx`
 - `src/Components/Uniformes/BaixaDpUniformes.jsx`
+
+### Endpoints adicionais de empréstimos
+
+- `GET /api/uniforms/loan/stock-options`
+- `GET /api/uniforms/loan/employee/:cpf/summary`
+- `POST /api/uniforms/loan/withdraw`
+- `POST /api/uniforms/loan/:id/return`
 
 ## Autenticação e Autorização (estado atual)
 
@@ -57,3 +66,4 @@
 
 - Não confiar apenas na visibilidade de menu; manter validação no backend.
 - Em base legada, sanear datas inválidas (`0000-00-00`) antes de consultas Prisma.
+- Devolução legada de uniformes (passivo pré-sistema) está documentada como proposta funcional e ainda não implementada.

@@ -16,14 +16,19 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
    - retirada por CPF;
    - quantidade fixa `1` por item da retirada;
    - não permite repetir o mesmo uniforme no carrinho da mesma retirada.
-5. Baixa de uniformes no DP:
+5. Empréstimo de uniformes:
+   - acesso para operador e admin (`level >= 3`);
+   - controla saída e devolução no estoque de empréstimos;
+   - não possui limite anual;
+   - não permite empréstimo com saldo de empréstimos zerado/insuficiente.
+6. Baixa de uniformes no DP:
    - acesso para RH e admin (`level === 2` ou `level >= 4`);
    - baixa financeira por item/quantidade pendente.
-6. Estoque por tamanho:
+7. Estoque por tamanho:
    - estoque principal e empréstimos;
    - entrada, ajuste, transferência e descarte;
    - histórico de movimentações.
-7. Limite anual:
+8. Limite anual:
    - controlado por configuração global (`UniformSetting`).
 
 ## Regras Inferidas
@@ -38,6 +43,15 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
 1. Nomenclatura oficial dos perfis por `level`.
 2. Política formal para exceções de limite e isenções.
 3. Regras finais para futura integração com módulo de enxoval.
+4. Política funcional para devolução de passivo legado (uniformes retirados antes do sistema).
+
+## Regra Planejada (Ainda Não Implementada)
+
+1. Devolução legada no mesmo módulo de devolução:
+   - quando não houver retirada registrada para o CPF;
+   - permitir entrada manual de item/tamanho/quantidade;
+   - exigir justificativa obrigatória;
+   - registrar entrada no estoque de empréstimos com rastreabilidade completa.
 
 ## Permissões por Perfil (Uniformes)
 
@@ -45,9 +59,11 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
    - estoque de uniformes;
    - cadastro de uniformes;
    - retirada/devolução;
+   - empréstimos de uniformes;
    - baixa DP.
 2. `level = 3` (Operador):
-   - retirada/devolução.
+   - retirada/devolução;
+   - empréstimos de uniformes.
 3. `level = 2` (RH/DP):
    - baixa DP.
 4. `level = 1`:

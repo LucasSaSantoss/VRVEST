@@ -88,6 +88,9 @@ const getPendingQuantity = (withdrawalItem) =>
   Number(withdrawalItem.returnedQuantity || 0) -
   Number(withdrawalItem.discountedQuantity || 0);
 
+const getPendingLoanQuantity = (loanItem) =>
+  Number(loanItem.quantity || 0) - Number(loanItem.returnedQuantity || 0);
+
 const isStockMovementWithoutBalanceAllowed = (settings) =>
   Number(settings?.allowZeroOrNegativeStockMovement || 0) === 1;
 
@@ -1207,6 +1210,261 @@ export const listUniformStockOptions = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro ao listar opções de uniforme para retirada:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+export const listUniformLoanStockOptions = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+  try {
+    const data = await prisma.uniformStockSize.findMany({
+      where: {
+        item: {
+          isUniform: {
+            gt: 0,
+          },
+          active: 1,
+        },
+      },
+      orderBy: [{ itemId: "asc" }, { size: "asc" }],
+      include: {
+        item: true,
+      },
+    });
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Erro ao listar opções de estoque de empréstimo:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+export const getEmployeeUniformLoanSummary = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+  try {
+    const { cpf } = req.params;
+    const employee = await prisma.employee.findUnique({
+      where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
+    });
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Colaborador não encontrado." });
+    }
+
+    const openLoans = await prisma.uniformLoan.findMany({
+      where: { employeeId: employee.id, status: { in: ["OPEN", "PARTIAL_RETURN"] } },
+      orderBy: { loanDate: "desc" },
+      include: {
+        items: {
+          include: {
+            uniformStockSize: { include: { item: true } },
+          },
+        },
+      },
+    });
+
+    const openLoansNormalized = openLoans
+      .map((loan) => {
+        const items = loan.items.map((item) => ({
+          ...item,
+          pendingQuantity: Math.max(getPendingLoanQuantity(item), 0),
+        }));
+        const pendingTotal = items.reduce((acc, item) => acc + item.pendingQuantity, 0);
+        return { ...loan, items, pendingTotal };
+      })
+      .filter((loan) => loan.pendingTotal > 0);
+
+    const lastLoan = await prisma.uniformLoan.findFirst({
+      where: { employeeId: employee.id },
+      orderBy: { loanDate: "desc" },
+      include: {
+        items: {
+          include: {
+            uniformStockSize: { include: { item: true } },
+          },
+        },
+      },
+    });
+
+    return res.json({
+      success: true,
+      data: { employee, openLoans: openLoansNormalized, lastLoan },
+    });
+  } catch (error) {
+    console.error("Erro ao carregar resumo de empréstimos de uniformes:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+export const createUniformLoan = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+  try {
+    const { cpf, items, notes } = req.body;
+    if (!cpf || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "CPF e itens são obrigatórios." });
+    }
+
+    const employee = await prisma.employee.findUnique({ where: { cpf }, select: EMPLOYEE_SAFE_SELECT });
+    if (!employee || employee.active !== 1) {
+      return res.status(400).json({ success: false, message: "Colaborador inválido ou inativo." });
+    }
+
+    const stockIds = items.map((item) => Number(item.uniformStockSizeId));
+    const stockRecords = await prisma.uniformStockSize.findMany({ where: { id: { in: stockIds } } });
+    const stockMap = new Map(stockRecords.map((s) => [s.id, s]));
+    const userId = Number(req.user.id);
+    const now = new Date();
+
+    for (const item of items) {
+      const stockId = Number(item.uniformStockSizeId);
+      const quantity = Number(item.quantity || 0);
+      const stock = stockMap.get(stockId);
+      if (!stock || quantity <= 0) {
+        return res.status(400).json({ success: false, message: "Item de empréstimo inválido." });
+      }
+      if (Number(stock.qtyLoanStock) < quantity) {
+        return res.status(400).json({ success: false, message: `Saldo insuficiente no estoque de empréstimos para item ${stockId}.` });
+      }
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const loan = await tx.uniformLoan.create({
+        data: {
+          employeeId: employee.id,
+          userId,
+          loanDate: now,
+          status: "OPEN",
+          notes: notes || null,
+        },
+      });
+
+      for (const item of items) {
+        const stockId = Number(item.uniformStockSizeId);
+        const quantity = Number(item.quantity || 0);
+        await tx.uniformLoanItem.create({
+          data: { uniformLoanId: loan.id, uniformStockSizeId: stockId, quantity },
+        });
+        await tx.uniformStockSize.update({
+          where: { id: stockId },
+          data: { qtyLoanStock: { decrement: quantity } },
+        });
+        await tx.uniformMovement.create({
+          data: {
+            uniformStockSizeId: stockId,
+            movementType: "LOAN_EXIT",
+            originType: "LOAN_WITHDRAWAL",
+            referenceType: "UniformLoan",
+            referenceId: loan.id,
+            quantity,
+            userId,
+            notes: "Saída de empréstimo para colaborador.",
+          },
+        });
+      }
+
+      await tx.userLog.create({
+        data: {
+          userId,
+          action: "UNIFORM_LOAN_CREATE",
+          newData: { employeeId: employee.id, uniformLoanId: loan.id, items },
+          createdAt: now,
+        },
+      });
+
+      return loan;
+    });
+
+    return res.status(201).json({ success: true, message: "Empréstimo registrado com sucesso.", data: result });
+  } catch (error) {
+    console.error("Erro ao registrar empréstimo de uniforme:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+export const returnUniformLoanItems = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+  try {
+    const loanId = Number(req.params.id);
+    const { items, notes } = req.body;
+    if (!loanId || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({ success: false, message: "Informe empréstimo e itens para devolução." });
+    }
+
+    const loan = await prisma.uniformLoan.findUnique({
+      where: { id: loanId },
+      include: {
+        items: { include: { uniformStockSize: { include: { item: true } } } },
+      },
+    });
+    if (!loan) return res.status(404).json({ success: false, message: "Empréstimo não encontrado." });
+    if (loan.status === "SETTLED_RETURN") {
+      return res.status(400).json({ success: false, message: "Empréstimo já finalizado." });
+    }
+
+    const itemMap = new Map(loan.items.map((item) => [item.id, item]));
+    for (const input of items) {
+      const loanItemId = Number(input.uniformLoanItemId);
+      const quantity = Number(input.quantity || 0);
+      const loanItem = itemMap.get(loanItemId);
+      if (!loanItem || quantity <= 0) {
+        return res.status(400).json({ success: false, message: "Item de devolução de empréstimo inválido." });
+      }
+      const pending = Math.max(getPendingLoanQuantity(loanItem), 0);
+      if (quantity > pending) {
+        return res.status(400).json({ success: false, message: `Quantidade acima do pendente no item ${loanItemId}.` });
+      }
+    }
+
+    const userId = Number(req.user.id);
+    const now = new Date();
+    const result = await prisma.$transaction(async (tx) => {
+      for (const input of items) {
+        const loanItemId = Number(input.uniformLoanItemId);
+        const quantity = Number(input.quantity || 0);
+        const loanItem = itemMap.get(loanItemId);
+        await tx.uniformLoanItem.update({
+          where: { id: loanItemId },
+          data: { returnedQuantity: { increment: quantity } },
+        });
+        await tx.uniformStockSize.update({
+          where: { id: loanItem.uniformStockSizeId },
+          data: { qtyLoanStock: { increment: quantity } },
+        });
+        await tx.uniformMovement.create({
+          data: {
+            uniformStockSizeId: loanItem.uniformStockSizeId,
+            movementType: "LOAN_RETURN",
+            originType: "LOAN_SETTLEMENT",
+            referenceType: "UniformLoan",
+            referenceId: loan.id,
+            quantity,
+            userId,
+            notes: "Devolução de empréstimo por colaborador.",
+          },
+        });
+      }
+
+      const refreshedItems = await tx.uniformLoanItem.findMany({ where: { uniformLoanId: loan.id } });
+      const pendingTotal = refreshedItems.reduce((acc, item) => acc + Math.max(getPendingLoanQuantity(item), 0), 0);
+      const status = pendingTotal === 0 ? "SETTLED_RETURN" : "PARTIAL_RETURN";
+      const updated = await tx.uniformLoan.update({
+        where: { id: loan.id },
+        data: { status, notes: notes || loan.notes, updatedAt: now },
+      });
+      await tx.userLog.create({
+        data: {
+          userId,
+          action: "UNIFORM_LOAN_RETURN",
+          changes: { uniformLoanId: loan.id, items },
+          newData: { status, notes: notes || loan.notes || null },
+          createdAt: now,
+        },
+      });
+      return updated;
+    });
+
+    return res.json({ success: true, message: "Devolução de empréstimo registrada com sucesso.", data: result });
+  } catch (error) {
+    console.error("Erro ao devolver empréstimo de uniforme:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };

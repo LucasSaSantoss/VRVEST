@@ -24,8 +24,10 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 ## Fluxos Principais (Uniformes)
 
 1. Estoque (`/api/uniform-stock/*`): somente admin.
-2. Retirada/devolução (`/api/uniforms/*`): operador/admin.
-3. Baixa DP (`/api/uniforms/dp/*` e settlement): RH/admin.
+2. Retirada (`/api/uniforms/*`): operador/admin.
+3. Devolução (`/api/uniforms/*`): operador/admin.
+4. Empréstimos de uniformes (`/api/uniforms/loan/*`): operador/admin.
+5. Baixa DP (`/api/uniforms/dp/*` e settlement): RH/admin.
 
 ## Glossário de Status (Uniformes)
 
@@ -52,3 +54,12 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 
 1. Em base legada importada, datas inválidas (`0000-00-00`) podem quebrar consultas Prisma.
 2. Manter saneamento pós-importação para estabilidade operacional.
+3. Existe proposta aprovada tecnicamente (pendente validação funcional) para `Devolução Legada` no mesmo módulo de devolução, sem criar nova tela.
+
+## Itens Planejados (Ainda Não Implementados)
+
+1. Modo `Devolução Legada` no módulo existente de devolução:
+   - uso quando colaborador não possui retirada registrada no sistema;
+   - registro com justificativa obrigatória;
+   - entrada no estoque de empréstimos;
+   - trilha de auditoria explícita (`UniformMovement` + `UserLog`).

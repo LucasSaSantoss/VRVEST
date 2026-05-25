@@ -39,6 +39,29 @@ Mapear o fluxo de dados principal para manutenção segura.
 2. Front chama `PUT /api/uniforms/withdrawals/:id/settlement`.
 3. Backend valida RH/admin (`level === 2` ou `level >= 4`).
 
+### 6) Empréstimo de Uniformes
+
+1. Front chama `GET /api/uniforms/loan/stock-options`.
+2. Front chama `GET /api/uniforms/loan/employee/:cpf/summary`.
+3. Front chama `POST /api/uniforms/loan/withdraw`.
+4. Backend valida operador/admin (`level >= 3`) e grava:
+   - `UniformLoan`;
+   - `UniformLoanItem`;
+   - `UniformMovement`;
+   - `UserLog`.
+5. Devolução de empréstimo:
+   - front chama `POST /api/uniforms/loan/:id/return`;
+   - backend atualiza pendências e retorna ao estoque de empréstimos.
+
+## Fluxo Planejado (Não Implementado)
+
+### Devolução Legada no Módulo de Devolução
+
+1. Front busca CPF em `GET /api/uniforms/employee/:cpf/summary`.
+2. Se não houver retirada em aberto, usuário poderá acionar `Devolução Legada`.
+3. Front enviará item/tamanho/quantidade/justificativa para endpoint dedicado.
+4. Backend registrará entrada no estoque de empréstimos com auditoria completa.
+
 ## Glossário de Status e Tipos
 
 ### Status da retirada (`UniformWithdrawal.status`)
@@ -52,4 +75,4 @@ Mapear o fluxo de dados principal para manutenção segura.
 
 ### Tipos de movimentação (`UniformMovement.movementType`)
 
-- `ENTRY`, `EXIT`, `RETURN_TO_LOAN`, `ADJUSTMENT`, `DISCARD`, `DISCOUNT`, `REVERSAL`.
+- `ENTRY`, `EXIT`, `LOAN_EXIT`, `LOAN_RETURN`, `RETURN_TO_LOAN`, `ADJUSTMENT`, `DISCARD`, `DISCOUNT`, `REVERSAL`.

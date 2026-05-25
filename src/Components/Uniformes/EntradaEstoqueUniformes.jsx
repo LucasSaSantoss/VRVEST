@@ -9,6 +9,8 @@ const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
 const TIPO_MOVIMENTACAO_LABEL = {
   ENTRY: "Entrada",
   EXIT: "Saída",
+  LOAN_EXIT: "Empréstimo (Saída para Colaborador)",
+  LOAN_RETURN: "Devolução de Empréstimo",
   RETURN_TO_LOAN: "Devolução para Empréstimos",
   DISCARD: "Descarte",
   DISCOUNT: "Baixa Financeira",
@@ -388,6 +390,8 @@ export default function EntradaEstoqueUniformes() {
     texto = texto.replace(/ItemRetirada=/gi, "Item da retirada nº ");
     texto = texto.replace(/\bMAIN\b/g, "Estoque Principal");
     texto = texto.replace(/\bLOAN\b/g, "Estoque Empréstimos");
+    texto = texto.replace(/\bLOAN_WITHDRAWAL\b/g, "Empréstimo");
+    texto = texto.replace(/\bLOAN_SETTLEMENT\b/g, "Devolução de Empréstimo");
 
     return texto;
   };
