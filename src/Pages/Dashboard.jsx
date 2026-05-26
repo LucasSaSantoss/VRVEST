@@ -21,6 +21,7 @@ import { FaUserGear } from "react-icons/fa6";
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
 import RelatorioRetiradasUniformes from "../Components/Relatorios/RelatorioRetiradasUniformes";
+import RelatorioEmprestimosUniformes from "../Components/Relatorios/RelatorioEmprestimosUniformes";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -34,6 +35,7 @@ import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
 import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
 import EmprestimoUniformes from "../Components/Uniformes/EmprestimoUniformes";
+import DevolucaoEmprestimos from "../Components/Uniformes/DevolucaoEmprestimos";
 
 const canAccessTabByLevel = (level, tab) => {
   const userLevel = Number(level || 0);
@@ -51,6 +53,7 @@ const canAccessTabByLevel = (level, tab) => {
     case "retiradaUniformes":
     case "devolucaoUniformes":
     case "emprestimoUniformes":
+    case "devolucaoEmprestimos":
       return userLevel >= 3; // operador e admin
     case "baixaDpUniformes":
       return userLevel === 2 || userLevel >= 4; // RH e admin
@@ -59,6 +62,7 @@ const canAccessTabByLevel = (level, tab) => {
     case "baixa":
     case "relatorios":
     case "relatorioRetiradasUniformes":
+    case "relatorioEmprestimosUniformes":
       return userLevel >= 4;
     case "perfil":
       return true;
@@ -122,6 +126,7 @@ export default function Dashboard() {
       home: <DashBoardVRVest />,
       relatorios: <RelatorioFinanceiroAtrasados />,
       relatorioRetiradasUniformes: <RelatorioRetiradasUniformes />,
+      relatorioEmprestimosUniformes: <RelatorioEmprestimosUniformes />,
       qrcode: <QrCodeVRVest />,
       funcionarioTemp: <CreateFuncTemp />,
       usuarios: <TabelaUsuarios />,
@@ -132,6 +137,7 @@ export default function Dashboard() {
       retiradaUniformes: <RetiradaUniformes />,
       devolucaoUniformes: <DevolucaoUniformes />,
       emprestimoUniformes: <EmprestimoUniformes />,
+      devolucaoEmprestimos: <DevolucaoEmprestimos />,
       cadastroUniformes: <CadastroUniformes />,
       baixaDpUniformes: <BaixaDpUniformes />,
     }),
@@ -343,22 +349,39 @@ export default function Dashboard() {
                 {submenuUniformesOpen && hovered && (
                   <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
                     {canAccessTabByLevel(levelUser, "retiradaUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada Uniformes</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada de Uniformes</li>
                     )}
                     {canAccessTabByLevel(levelUser, "devolucaoUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoUniformes")}>Devolução Uniformes</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoUniformes")}>Devolução de Uniformes</li>
+                    )}
+                    {(canAccessTabByLevel(levelUser, "retiradaUniformes") ||
+                      canAccessTabByLevel(levelUser, "devolucaoUniformes")) && (
+                      <li className="my-1 border-t border-white/30" />
                     )}
                     {canAccessTabByLevel(levelUser, "emprestimoUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("emprestimoUniformes")}>Empréstimo Uniformes</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("emprestimoUniformes")}>Empréstimo de Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "devolucaoEmprestimos") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoEmprestimos")}>Devolução de Empréstimos</li>
+                    )}
+                    {(canAccessTabByLevel(levelUser, "emprestimoUniformes") ||
+                      canAccessTabByLevel(levelUser, "devolucaoEmprestimos")) && (
+                      <li className="my-1 border-t border-white/30" />
                     )}
                     {canAccessTabByLevel(levelUser, "baixaDpUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("baixaDpUniformes")}>Baixa Uniformes DP</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("baixaDpUniformes")}>Baixa de Uniformes - DP</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "baixaDpUniformes") && (
+                      <li className="my-1 border-t border-white/30" />
                     )}
                     {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro Uniformes</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro de Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
+                      <li className="my-1 border-t border-white/30" />
                     )}
                     {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque Uniformes</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
                     )}
                   </ul>
                 )}
@@ -414,6 +437,12 @@ export default function Dashboard() {
                         onClick={() => selectTab("relatorioRetiradasUniformes")}
                       >
                         Retiradas de Uniformes
+                      </li>
+                      <li
+                        className="cursor-pointer hover:text-gray-300"
+                        onClick={() => selectTab("relatorioEmprestimosUniformes")}
+                      >
+                        Empréstimos de Uniformes
                       </li>
                     </ul>
                   )}

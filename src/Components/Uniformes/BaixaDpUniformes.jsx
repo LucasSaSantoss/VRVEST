@@ -27,8 +27,15 @@ export default function BaixaDpUniformes() {
     try {
       const res = await api.get(`/uniforms/dp/employee/${cpfBusca}/pendencies`);
       if (res.data?.success) {
-        setResult(res.data.data);
-        setDiscountQtyMap({});
+        const data = res.data.data;
+        setResult(data);
+        const defaultQtyMap = {};
+        (data.withdrawals || []).forEach((withdrawal) => {
+          (withdrawal.items || []).forEach((item) => {
+            defaultQtyMap[item.id] = Number(item.pendingQuantity || 0);
+          });
+        });
+        setDiscountQtyMap(defaultQtyMap);
       }
     } catch (error) {
       setResult(null);
@@ -46,22 +53,28 @@ export default function BaixaDpUniformes() {
     }
   }, [cpf, lastAutoCpfSearched]);
 
-  const confirmarBaixa = async (withdrawal) => {
-    const items = withdrawal.items
-      .map((i) => ({
-        uniformWithdrawalItemId: i.id,
-        quantity: Number(discountQtyMap[i.id] || 0),
-      }))
-      .filter((i) => i.quantity > 0);
+  const confirmarBaixaItem = async (withdrawal, item) => {
+    const quantidadeInformada = Number(discountQtyMap[item.id] || 0);
+    if (!Number.isFinite(quantidadeInformada) || quantidadeInformada <= 0) {
+      showTemporaryPopup("Informe uma quantidade válida para desconto.", "error");
+      return;
+    }
 
-    if (items.length === 0) {
-      showTemporaryPopup("Informe ao menos uma quantidade para desconto.", "error");
+    if (quantidadeInformada > Number(item.pendingQuantity || 0)) {
+      showTemporaryPopup("A quantidade não pode ser maior que o pendente do item.", "error");
       return;
     }
 
     setProcessing(true);
     try {
-      const res = await api.put(`/uniforms/withdrawals/${withdrawal.id}/settlement`, { items });
+      const res = await api.put(`/uniforms/withdrawals/${withdrawal.id}/settlement`, {
+        items: [
+          {
+            uniformWithdrawalItemId: item.id,
+            quantity: quantidadeInformada,
+          },
+        ],
+      });
       if (res.data?.success) {
         const emailNotification = res.data?.emailNotification;
         if (emailNotification?.success === false) {
@@ -131,7 +144,7 @@ export default function BaixaDpUniformes() {
 
                   <div className="space-y-2 mb-2">
                     {w.items.map((item) => (
-                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-6 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
+                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
                         <span className="md:col-span-2">{item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size}</span>
                         <span>Pendente: {item.pendingQuantity}</span>
                         <span>Unitário: R$ {Number(item.unitValue || 0).toFixed(2)}</span>
@@ -140,18 +153,21 @@ export default function BaixaDpUniformes() {
                           type="number"
                           min="0"
                           max={item.pendingQuantity}
-                          className="border rounded px-2 py-1"
+                          className="border rounded px-2 py-1 md:max-w-[110px]"
                           placeholder="Qtd desconto"
                           value={discountQtyMap[item.id] || ""}
                           onChange={(e) => setDiscountQtyMap((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         />
+                        <button
+                          disabled={processing}
+                          onClick={() => confirmarBaixaItem(w, item)}
+                          className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-3 py-1.5 rounded md:justify-self-start"
+                        >
+                          {processing ? "Aguarde..." : "Confirmar Baixa"}
+                        </button>
                       </div>
                     ))}
                   </div>
-
-                  <button disabled={processing} onClick={() => confirmarBaixa(w)} className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-4 py-2 rounded">
-                    {processing ? "Aguarde..." : "Confirmar Baixa com Desconto"}
-                  </button>
                 </div>
               ))}
             </div>

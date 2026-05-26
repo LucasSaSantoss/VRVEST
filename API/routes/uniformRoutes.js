@@ -10,6 +10,8 @@ import {
   listUniformStockOptions,
   listUniformLoanStockOptions,
   listUniformWithdrawals,
+  listUniformLoans,
+  registerLegacyUniformReturn,
   returnUniformWithdrawalItems,
   returnUniformLoanItems,
   settleUniformWithdrawal,
@@ -30,7 +32,9 @@ router.get("/loan/stock-options", authMiddleware, listUniformLoanStockOptions);
 router.post("/withdraw", authMiddleware, createUniformWithdrawal);
 router.post("/loan/withdraw", authMiddleware, createUniformLoan);
 router.get("/withdrawals", authMiddleware, listUniformWithdrawals);
+router.get("/loans", authMiddleware, listUniformLoans);
 router.post("/withdrawals/:id/return", authMiddleware, returnUniformWithdrawalItems);
+router.post("/returns/legacy", authMiddleware, registerLegacyUniformReturn);
 router.post("/loan/:id/return", authMiddleware, returnUniformLoanItems);
 router.put("/withdrawals/:id/settlement", authMiddleware, settleUniformWithdrawal);
 

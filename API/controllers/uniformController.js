@@ -838,6 +838,171 @@ export const returnUniformWithdrawalItems = async (req, res) => {
   }
 };
 
+export const registerLegacyUniformReturn = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+
+  try {
+    const { cpf, uniformStockSizeId, quantity, notes } = req.body;
+    const qty = Number(quantity || 0);
+
+    if (!cpf || !uniformStockSizeId || qty <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Informe CPF, item/tamanho e quantidade para devolução legada.",
+      });
+    }
+
+    if (!notes || !String(notes).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Justificativa obrigatória para devolução legada.",
+      });
+    }
+
+    const employee = await prisma.employee.findUnique({
+      where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
+    });
+    if (!employee) {
+      return res.status(404).json({ success: false, message: "Colaborador não encontrado." });
+    }
+
+    const stockSize = await prisma.uniformStockSize.findUnique({
+      where: { id: Number(uniformStockSizeId) },
+      include: { item: true },
+    });
+    if (!stockSize || !stockSize.item || Number(stockSize.item.active) !== 1 || Number(stockSize.item.isUniform) <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Item/tamanho inválido para devolução legada.",
+      });
+    }
+
+    const userId = Number(req.user.id);
+    const now = new Date();
+
+    const result = await prisma.$transaction(async (tx) => {
+      const updatedStock = await tx.uniformStockSize.update({
+        where: { id: Number(uniformStockSizeId) },
+        data: { qtyLoanStock: { increment: qty } },
+      });
+
+      await tx.uniformMovement.create({
+        data: {
+          uniformStockSizeId: Number(uniformStockSizeId),
+          movementType: "RETURN_TO_LOAN",
+          originType: "LEGACY_RETURN",
+          quantity: qty,
+          userId,
+          notes: `Devolução legada de uniforme. CPF=${cpf}. Justificativa: ${String(notes).trim()}`,
+        },
+      });
+
+      await tx.userLog.create({
+        data: {
+          userId,
+          action: "UNIFORM_LEGACY_RETURN",
+          changes: {
+            cpf,
+            uniformStockSizeId: Number(uniformStockSizeId),
+            quantity: qty,
+          },
+          newData: {
+            notes: String(notes).trim(),
+            employeeId: employee.id,
+          },
+          createdAt: now,
+        },
+      });
+
+      return updatedStock;
+    });
+
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail da devolução legada enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const textoEmail = `Olá ${employee?.name || "colaborador(a)"},
+
+Foi registrada uma devolução legada de uniforme em seu nome.
+
+Data/Hora da operação: ${new Date().toLocaleString("pt-BR")}
+Colaborador: ${employee?.name || "-"}
+CPF: ${employee?.cpf || "-"}
+Setor: ${employee?.sector || "-"}
+Cargo: ${employee?.position || "-"}
+Operador responsável: ${req.user?.name || "-"}
+Item: ${stockSize.item?.itemName || "-"} | Tam: ${stockSize.size || "-"} | Qtd: ${qty}
+Justificativa: ${String(notes).trim()}
+`;
+
+      if (employee?.email) {
+        await enviarEmail(
+          employee.email,
+          "Comprovante de Devolução Legada de Uniforme",
+          textoEmail
+        );
+        emailNotification.details.employee = true;
+      }
+
+      if (emailCopiado) {
+        await enviarEmail(
+          emailCopiado,
+          `Aviso de Devolução Legada de Uniforme - ${employee?.name || "Colaborador"}`,
+          textoEmail
+        );
+        emailNotification.details.system = true;
+      }
+
+      if (!emailNotification.details.employee && !emailNotification.details.system) {
+        emailNotification = {
+          success: false,
+          message:
+            "Devolução legada registrada, mas nenhum e-mail foi enviado (destinatários não configurados).",
+          details: emailNotification.details,
+        };
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Devolução legada registrada, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de devolução legada:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_LEGACY_RETURN_EMAIL_ERROR",
+            changes: { cpf, uniformStockSizeId: Number(uniformStockSizeId), quantity: qty },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail da devolução legada:", logError);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Devolução legada registrada com sucesso.",
+      data: result,
+      emailNotification,
+    });
+  } catch (error) {
+    console.error("Erro ao registrar devolução legada:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
 export const settleUniformWithdrawal = async (req, res) => {
   if (!requireRhOrAdmin(req, res)) return;
 
@@ -1171,6 +1336,57 @@ export const listUniformWithdrawals = async (req, res) => {
     return res.json({ success: true, data });
   } catch (error) {
     console.error("Erro ao listar retiradas de uniformes:", error);
+    return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+export const listUniformLoans = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+
+  try {
+    const { status, cpf, year } = req.query;
+    const where = {};
+
+    if (status) where.status = status;
+    if (year) {
+      const yearNum = Number(year);
+      if (!Number.isNaN(yearNum)) {
+        const start = new Date(Date.UTC(yearNum, 0, 1, 0, 0, 0));
+        const end = new Date(Date.UTC(yearNum + 1, 0, 1, 0, 0, 0));
+        where.loanDate = { gte: start, lt: end };
+      }
+    }
+
+    if (cpf) {
+      const employee = await prisma.employee.findUnique({
+        where: { cpf },
+        select: { id: true },
+      });
+      if (!employee) {
+        return res.json({ success: true, data: [] });
+      }
+      where.employeeId = employee.id;
+    }
+
+    const data = await prisma.uniformLoan.findMany({
+      where,
+      orderBy: { loanDate: "desc" },
+      include: {
+        employee: { select: { id: true, name: true, cpf: true } },
+        user: { select: { id: true, name: true } },
+        items: {
+          include: {
+            uniformStockSize: {
+              include: { item: true },
+            },
+          },
+        },
+      },
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Erro ao listar empréstimos de uniformes:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
