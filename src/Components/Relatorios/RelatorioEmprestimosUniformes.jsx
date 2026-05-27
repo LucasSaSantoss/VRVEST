@@ -1,4 +1,5 @@
 ﻿import { useState } from "react";
+import * as XLSX from "xlsx";
 import { api, obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
@@ -50,6 +51,57 @@ export default function RelatorioEmprestimosUniformes() {
     }
   };
 
+  const exportarExcel = () => {
+    if (!rows.length) {
+      showTemporaryPopup("Não há dados para exportar.", "error");
+      return;
+    }
+
+    const linhas = [];
+    rows.forEach((loan) => {
+      const itens = loan.items || [];
+
+      if (!itens.length) {
+        linhas.push({
+          Ordem: `Empréstimo #${loan.id}`,
+          "Data/Hora": new Date(loan.loanDate).toLocaleString("pt-BR"),
+          Colaborador: loan.employee?.name || "-",
+          CPF: loan.employee?.cpf || "-",
+          Uniforme: "-",
+          "Qtd. Emprestada": 0,
+          "Qtd. Devolvida": 0,
+          Status: formatStatus(loan.status),
+          Operador: loan.user?.name || "-",
+        });
+        return;
+      }
+
+      itens.forEach((item) => {
+        linhas.push({
+          Ordem: `Empréstimo #${loan.id}`,
+          "Data/Hora": new Date(loan.loanDate).toLocaleString("pt-BR"),
+          Colaborador: loan.employee?.name || "-",
+          CPF: loan.employee?.cpf || "-",
+          Uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
+            item.uniformStockSize?.size || "-"
+          })`,
+          "Qtd. Emprestada": Number(item.quantity || 0),
+          "Qtd. Devolvida": Number(item.returnedQuantity || 0),
+          Status: formatStatus(loan.status),
+          Operador: loan.user?.name || "-",
+        });
+      });
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(linhas);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Emprestimos");
+    XLSX.writeFile(
+      workbook,
+      `relatorio_emprestimos_uniformes_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
@@ -90,6 +142,14 @@ export default function RelatorioEmprestimosUniformes() {
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded"
           >
             {loading ? "Buscando..." : "Buscar"}
+          </button>
+        </div>
+        <div className="mt-2">
+          <button
+            onClick={exportarExcel}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded"
+          >
+            Exportar Excel
           </button>
         </div>
       </section>

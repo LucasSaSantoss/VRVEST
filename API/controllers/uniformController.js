@@ -106,6 +106,15 @@ const STATUS_RETIRADA_EMAIL_LABEL = {
 const formatarStatusParaEmail = (status) =>
   STATUS_RETIRADA_EMAIL_LABEL[status] || status || "-";
 
+const STATUS_EMPRESTIMO_EMAIL_LABEL = {
+  OPEN: "Em Aberto",
+  PARTIAL_RETURN: "Devolução Parcial",
+  SETTLED_RETURN: "Devolução Total",
+};
+
+const formatarStatusEmprestimoParaEmail = (status) =>
+  STATUS_EMPRESTIMO_EMAIL_LABEL[status] || status || "-";
+
 const montarTextoEmailRetirada = ({
   employee,
   operatorName,
@@ -182,6 +191,87 @@ Cargo: ${employee?.position || "-"}
 Operador responsável: ${operatorName || "-"}
 
 Status atual da retirada: ${formatarStatusParaEmail(withdrawal?.status)}
+
+Itens movimentados na operação:
+${linhasItens || "-"}
+
+Observações: ${observacoes || "Não informado"}
+
+Este e-mail é um comprovante automático da operação.
+`;
+};
+
+const montarTextoEmailEmprestimo = ({
+  employee,
+  operatorName,
+  loan,
+  loanItems,
+}) => {
+  const dataHora = loan?.loanDate
+    ? new Date(loan.loanDate).toLocaleString("pt-BR")
+    : "-";
+  const linhasItens = loanItems
+    .map((item, idx) => {
+      const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
+      const tamanho = item?.uniformStockSize?.size || "-";
+      const qtd = Number(item?.quantity || 0);
+      return `${idx + 1}. ${nome} | Tam: ${tamanho} | Qtd: ${qtd}`;
+    })
+    .join("\n");
+
+  return `Olá ${employee?.name || "colaborador(a)"},
+
+Informamos o registro de empréstimo de uniforme em seu nome.
+
+Protocolo do empréstimo: #${loan?.id || "-"}
+Data/Hora: ${dataHora}
+Colaborador: ${employee?.name || "-"}
+CPF: ${employee?.cpf || "-"}
+Setor: ${employee?.sector || "-"}
+Cargo: ${employee?.position || "-"}
+Operador responsável: ${operatorName || "-"}
+
+Status do empréstimo: ${formatarStatusEmprestimoParaEmail(loan?.status)}
+
+Itens emprestados:
+${linhasItens || "-"}
+
+Observações: ${loan?.notes || "Não informado"}
+
+Este e-mail é um comprovante automático da operação.
+`;
+};
+
+const montarTextoEmailDevolucaoEmprestimo = ({
+  employee,
+  operatorName,
+  loan,
+  devolucaoItems,
+  observacoes,
+}) => {
+  const dataHora = new Date().toLocaleString("pt-BR");
+  const linhasItens = devolucaoItems
+    .map((item, idx) => {
+      const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
+      const tamanho = item?.uniformStockSize?.size || "-";
+      const qtd = Number(item?.quantity || 0);
+      return `${idx + 1}. ${nome} | Tam: ${tamanho} | Qtd: ${qtd}`;
+    })
+    .join("\n");
+
+  return `Olá ${employee?.name || "colaborador(a)"},
+
+Informamos o registro de devolução de empréstimo de uniforme em seu nome.
+
+Protocolo do empréstimo: #${loan?.id || "-"}
+Data/Hora da operação: ${dataHora}
+Colaborador: ${employee?.name || "-"}
+CPF: ${employee?.cpf || "-"}
+Setor: ${employee?.sector || "-"}
+Cargo: ${employee?.position || "-"}
+Operador responsável: ${operatorName || "-"}
+
+Status atual do empréstimo: ${formatarStatusEmprestimoParaEmail(loan?.status)}
 
 Itens movimentados na operação:
 ${linhasItens || "-"}
@@ -1589,7 +1679,93 @@ export const createUniformLoan = async (req, res) => {
       return loan;
     });
 
-    return res.status(201).json({ success: true, message: "Empréstimo registrado com sucesso.", data: result });
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail do empréstimo enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const loanDetails = await prisma.uniformLoan.findUnique({
+        where: { id: result.id },
+        include: {
+          items: {
+            include: {
+              uniformStockSize: {
+                include: { item: true },
+              },
+            },
+          },
+        },
+      });
+
+      if (loanDetails) {
+        const textoEmail = montarTextoEmailEmprestimo({
+          employee,
+          operatorName: req.user?.name || null,
+          loan: loanDetails,
+          loanItems: loanDetails.items || [],
+        });
+
+        if (employee?.email) {
+          await enviarEmail(
+            employee.email,
+            `Comprovante de Empréstimo de Uniforme #${loanDetails.id}`,
+            textoEmail
+          );
+          emailNotification.details.employee = true;
+        }
+
+        if (emailCopiado) {
+          await enviarEmail(
+            emailCopiado,
+            `Aviso de Empréstimo de Uniforme - ${employee?.name || "Colaborador"} (#${loanDetails.id})`,
+            textoEmail
+          );
+          emailNotification.details.system = true;
+        }
+
+        if (!emailNotification.details.employee && !emailNotification.details.system) {
+          emailNotification = {
+            success: false,
+            message:
+              "Empréstimo registrado, mas nenhum e-mail foi enviado (destinatários não configurados).",
+            details: emailNotification.details,
+          };
+        }
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Empréstimo registrado, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de empréstimo de uniforme:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_LOAN_EMAIL_ERROR",
+            changes: { uniformLoanId: result.id },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail de empréstimo:", logError);
+      }
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Empréstimo registrado com sucesso.",
+      data: result,
+      emailNotification,
+    });
   } catch (error) {
     console.error("Erro ao registrar empréstimo de uniforme:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
@@ -1608,6 +1784,9 @@ export const returnUniformLoanItems = async (req, res) => {
     const loan = await prisma.uniformLoan.findUnique({
       where: { id: loanId },
       include: {
+        employee: {
+          select: EMPLOYEE_SAFE_SELECT,
+        },
         items: { include: { uniformStockSize: { include: { item: true } } } },
       },
     });
@@ -1678,7 +1857,92 @@ export const returnUniformLoanItems = async (req, res) => {
       return updated;
     });
 
-    return res.json({ success: true, message: "Devolução de empréstimo registrada com sucesso.", data: result });
+    let emailNotification = {
+      success: true,
+      message: "Notificações de e-mail da devolução de empréstimo enviadas com sucesso.",
+      details: { employee: false, system: false },
+    };
+
+    try {
+      const devolucaoItems = items
+        .map((entry) => {
+          const loanItemId = Number(entry.uniformLoanItemId);
+          const originalItem = itemMap.get(loanItemId);
+          const quantity = Number(entry.quantity || 0);
+          if (!originalItem || quantity <= 0) return null;
+          return {
+            quantity,
+            uniformStockSize: originalItem.uniformStockSize,
+          };
+        })
+        .filter(Boolean);
+
+      const textoEmail = montarTextoEmailDevolucaoEmprestimo({
+        employee: loan.employee,
+        operatorName: req.user?.name || null,
+        loan: result,
+        devolucaoItems,
+        observacoes: notes || loan.notes || null,
+      });
+
+      if (loan.employee?.email) {
+        await enviarEmail(
+          loan.employee.email,
+          `Comprovante de ${result.status === "SETTLED_RETURN" ? "Devolução Total" : "Devolução Parcial"} de Empréstimo #${loan.id}`,
+          textoEmail
+        );
+        emailNotification.details.employee = true;
+      }
+
+      if (emailCopiado) {
+        await enviarEmail(
+          emailCopiado,
+          `Aviso de Devolução de Empréstimo - ${loan.employee?.name || "Colaborador"} (#${loan.id})`,
+          textoEmail
+        );
+        emailNotification.details.system = true;
+      }
+
+      if (!emailNotification.details.employee && !emailNotification.details.system) {
+        emailNotification = {
+          success: false,
+          message:
+            "Devolução de empréstimo registrada, mas nenhum e-mail foi enviado (destinatários não configurados).",
+          details: emailNotification.details,
+        };
+      }
+    } catch (emailError) {
+      emailNotification = {
+        success: false,
+        message:
+          "Devolução de empréstimo registrada, mas houve falha no envio das notificações de e-mail.",
+        details: emailNotification.details,
+      };
+      console.error("Erro ao enviar e-mails de devolução de empréstimo:", emailError);
+      try {
+        await prisma.userLog.create({
+          data: {
+            userId,
+            action: "UNIFORM_LOAN_RETURN_EMAIL_ERROR",
+            changes: { uniformLoanId: loan.id },
+            newData: {
+              error: emailError?.message || String(emailError),
+              employeeEmail: loan.employee?.email || null,
+              copiedEmail: emailCopiado || null,
+            },
+          },
+        });
+      } catch (logError) {
+        console.error("Erro ao registrar falha de e-mail de devolução de empréstimo:", logError);
+      }
+    }
+
+    return res.json({
+      success: true,
+      message: "Devolução de empréstimo registrada com sucesso.",
+      data: result,
+      emailNotification,
+    });
   } catch (error) {
     console.error("Erro ao devolver empréstimo de uniforme:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });

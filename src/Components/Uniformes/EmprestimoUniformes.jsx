@@ -137,7 +137,18 @@ export default function EmprestimoUniformes() {
         notes: notes?.trim() || null,
       });
       if (res.data?.success) {
-        showTemporaryPopup(res.data.message || "Empréstimo registrado com sucesso.", "success");
+        const emailNotification = res.data?.emailNotification;
+        if (emailNotification?.success === false) {
+          showTemporaryPopup(
+            `${res.data.message || "Empréstimo registrado com sucesso."} ${emailNotification.message || ""}`.trim(),
+            "error"
+          );
+        } else {
+          showTemporaryPopup(
+            `${res.data.message || "Empréstimo registrado com sucesso."} ${emailNotification?.message || ""}`.trim(),
+            "success"
+          );
+        }
         setCart([]);
         setSelectedItemId("");
         setSelectedStockId("");

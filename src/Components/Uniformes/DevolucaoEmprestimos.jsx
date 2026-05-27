@@ -78,7 +78,18 @@ export default function DevolucaoEmprestimos() {
       });
 
       if (res.data?.success) {
-        showTemporaryPopup(res.data.message || "Devolução registrada com sucesso.", "success");
+        const emailNotification = res.data?.emailNotification;
+        if (emailNotification?.success === false) {
+          showTemporaryPopup(
+            `${res.data.message || "Devolução registrada com sucesso."} ${emailNotification.message || ""}`.trim(),
+            "error"
+          );
+        } else {
+          showTemporaryPopup(
+            `${res.data.message || "Devolução registrada com sucesso."} ${emailNotification?.message || ""}`.trim(),
+            "success"
+          );
+        }
         await loadSummary(summary?.employee?.cpf || cpf);
       }
     } catch (error) {
