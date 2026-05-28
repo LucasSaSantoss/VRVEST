@@ -15,9 +15,24 @@
 
 ### Rotas relevantes de uniformes
 
-- `/api/uniforms/*` (retirada/devolução, configurações e baixa DP).
+- `/api/uniforms/*` (retirada, devolução, devolução legada, configurações, baixa DP, relatórios).
 - `/api/uniform-stock/*` (estoque e movimentações).
 - `/api/items/*` (cadastro de itens/uniformes).
+
+### Endpoints relevantes (uniformes)
+
+- `GET /api/uniforms/employee/:cpf/summary`
+- `POST /api/uniforms/withdraw`
+- `POST /api/uniforms/withdrawals/:id/return`
+- `POST /api/uniforms/returns/legacy`
+- `GET /api/uniforms/dp/employee/:cpf/pendencies`
+- `PUT /api/uniforms/withdrawals/:id/settlement`
+- `GET /api/uniforms/loan/stock-options`
+- `GET /api/uniforms/loan/employee/:cpf/summary`
+- `POST /api/uniforms/loan/withdraw`
+- `POST /api/uniforms/loan/:id/return`
+- `GET /api/uniforms/withdrawals`
+- `GET /api/uniforms/loans`
 
 ## Frontend
 
@@ -29,41 +44,47 @@
 ### Componentes principais de uniformes
 
 - `src/Components/Uniformes/EntradaEstoqueUniformes.jsx`
+- `src/Components/Uniformes/CadastroUniformes.jsx`
 - `src/Components/Uniformes/RetiradaUniformes.jsx`
 - `src/Components/Uniformes/DevolucaoUniformes.jsx`
 - `src/Components/Uniformes/EmprestimoUniformes.jsx`
-- `src/Components/Uniformes/CadastroUniformes.jsx`
+- `src/Components/Uniformes/DevolucaoEmprestimos.jsx`
 - `src/Components/Uniformes/BaixaDpUniformes.jsx`
 
-### Endpoints adicionais de empréstimos
+### Relatórios implementados
 
-- `GET /api/uniforms/loan/stock-options`
-- `GET /api/uniforms/loan/employee/:cpf/summary`
-- `POST /api/uniforms/loan/withdraw`
-- `POST /api/uniforms/loan/:id/return`
+- `src/Components/Relatorios/RelatorioRetiradasUniformes.jsx`
+- `src/Components/Relatorios/RelatorioEmprestimosUniformes.jsx`
 
 ## Autenticação e Autorização (estado atual)
 
 1. `level = 4` (Admin):
-   - estoque de uniformes;
-   - cadastro de uniformes;
-   - retirada/devolução;
-   - baixa DP.
+   - acesso a todos os módulos de uniformes.
 2. `level = 3` (Operador):
-   - retirada/devolução.
+   - retirada, devolução, empréstimo e devolução de empréstimos.
 3. `level = 2` (RH/DP):
-   - baixa DP.
+   - baixa de uniformes - DP.
 4. `level = 1`:
    - acesso básico legado.
+
+## Notificações de E-mail (arquitetura de fluxo)
+
+1. Disparo no backend (`uniformController`) após transação principal concluída.
+2. Destinatários:
+   - colaborador (quando houver e-mail cadastrado);
+   - endereço institucional (`EMAIL_COPIADO`).
+3. Retorno para frontend via campo `emailNotification`.
+4. Falhas de e-mail são logadas em `UserLog`.
 
 ## Reforços de Segurança
 
 - Backend de estoque (`uniformStockController`) exige admin.
 - Backend de baixa DP (`uniformController`) exige RH ou admin.
+- Backend de fluxos operacionais exige operador ou admin.
 - Frontend bloqueia acesso por menu e por query `?tab=` sem permissão.
 
 ## Observações de Manutenção
 
 - Não confiar apenas na visibilidade de menu; manter validação no backend.
 - Em base legada, sanear datas inválidas (`0000-00-00`) antes de consultas Prisma.
-- Devolução legada de uniformes (passivo pré-sistema) está documentada como proposta funcional e ainda não implementada.
+- Garantir textos de interface em português brasileiro.

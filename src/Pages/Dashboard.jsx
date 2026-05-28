@@ -348,6 +348,16 @@ export default function Dashboard() {
                 </div>
                 {submenuUniformesOpen && hovered && (
                   <ul className="ml-6 mt-1 space-y-1 text-sm overflow-y-auto">
+                    {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro de Uniformes</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
+                    )}
+                    {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
+                      canAccessTabByLevel(levelUser, "estoqueUniformes")) && (
+                      <li className="my-1 border-t border-white/30" />
+                    )}
                     {canAccessTabByLevel(levelUser, "retiradaUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada de Uniformes</li>
                     )}
@@ -373,15 +383,6 @@ export default function Dashboard() {
                     )}
                     {canAccessTabByLevel(levelUser, "baixaDpUniformes") && (
                       <li className="my-1 border-t border-white/30" />
-                    )}
-                    {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro de Uniformes</li>
-                    )}
-                    {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
-                      <li className="my-1 border-t border-white/30" />
-                    )}
-                    {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
                     )}
                   </ul>
                 )}
