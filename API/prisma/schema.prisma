@@ -13,62 +13,61 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-
 model User {
-  id      Int      @id @default(autoincrement())
-  name    String @db.VarChar(100) 
-  email   String @unique @db.VarChar(100)  
-  password String @db.VarChar(100)  
-  sector  String @db.VarChar(100) 
-  position String @db.VarChar(100) 
-  level Int @default(1)
-  active Int @default(1)
-  uniformWithdrawals UniformWithdrawal[]
-  uniformLoans UniformLoan[]
-  uniformMovements UniformMovement[]
-  updatedUniformSettings UniformSetting[]
+  id                            Int                     @id @default(autoincrement())
+  name                          String                  @db.VarChar(100)
+  email                         String                  @unique @db.VarChar(100)
+  password                      String                  @db.VarChar(100)
+  sector                        String                  @db.VarChar(100)
+  position                      String                  @db.VarChar(100)
+  level                         Int                     @default(1)
+  active                        Int                     @default(1)
+  uniformWithdrawals            UniformWithdrawal[]
+  chargedUniformWithdrawalItems UniformWithdrawalItem[] @relation("UniformWithdrawalItemChargedByUser")
+  uniformLoans                  UniformLoan[]
+  uniformMovements              UniformMovement[]
+  updatedUniformSettings        UniformSetting[]
 }
 
-
 model Employee {
-  id      Int      @id @default(autoincrement())
-  name    String @db.VarChar(100) 
-  cpf     String @unique @db.VarChar(11)  
-  email   String @unique @db.VarChar(100)   
-  matricula String? @db.VarChar(50)   
-  sector  String @db.VarChar(100) 
-  position String @db.VarChar(100) 
-  numPend  Int     @default(0)
-  cadUserID Int 
-  cadUserName String @db.VarChar(100) 
-  modality String @db.VarChar(100)
-  active Int @default(1)
-  tempEmpl Int @default(0)
-  tempEmplObs String? @db.VarChar(255)
-  tempEmplImg String? @db.VarChar(255)
-  tempCreatedDate DateTime? 
-  tempAlterDate DateTime? 
-  pendencies Pendency[]
+  id                 Int                 @id @default(autoincrement())
+  name               String              @db.VarChar(100)
+  cpf                String              @unique @db.VarChar(11)
+  email              String              @unique @db.VarChar(100)
+  matricula          String?             @db.VarChar(50)
+  sector             String              @db.VarChar(100)
+  position           String              @db.VarChar(100)
+  numPend            Int                 @default(0)
+  cadUserID          Int
+  cadUserName        String              @db.VarChar(100)
+  modality           String              @db.VarChar(100)
+  active             Int                 @default(1)
+  tempEmpl           Int                 @default(0)
+  tempEmplObs        String?             @db.VarChar(255)
+  tempEmplImg        String?             @db.VarChar(255)
+  tempCreatedDate    DateTime?
+  tempAlterDate      DateTime?
+  pendencies         Pendency[]
   uniformWithdrawals UniformWithdrawal[]
-  uniformLoans UniformLoan[]
+  uniformLoans       UniformLoan[]
 }
 
 model Pendency {
-  id      Int      @id @default(autoincrement())
-  emplID    Int? 
-  emplName   String @db.VarChar(100)    
-  userId  Int
-  userName String @db.VarChar(100) 
-  date DateTime
-  devolUserId  Int? @default(0)
-  devolUserName String? @db.VarChar(100)
-  devolDate DateTime? 
-  devolType Int @default(1)
-  status Int @default(1)
-  kitSize String @db.VarChar(5)
-  kitPrice String? @db.VarChar(10)
-  kitType String? @db.VarChar(10)
-  employee     Employee? @relation(fields: [emplID], references: [id])
+  id            Int       @id @default(autoincrement())
+  emplID        Int?
+  emplName      String    @db.VarChar(100)
+  userId        Int
+  userName      String    @db.VarChar(100)
+  date          DateTime
+  devolUserId   Int?      @default(0)
+  devolUserName String?   @db.VarChar(100)
+  devolDate     DateTime?
+  devolType     Int       @default(1)
+  status        Int       @default(1)
+  kitSize       String    @db.VarChar(5)
+  kitPrice      String?   @db.VarChar(10)
+  kitType       String?   @db.VarChar(10)
+  employee      Employee? @relation(fields: [emplID], references: [id])
 }
 
 model UserLog {
@@ -81,108 +80,130 @@ model UserLog {
 }
 
 model Sectors {
-  id        Int      @id @default(autoincrement())
-  name      String @db.VarChar(100)
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(100)
 }
 
 model Modalities {
-  id        Int      @id @default(autoincrement())
-  name      String @db.VarChar(100)
+  id   Int    @id @default(autoincrement())
+  name String @db.VarChar(100)
 }
 
-model itemsCloth{
-  id        Int      @id @default(autoincrement())
-  itemName  String @db.VarChar(100)
-  itemVal     String @db.VarChar(10)
+model itemsCloth {
+  id                       Int                @id @default(autoincrement())
+  itemName                 String             @db.VarChar(100)
+  itemVal                  String             @db.VarChar(10)
   // [MANUTENCAO] Motivo: preparar cadastro legado para módulo de estoque de uniformes sem impacto no fluxo atual.
   // [MANUTENCAO] Impacto: campos opcionais/default para uso apenas em novas rotinas de uniformes/estoque.
   // [MANUTENCAO] Data: 2026-05-19
   // [MANUTENCAO] Autor: Márlon Etiene
-  minStock Int @default(0)
-  isUniform Int @default(0)
-  active Int @default(1)
-  uniformStockSizes UniformStockSize[]
+  minStock                 Int                @default(0)
+  isUniform                Int                @default(0)
+  active                   Int                @default(1)
+  // [MANUTENCAO] Motivo: suportar validade por tipo de jornada no modulo de uniformes.
+  // [MANUTENCAO] Impacto: habilita calculo de prazo por item retirado (plantonista/diarista).
+  // [MANUTENCAO] Data: 2026-05-28
+  // [MANUTENCAO] Autor: Márlon Etiene
+  validadePlantonistaMeses Int                @default(12)
+  validadeDiaristaMeses    Int                @default(12)
+  uniformStockSizes        UniformStockSize[]
 }
 
 model Specialties {
-  id        Int      @id @default(autoincrement())
-  name      String @unique @db.VarChar(100)
-  permiteKitTrauma Int @default(0)
+  id               Int    @id @default(autoincrement())
+  name             String @unique @db.VarChar(100)
+  permiteKitTrauma Int    @default(0)
 }
 
 model UniformStockSize {
   id           Int      @id @default(autoincrement())
-  itemId        Int
+  itemId       Int
   size         String   @db.VarChar(10)
   qtyMainStock Int      @default(0)
   qtyLoanStock Int      @default(0)
   minStock     Int      @default(0)
   updatedAt    DateTime @updatedAt
 
-  item         itemsCloth @relation(fields: [itemId], references: [id])
+  item            itemsCloth              @relation(fields: [itemId], references: [id])
   withdrawalItems UniformWithdrawalItem[]
-  loanItems UniformLoanItem[]
-  movements    UniformMovement[]
+  loanItems       UniformLoanItem[]
+  movements       UniformMovement[]
 
   @@unique([itemId, size])
 }
 
 model UniformLoan {
-  id           Int      @id @default(autoincrement())
-  employeeId   Int
-  userId       Int
-  loanDate     DateTime
-  status       String   @db.VarChar(30)
-  notes        String?  @db.VarChar(500)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  id         Int      @id @default(autoincrement())
+  employeeId Int
+  userId     Int
+  loanDate   DateTime
+  status     String   @db.VarChar(30)
+  notes      String?  @db.VarChar(500)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
-  employee     Employee @relation(fields: [employeeId], references: [id])
-  user         User     @relation(fields: [userId], references: [id])
-  items        UniformLoanItem[]
+  employee Employee          @relation(fields: [employeeId], references: [id])
+  user     User              @relation(fields: [userId], references: [id])
+  items    UniformLoanItem[]
 }
 
 model UniformLoanItem {
-  id                 Int      @id @default(autoincrement())
+  id                 Int @id @default(autoincrement())
   uniformLoanId      Int
   uniformStockSizeId Int
   quantity           Int
-  returnedQuantity   Int      @default(0)
+  returnedQuantity   Int @default(0)
 
-  loan               UniformLoan      @relation(fields: [uniformLoanId], references: [id])
-  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
+  loan             UniformLoan      @relation(fields: [uniformLoanId], references: [id])
+  uniformStockSize UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
 }
 
 model UniformWithdrawal {
-  id                     Int      @id @default(autoincrement())
-  employeeId             Int
-  userId                 Int
-  year                   Int
-  withdrawDate           DateTime
-  totalQuantity          Int
-  limitApplied           Int
-  status                 String   @db.VarChar(30)
-  nonDeliveryJustification String? @db.VarChar(500)
-  chargeReason           String?  @db.VarChar(500)
-  notes                  String?  @db.VarChar(500)
-  createdAt              DateTime @default(now())
-  updatedAt              DateTime @updatedAt
+  id                       Int      @id @default(autoincrement())
+  employeeId               Int
+  userId                   Int
+  year                     Int
+  withdrawDate             DateTime
+  totalQuantity            Int
+  limitApplied             Int
+  // [MANUTENCAO] Motivo: registrar jornada da retirada para aplicar limite e validade corretos.
+  // [MANUTENCAO] Impacto: permite diferenciar regras entre plantonista e diarista.
+  // [MANUTENCAO] Data: 2026-05-28
+  // [MANUTENCAO] Autor: Márlon Etiene
+  workType                 String   @default("DIARISTA") @db.VarChar(20)
+  status                   String   @db.VarChar(30)
+  nonDeliveryJustification String?  @db.VarChar(500)
+  chargeReason             String?  @db.VarChar(500)
+  notes                    String?  @db.VarChar(500)
+  createdAt                DateTime @default(now())
+  updatedAt                DateTime @updatedAt
 
-  employee               Employee @relation(fields: [employeeId], references: [id])
-  user                   User @relation(fields: [userId], references: [id])
-  items                  UniformWithdrawalItem[]
+  employee Employee                @relation(fields: [employeeId], references: [id])
+  user     User                    @relation(fields: [userId], references: [id])
+  items    UniformWithdrawalItem[]
 }
 
 model UniformWithdrawalItem {
-  id                 Int      @id @default(autoincrement())
+  id                  Int       @id @default(autoincrement())
   uniformWithdrawalId Int
-  uniformStockSizeId Int
-  quantity           Int
-  returnedQuantity   Int      @default(0)
-  discountedQuantity Int      @default(0)
+  uniformStockSizeId  Int
+  quantity            Int
+  returnedQuantity    Int       @default(0)
+  discountedQuantity  Int       @default(0)
+  // [MANUTENCAO] Motivo: controlar vencimento e status de cobranca por item retirado.
+  // [MANUTENCAO] Impacto: base para regras de expiracao, baixa e bloqueio de cobranca duplicada.
+  // [MANUTENCAO] Data: 2026-05-28
+  // [MANUTENCAO] Autor: Márlon Etiene
+  dueDate             DateTime?
+  expiredAt           DateTime?
+  expirationStatus    String    @default("ACTIVE") @db.VarChar(30)
+  isChargeableExtra   Int       @default(0)
+  chargedAt           DateTime?
+  chargedByUserId     Int?
 
-  withdrawal         UniformWithdrawal @relation(fields: [uniformWithdrawalId], references: [id])
-  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
+  withdrawal       UniformWithdrawal @relation(fields: [uniformWithdrawalId], references: [id])
+  uniformStockSize UniformStockSize  @relation(fields: [uniformStockSizeId], references: [id])
+  chargedByUser    User?             @relation("UniformWithdrawalItemChargedByUser", fields: [chargedByUserId], references: [id])
 }
 
 model UniformMovement {
@@ -197,19 +218,25 @@ model UniformMovement {
   notes              String?  @db.VarChar(500)
   createdAt          DateTime @default(now())
 
-  uniformStockSize   UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
-  user               User @relation(fields: [userId], references: [id])
+  uniformStockSize UniformStockSize @relation(fields: [uniformStockSizeId], references: [id])
+  user             User             @relation(fields: [userId], references: [id])
 }
 
 model UniformSetting {
-  id               Int      @id @default(autoincrement())
-  annualLimit      Int      @default(2)
-  allowZeroOrNegativeStockMovement Int @default(0)
-  updatedByUserId  Int?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id                               Int      @id @default(autoincrement())
+  annualLimit                      Int      @default(2)
+  // [MANUTENCAO] Motivo: substituir limite anual global por limites por jornada.
+  // [MANUTENCAO] Impacto: permite regra de retirada especifica para plantonista e diarista.
+  // [MANUTENCAO] Data: 2026-05-28
+  // [MANUTENCAO] Autor: Márlon Etiene
+  annualLimitPlantonista           Int      @default(1)
+  annualLimitDiarista              Int      @default(2)
+  allowZeroOrNegativeStockMovement Int      @default(0)
+  updatedByUserId                  Int?
+  createdAt                        DateTime @default(now())
+  updatedAt                        DateTime @updatedAt
 
-  updatedBy        User?    @relation(fields: [updatedByUserId], references: [id])
+  updatedBy User? @relation(fields: [updatedByUserId], references: [id])
 }
 
 model UniformSize {
