@@ -78,7 +78,7 @@ const getOrCreateUniformSetting = async (tx = prisma) => {
 
 const getItemUnitValue = (itemVal) => {
   if (itemVal === null || itemVal === undefined) return 0;
-  const normalized = String(itemVal).replace(".", "").replace(",", ".");
+  const normalized = String(itemVal).replace(/\./g, "").replace(",", ".");
   const numeric = Number(normalized);
   return Number.isFinite(numeric) ? numeric : 0;
 };

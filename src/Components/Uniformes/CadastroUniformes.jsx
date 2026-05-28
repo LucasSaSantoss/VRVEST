@@ -3,6 +3,28 @@ import { api, obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
+const formatarMoedaPtBrInput = (valor) => {
+  const somenteDigitos = String(valor || "").replace(/\D/g, "");
+  if (!somenteDigitos) return "";
+
+  const numero = Number(somenteDigitos) / 100;
+  return numero.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
+const formatarMoedaPtBrExibicao = (valor) => {
+  const somenteDigitos = String(valor || "").replace(/\D/g, "");
+  if (!somenteDigitos) return "0,00";
+
+  const numero = Number(somenteDigitos) / 100;
+  return numero.toLocaleString("pt-BR", {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
+};
+
 function Modal({ open, title, onClose, children }) {
   if (!open) return null;
   return (
@@ -92,7 +114,7 @@ export default function CadastroUniformes() {
   const abrirEdicao = (u) => {
     setEditando(u);
     setEditNome(u.itemName || "");
-    setEditValor(u.itemVal || "");
+    setEditValor(formatarMoedaPtBrInput(u.itemVal || ""));
     setEditAtivo(String(u.active || 0));
   };
 
@@ -170,7 +192,7 @@ export default function CadastroUniformes() {
                   .map((u) => (
                   <tr key={u.id} className="border-b">
                     <td className="py-2">{u.itemName}</td>
-                    <td>{u.itemVal}</td>
+                    <td>{formatarMoedaPtBrExibicao(u.itemVal)}</td>
                     <td>
                       <span className={`text-xs font-semibold ${u.active === 1 ? "text-green-700" : "text-red-700"}`}>
                         {u.active === 1 ? "Ativo" : "Inativo"}
@@ -235,7 +257,13 @@ export default function CadastroUniformes() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Valor do uniforme</label>
-            <input className="border rounded px-3 py-2 w-full" value={novoValor} onChange={(e) => setNovoValor(e.target.value)} />
+            <input
+              className="border rounded px-3 py-2 w-full"
+              value={novoValor}
+              onChange={(e) => setNovoValor(formatarMoedaPtBrInput(e.target.value))}
+              placeholder="0,00"
+              inputMode="numeric"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
@@ -259,7 +287,13 @@ export default function CadastroUniformes() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Valor do uniforme</label>
-            <input className="border rounded px-3 py-2 w-full" value={editValor} onChange={(e) => setEditValor(e.target.value)} />
+            <input
+              className="border rounded px-3 py-2 w-full"
+              value={editValor}
+              onChange={(e) => setEditValor(formatarMoedaPtBrInput(e.target.value))}
+              placeholder="0,00"
+              inputMode="numeric"
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
