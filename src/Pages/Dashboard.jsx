@@ -351,6 +351,10 @@ export default function Dashboard() {
                     {canAccessTabByLevel(levelUser, "cadastroUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cadastroUniformes")}>Cadastro de Uniformes</li>
                     )}
+                    {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
+                      canAccessTabByLevel(levelUser, "estoqueUniformes")) && (
+                      <li className="my-1 border-t border-white/30" />
+                    )}                    
                     {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
                     )}
