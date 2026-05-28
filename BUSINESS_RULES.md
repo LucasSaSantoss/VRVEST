@@ -86,7 +86,7 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
 ### Status da retirada (`UniformWithdrawal.status`)
 
 1. `REGULAR`: retirada dentro da regra.
-2. `EXEMPT`: retirada acima do limite com justificativa aceita.
+2. `EXEMPT`: retirada extra (acima do limite) com justificativa aceita.
 3. `CHARGEABLE`: retirada acima do limite sem justificativa.
 4. `PARTIAL_RETURN`: parte dos itens ainda pendente.
 5. `SETTLED_RETURN`: regularizada por devolução física total.

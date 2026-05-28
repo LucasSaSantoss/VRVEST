@@ -96,7 +96,7 @@ const isStockMovementWithoutBalanceAllowed = (settings) =>
 
 const STATUS_RETIRADA_EMAIL_LABEL = {
   REGULAR: "Retirada",
-  EXEMPT: "Isenta",
+  EXEMPT: "Extra",
   CHARGEABLE: "Com Cobrança",
   PARTIAL_RETURN: "Devolução Parcial",
   SETTLED_RETURN: "Devolução Total",

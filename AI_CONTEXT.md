@@ -69,7 +69,7 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 ### `UniformWithdrawal.status`
 
 - `REGULAR`: retirada dentro da regra.
-- `EXEMPT`: retirada acima do limite com justificativa aceita.
+- `EXEMPT`: retirada extra (acima do limite) com justificativa aceita.
 - `CHARGEABLE`: retirada acima do limite sem justificativa.
 - `PARTIAL_RETURN`: retirada parcialmente regularizada.
 - `SETTLED_RETURN`: retirada regularizada por devolução física.

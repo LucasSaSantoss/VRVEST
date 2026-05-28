@@ -6,7 +6,7 @@ const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
 const STATUS_LABEL = {
   REGULAR: "Retirada",
-  EXEMPT: "Isenta",
+  EXEMPT: "Extra",
   CHARGEABLE: "Com Cobrança",
   PARTIAL_RETURN: "Devolução Parcial",
   SETTLED_RETURN: "Devolução Total",
@@ -21,7 +21,9 @@ export default function RelatorioRetiradasUniformes() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
+  const ITENS_POR_PAGINA = 10;
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -40,8 +42,10 @@ export default function RelatorioRetiradasUniformes() {
       const res = await api.get("/uniforms/withdrawals", { params });
       if (res.data?.success) {
         setRows(res.data.data || []);
+        setPaginaAtual(1);
       } else {
         setRows([]);
+        setPaginaAtual(1);
       }
     } catch (error) {
       setRows([]);
@@ -105,6 +109,44 @@ export default function RelatorioRetiradasUniformes() {
     );
   };
 
+  const linhasTabela = rows.flatMap((w) => {
+    const itens = w.items || [];
+    if (!itens.length) {
+      return [
+        {
+          key: `withdrawal-${w.id}`,
+          ordem: `Retirada #${w.id}`,
+          dataHora: new Date(w.withdrawDate).toLocaleString("pt-BR"),
+          colaborador: w.employee?.name || "-",
+          cpf: w.employee?.cpf || "-",
+          uniforme: "-",
+          qtdRetirada: Number(w.totalQuantity || 0),
+          qtdDevolvida: 0,
+          status: formatStatus(w.status),
+          operador: w.user?.name || "-",
+        },
+      ];
+    }
+    return itens.map((item, itemIndex) => ({
+      key: `withdrawal-${w.id}-item-${item.id || itemIndex}`,
+      ordem: `Retirada #${w.id}`,
+      dataHora: new Date(w.withdrawDate).toLocaleString("pt-BR"),
+      colaborador: w.employee?.name || "-",
+      cpf: w.employee?.cpf || "-",
+      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${item.uniformStockSize?.size || "-"})`,
+      qtdRetirada: Number(item.quantity || 0),
+      qtdDevolvida: Number(item.returnedQuantity || 0),
+      status: formatStatus(w.status),
+      operador: w.user?.name || "-",
+    }));
+  });
+
+  const totalPaginas = Math.max(1, Math.ceil(linhasTabela.length / ITENS_POR_PAGINA));
+  const linhasPaginadas = linhasTabela.slice(
+    (paginaAtual - 1) * ITENS_POR_PAGINA,
+    paginaAtual * ITENS_POR_PAGINA
+  );
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
@@ -137,7 +179,7 @@ export default function RelatorioRetiradasUniformes() {
           >
             <option value="">Todos os status</option>
             <option value="REGULAR">Retirada</option>
-            <option value="EXEMPT">Isenta</option>
+            <option value="EXEMPT">Extra</option>
             <option value="CHARGEABLE">Com Cobrança</option>
             <option value="PARTIAL_RETURN">Devolução Parcial</option>
             <option value="SETTLED_RETURN">Devolução Total</option>
@@ -183,48 +225,40 @@ export default function RelatorioRetiradasUniformes() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((w) => {
-                  const itens = w.items || [];
-                  if (itens.length === 0) {
-                    return (
-                      <tr key={`withdrawal-${w.id}`} className="border-b align-top">
-                        <td className="py-2 pr-3 font-semibold">Retirada #{w.id}</td>
-                        <td className="py-2 pr-3">{new Date(w.withdrawDate).toLocaleString("pt-BR")}</td>
-                        <td className="py-2 pr-3">{w.employee?.name || "-"}</td>
-                        <td className="py-2 pr-3">{w.employee?.cpf || "-"}</td>
-                        <td className="py-2 pr-3">-</td>
-                        <td className="py-2 pr-3 font-semibold">{w.totalQuantity || 0}</td>
-                        <td className="py-2 pr-3 font-semibold">0</td>
-                        <td className="py-2 pr-3">{formatStatus(w.status)}</td>
-                        <td className="py-2">{w.user?.name || "-"}</td>
-                      </tr>
-                    );
-                  }
-
-                  return itens.map((item, itemIndex) => {
-                    const itemLabel = `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
-                      item.uniformStockSize?.size || "-"
-                    })`;
-                    const qtdRetirada = Number(item.quantity || 0);
-                    const qtdDevolvida = Number(item.returnedQuantity || 0);
-
-                    return (
-                      <tr key={`withdrawal-${w.id}-item-${item.id || itemIndex}`} className="border-b align-top">
-                        <td className="py-2 pr-3 font-semibold">Retirada #{w.id}</td>
-                        <td className="py-2 pr-3">{new Date(w.withdrawDate).toLocaleString("pt-BR")}</td>
-                        <td className="py-2 pr-3">{w.employee?.name || "-"}</td>
-                        <td className="py-2 pr-3">{w.employee?.cpf || "-"}</td>
-                        <td className="py-2 pr-3">{itemLabel}</td>
-                        <td className="py-2 pr-3 font-semibold">{qtdRetirada}</td>
-                        <td className="py-2 pr-3 font-semibold">{qtdDevolvida}</td>
-                        <td className="py-2 pr-3">{formatStatus(w.status)}</td>
-                        <td className="py-2">{w.user?.name || "-"}</td>
-                      </tr>
-                    );
-                  });
-                })}
+                {linhasPaginadas.map((linha) => (
+                  <tr key={linha.key} className="border-b align-top">
+                    <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
+                    <td className="py-2 pr-3">{linha.dataHora}</td>
+                    <td className="py-2 pr-3">{linha.colaborador}</td>
+                    <td className="py-2 pr-3">{linha.cpf}</td>
+                    <td className="py-2 pr-3">{linha.uniforme}</td>
+                    <td className="py-2 pr-3 font-semibold">{linha.qtdRetirada}</td>
+                    <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
+                    <td className="py-2 pr-3">{linha.status}</td>
+                    <td className="py-2">{linha.operador}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
+            <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
+              <span>Página {paginaAtual} de {totalPaginas}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaAtual >= totalPaginas}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </section>

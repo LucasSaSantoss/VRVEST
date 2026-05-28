@@ -8,7 +8,7 @@ const STATUS_RETIRADA_LABEL = {
   PARTIAL_RETURN: "Devolução Parcial",
   RETURNED: "Devolução Total",
   CHARGEABLE: "Com Cobrança",
-  EXEMPT: "Isenta",
+  EXEMPT: "Extra",
   SETTLED_DISCOUNT: "Baixa Financeira",
   SETTLED_RETURN: "Devolução Total",
   REGULAR: "Retirada",

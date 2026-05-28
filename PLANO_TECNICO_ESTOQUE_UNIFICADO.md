@@ -75,7 +75,7 @@ Cabeçalho da retirada:
 - `withdrawDate`
 - `totalQuantity`
 - `limitApplied` (1 ou 2)
-- `status` (`REGULAR`, `CHARGEABLE`, `EXEMPT`)
+- `status` (`REGULAR`, `CHARGEABLE`, `EXEMPT` = Extra)
 - `nonDeliveryJustification` (opcional)
 - `chargeReason` (opcional)
 - `createdAt`

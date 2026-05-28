@@ -22,8 +22,10 @@ function Modal({ open, title, onClose, children }) {
 
 export default function CadastroUniformes() {
   const [uniformes, setUniformes] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const [loading, setLoading] = useState(false);
+  const ITENS_POR_PAGINA = 10;
 
   const [novoNome, setNovoNome] = useState("");
   const [novoValor, setNovoValor] = useState("");
@@ -44,7 +46,10 @@ export default function CadastroUniformes() {
     setLoading(true);
     try {
       const res = await api.get("/items/uniforms");
-      if (res.data?.success) setUniformes(res.data.data || []);
+      if (res.data?.success) {
+        setUniformes(res.data.data || []);
+        setPaginaAtual(1);
+      }
     } catch (error) {
       showTemporaryPopup(obterMensagemErroApi(error, "Erro ao carregar uniformes."), "error");
     } finally {
@@ -160,7 +165,9 @@ export default function CadastroUniformes() {
                 </tr>
               </thead>
               <tbody>
-                {uniformes.map((u) => (
+                {uniformes
+                  .slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA)
+                  .map((u) => (
                   <tr key={u.id} className="border-b">
                     <td className="py-2">{u.itemName}</td>
                     <td>{u.itemVal}</td>
@@ -191,6 +198,31 @@ export default function CadastroUniformes() {
                 ))}
               </tbody>
             </table>
+            <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
+              <span>
+                Página {paginaAtual} de {Math.max(1, Math.ceil(uniformes.length / ITENS_POR_PAGINA))}
+              </span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() =>
+                    setPaginaAtual((p) =>
+                      Math.min(Math.ceil(uniformes.length / ITENS_POR_PAGINA), p + 1)
+                    )
+                  }
+                  disabled={paginaAtual >= Math.ceil(uniformes.length / ITENS_POR_PAGINA)}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </section>

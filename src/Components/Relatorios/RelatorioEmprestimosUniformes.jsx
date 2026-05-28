@@ -18,7 +18,9 @@ export default function RelatorioEmprestimosUniformes() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
+  const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
+  const ITENS_POR_PAGINA = 10;
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -37,8 +39,10 @@ export default function RelatorioEmprestimosUniformes() {
       const res = await api.get("/uniforms/loans", { params });
       if (res.data?.success) {
         setRows(res.data.data || []);
+        setPaginaAtual(1);
       } else {
         setRows([]);
+        setPaginaAtual(1);
       }
     } catch (error) {
       setRows([]);
@@ -101,6 +105,44 @@ export default function RelatorioEmprestimosUniformes() {
       `relatorio_emprestimos_uniformes_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
+
+  const linhasTabela = rows.flatMap((loan) => {
+    const itens = loan.items || [];
+    if (!itens.length) {
+      return [
+        {
+          key: `loan-${loan.id}`,
+          ordem: `Empréstimo #${loan.id}`,
+          dataHora: new Date(loan.loanDate).toLocaleString("pt-BR"),
+          colaborador: loan.employee?.name || "-",
+          cpf: loan.employee?.cpf || "-",
+          uniforme: "-",
+          qtdEmprestada: 0,
+          qtdDevolvida: 0,
+          status: formatStatus(loan.status),
+          operador: loan.user?.name || "-",
+        },
+      ];
+    }
+    return itens.map((item, itemIndex) => ({
+      key: `loan-${loan.id}-item-${item.id || itemIndex}`,
+      ordem: `Empréstimo #${loan.id}`,
+      dataHora: new Date(loan.loanDate).toLocaleString("pt-BR"),
+      colaborador: loan.employee?.name || "-",
+      cpf: loan.employee?.cpf || "-",
+      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${item.uniformStockSize?.size || "-"})`,
+      qtdEmprestada: Number(item.quantity || 0),
+      qtdDevolvida: Number(item.returnedQuantity || 0),
+      status: formatStatus(loan.status),
+      operador: loan.user?.name || "-",
+    }));
+  });
+
+  const totalPaginas = Math.max(1, Math.ceil(linhasTabela.length / ITENS_POR_PAGINA));
+  const linhasPaginadas = linhasTabela.slice(
+    (paginaAtual - 1) * ITENS_POR_PAGINA,
+    paginaAtual * ITENS_POR_PAGINA
+  );
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
@@ -177,48 +219,40 @@ export default function RelatorioEmprestimosUniformes() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((loan) => {
-                  const itens = loan.items || [];
-                  if (itens.length === 0) {
-                    return (
-                      <tr key={`loan-${loan.id}`} className="border-b align-top">
-                        <td className="py-2 pr-3 font-semibold">Empréstimo #{loan.id}</td>
-                        <td className="py-2 pr-3">{new Date(loan.loanDate).toLocaleString("pt-BR")}</td>
-                        <td className="py-2 pr-3">{loan.employee?.name || "-"}</td>
-                        <td className="py-2 pr-3">{loan.employee?.cpf || "-"}</td>
-                        <td className="py-2 pr-3">-</td>
-                        <td className="py-2 pr-3 font-semibold">0</td>
-                        <td className="py-2 pr-3 font-semibold">0</td>
-                        <td className="py-2 pr-3">{formatStatus(loan.status)}</td>
-                        <td className="py-2">{loan.user?.name || "-"}</td>
-                      </tr>
-                    );
-                  }
-
-                  return itens.map((item, itemIndex) => {
-                    const itemLabel = `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
-                      item.uniformStockSize?.size || "-"
-                    })`;
-                    const qtdEmprestada = Number(item.quantity || 0);
-                    const qtdDevolvida = Number(item.returnedQuantity || 0);
-
-                    return (
-                      <tr key={`loan-${loan.id}-item-${item.id || itemIndex}`} className="border-b align-top">
-                        <td className="py-2 pr-3 font-semibold">Empréstimo #{loan.id}</td>
-                        <td className="py-2 pr-3">{new Date(loan.loanDate).toLocaleString("pt-BR")}</td>
-                        <td className="py-2 pr-3">{loan.employee?.name || "-"}</td>
-                        <td className="py-2 pr-3">{loan.employee?.cpf || "-"}</td>
-                        <td className="py-2 pr-3">{itemLabel}</td>
-                        <td className="py-2 pr-3 font-semibold">{qtdEmprestada}</td>
-                        <td className="py-2 pr-3 font-semibold">{qtdDevolvida}</td>
-                        <td className="py-2 pr-3">{formatStatus(loan.status)}</td>
-                        <td className="py-2">{loan.user?.name || "-"}</td>
-                      </tr>
-                    );
-                  });
-                })}
+                {linhasPaginadas.map((linha) => (
+                  <tr key={linha.key} className="border-b align-top">
+                    <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
+                    <td className="py-2 pr-3">{linha.dataHora}</td>
+                    <td className="py-2 pr-3">{linha.colaborador}</td>
+                    <td className="py-2 pr-3">{linha.cpf}</td>
+                    <td className="py-2 pr-3">{linha.uniforme}</td>
+                    <td className="py-2 pr-3 font-semibold">{linha.qtdEmprestada}</td>
+                    <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
+                    <td className="py-2 pr-3">{linha.status}</td>
+                    <td className="py-2">{linha.operador}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
+            <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
+              <span>Página {paginaAtual} de {totalPaginas}</span>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                  disabled={paginaAtual === 1}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Anterior
+                </button>
+                <button
+                  onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                  disabled={paginaAtual >= totalPaginas}
+                  className="px-3 py-1 rounded border disabled:opacity-50"
+                >
+                  Próxima
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </section>

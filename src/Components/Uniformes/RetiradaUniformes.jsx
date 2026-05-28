@@ -5,7 +5,7 @@ import { LuPlus } from "react-icons/lu";
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 const STATUS_RETIRADA_LABEL = {
   REGULAR: "Retirada",
-  EXEMPT: "Isenta",
+  EXEMPT: "Extra",
   CHARGEABLE: "Com Cobrança",
   PARTIAL_RETURN: "Devolução Parcial",
   SETTLED_RETURN: "Devolução Total",
