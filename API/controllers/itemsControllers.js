@@ -3,6 +3,12 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 const ADMIN_LEVEL = 4;
 
+const normalizarMesesValidade = (value, fallback = 12) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  return parsed;
+};
+
 const requireAdmin = (req, res) => {
   if (Number(req.user?.level) < ADMIN_LEVEL) {
     res.status(403).json({
@@ -12,6 +18,14 @@ const requireAdmin = (req, res) => {
     return false;
   }
   return true;
+};
+
+const validarMesesValidade = (value, campo) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 12) {
+    return `${campo} deve ser um número inteiro entre 1 e 12 meses.`;
+  }
+  return null;
 };
 
 export const getItemsPrices = async (req, res) => {
@@ -30,6 +44,16 @@ export const listUniformItems = async (req, res) => {
   try {
     const data = await prisma.itemsCloth.findMany({
       where: { isUniform: 1 },
+      select: {
+        id: true,
+        itemName: true,
+        itemVal: true,
+        minStock: true,
+        isUniform: true,
+        active: true,
+        validadePlantonistaMeses: true,
+        validadeDiaristaMeses: true,
+      },
       orderBy: { itemName: "asc" },
     });
     return res.json({ success: true, data });
@@ -46,7 +70,14 @@ export const createUniformItem = async (req, res) => {
   if (!requireAdmin(req, res)) return;
 
   try {
-    const { itemName, itemVal, minStock, active } = req.body;
+    const {
+      itemName,
+      itemVal,
+      minStock,
+      active,
+      validadePlantonistaMeses,
+      validadeDiaristaMeses,
+    } = req.body;
     if (!itemName || !String(itemName).trim()) {
       return res.status(400).json({
         success: false,
@@ -60,6 +91,25 @@ export const createUniformItem = async (req, res) => {
       });
     }
 
+    const erroValidadePlantonista = validarMesesValidade(
+      validadePlantonistaMeses ?? 12,
+      "Validade para plantonista"
+    );
+    if (erroValidadePlantonista) {
+      return res.status(400).json({ success: false, message: erroValidadePlantonista });
+    }
+
+    const erroValidadeDiarista = validarMesesValidade(
+      validadeDiaristaMeses ?? 12,
+      "Validade para diarista"
+    );
+    if (erroValidadeDiarista) {
+      return res.status(400).json({ success: false, message: erroValidadeDiarista });
+    }
+
+    const validadePlantonista = normalizarMesesValidade(validadePlantonistaMeses, 12);
+    const validadeDiarista = normalizarMesesValidade(validadeDiaristaMeses, 12);
+
     const created = await prisma.itemsCloth.create({
       data: {
         itemName: String(itemName).trim(),
@@ -67,6 +117,8 @@ export const createUniformItem = async (req, res) => {
         minStock: Number(minStock || 0),
         isUniform: 1,
         active: active !== undefined ? Number(active) : 1,
+        validadePlantonistaMeses: validadePlantonista,
+        validadeDiaristaMeses: validadeDiarista,
       },
     });
 
@@ -93,7 +145,14 @@ export const updateUniformItem = async (req, res) => {
 
   try {
     const id = Number(req.params.id);
-    const { itemName, itemVal, minStock, active } = req.body;
+    const {
+      itemName,
+      itemVal,
+      minStock,
+      active,
+      validadePlantonistaMeses,
+      validadeDiaristaMeses,
+    } = req.body;
     const current = await prisma.itemsCloth.findUnique({ where: { id } });
     if (!current || current.isUniform !== 1) {
       return res.status(404).json({
@@ -101,6 +160,35 @@ export const updateUniformItem = async (req, res) => {
         message: "Uniforme não encontrado.",
       });
     }
+
+    if (validadePlantonistaMeses !== undefined) {
+      const erroValidadePlantonista = validarMesesValidade(
+        validadePlantonistaMeses,
+        "Validade para plantonista"
+      );
+      if (erroValidadePlantonista) {
+        return res.status(400).json({ success: false, message: erroValidadePlantonista });
+      }
+    }
+
+    if (validadeDiaristaMeses !== undefined) {
+      const erroValidadeDiarista = validarMesesValidade(
+        validadeDiaristaMeses,
+        "Validade para diarista"
+      );
+      if (erroValidadeDiarista) {
+        return res.status(400).json({ success: false, message: erroValidadeDiarista });
+      }
+    }
+
+    const validadePlantonistaAtualizada =
+      validadePlantonistaMeses !== undefined
+        ? normalizarMesesValidade(validadePlantonistaMeses, current.validadePlantonistaMeses)
+        : current.validadePlantonistaMeses;
+    const validadeDiaristaAtualizada =
+      validadeDiaristaMeses !== undefined
+        ? normalizarMesesValidade(validadeDiaristaMeses, current.validadeDiaristaMeses)
+        : current.validadeDiaristaMeses;
 
     const updated = await prisma.itemsCloth.update({
       where: { id },
@@ -110,6 +198,8 @@ export const updateUniformItem = async (req, res) => {
         itemVal: itemVal !== undefined ? String(itemVal).trim() : current.itemVal,
         minStock: minStock !== undefined ? Number(minStock) : current.minStock,
         active: active !== undefined ? Number(active) : current.active,
+        validadePlantonistaMeses: validadePlantonistaAtualizada,
+        validadeDiaristaMeses: validadeDiaristaAtualizada,
         isUniform: 1,
       },
     });

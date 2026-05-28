@@ -4,8 +4,10 @@ import { api, obterMensagemErroApi } from "../../services/api";
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
 export default function UniformSettings() {
-  const [annualLimit, setAnnualLimit] = useState(2);
-  const [annualLimitInput, setAnnualLimitInput] = useState("2");
+  const [annualLimitPlantonista, setAnnualLimitPlantonista] = useState(1);
+  const [annualLimitDiarista, setAnnualLimitDiarista] = useState(2);
+  const [annualLimitPlantonistaInput, setAnnualLimitPlantonistaInput] = useState("1");
+  const [annualLimitDiaristaInput, setAnnualLimitDiaristaInput] = useState("2");
   const [allowZeroOrNegativeStockMovement, setAllowZeroOrNegativeStockMovement] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -21,9 +23,16 @@ export default function UniformSettings() {
     try {
       const res = await api.get("/uniforms/settings");
       if (res.data?.success) {
-        const limit = Number(res.data.data?.annualLimit || 2);
-        setAnnualLimit(limit);
-        setAnnualLimitInput(String(limit));
+        const limitPlantonista = Number(
+          res.data.data?.annualLimitPlantonista || res.data.data?.annualLimit || 1
+        );
+        const limitDiarista = Number(
+          res.data.data?.annualLimitDiarista || res.data.data?.annualLimit || 2
+        );
+        setAnnualLimitPlantonista(limitPlantonista);
+        setAnnualLimitDiarista(limitDiarista);
+        setAnnualLimitPlantonistaInput(String(limitPlantonista));
+        setAnnualLimitDiaristaInput(String(limitDiarista));
         setAllowZeroOrNegativeStockMovement(
           Number(res.data.data?.allowZeroOrNegativeStockMovement || 0) === 1
         );
@@ -44,16 +53,23 @@ export default function UniformSettings() {
 
   const salvarConfiguracoes = async () => {
     try {
-      const parsed = Number(annualLimitInput);
-      if (!Number.isInteger(parsed) || parsed <= 0) {
-        showTemporaryPopup("Informe um limite anual inteiro maior que zero.", "error");
+      const parsedPlantonista = Number(annualLimitPlantonistaInput);
+      const parsedDiarista = Number(annualLimitDiaristaInput);
+      if (!Number.isInteger(parsedPlantonista) || parsedPlantonista <= 0) {
+        showTemporaryPopup("Informe limite de plantonista inteiro maior que zero.", "error");
+        return;
+      }
+      if (!Number.isInteger(parsedDiarista) || parsedDiarista <= 0) {
+        showTemporaryPopup("Informe limite de diarista inteiro maior que zero.", "error");
         return;
       }
 
       setSaving(true);
       const [limitRes, policyRes] = await Promise.all([
         api.put("/uniforms/settings/annual-limit", {
-          annualLimit: parsed,
+          annualLimitPlantonista: parsedPlantonista,
+          annualLimitDiarista: parsedDiarista,
+          annualLimit: parsedDiarista,
         }),
         api.put("/uniforms/settings/stock-movement-policy", {
           allowZeroOrNegativeStockMovement,
@@ -61,7 +77,8 @@ export default function UniformSettings() {
       ]);
 
       if (limitRes.data?.success && policyRes.data?.success) {
-        setAnnualLimit(parsed);
+        setAnnualLimitPlantonista(parsedPlantonista);
+        setAnnualLimitDiarista(parsedDiarista);
         showTemporaryPopup("Configurações de uniformes atualizadas com sucesso.", "success");
       }
     } catch (error) {
@@ -88,19 +105,34 @@ export default function UniformSettings() {
       ) : (
         <div className="space-y-6">
           <div className="text-sm text-gray-700">
-            Limite atual por funcionário/ano: <strong>{annualLimit}</strong>
+            Limite atual plantonista/ano: <strong>{annualLimitPlantonista}</strong>
+            <br />
+            Limite atual diarista/ano: <strong>{annualLimitDiarista}</strong>
           </div>
 
-          <div className="flex flex-col max-w-xs">
-            <label className="text-gray-700 font-medium mb-1">Limite anual</label>
-            <input
-              type="number"
-              min="1"
-              step="1"
-              value={annualLimitInput}
-              onChange={(e) => setAnnualLimitInput(e.target.value)}
-              className="bg-white border rounded-lg h-11 px-4 text-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-1">Limite anual plantonista</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={annualLimitPlantonistaInput}
+                onChange={(e) => setAnnualLimitPlantonistaInput(e.target.value)}
+                className="bg-white border rounded-lg h-11 px-4 text-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="flex flex-col">
+              <label className="text-gray-700 font-medium mb-1">Limite anual diarista</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={annualLimitDiaristaInput}
+                onChange={(e) => setAnnualLimitDiaristaInput(e.target.value)}
+                className="bg-white border rounded-lg h-11 px-4 text-gray-800 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
 
           <div className="border border-gray-200 rounded-lg p-4 max-w-2xl">

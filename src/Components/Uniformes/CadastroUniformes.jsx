@@ -52,12 +52,16 @@ export default function CadastroUniformes() {
   const [novoNome, setNovoNome] = useState("");
   const [novoValor, setNovoValor] = useState("");
   const [novoAtivo, setNovoAtivo] = useState("1");
+  const [novoValidadePlantonistaMeses, setNovoValidadePlantonistaMeses] = useState("12");
+  const [novoValidadeDiaristaMeses, setNovoValidadeDiaristaMeses] = useState("12");
 
   const [showNovoModal, setShowNovoModal] = useState(false);
   const [editando, setEditando] = useState(null);
   const [editNome, setEditNome] = useState("");
   const [editValor, setEditValor] = useState("");
   const [editAtivo, setEditAtivo] = useState("1");
+  const [editValidadePlantonistaMeses, setEditValidadePlantonistaMeses] = useState("12");
+  const [editValidadeDiaristaMeses, setEditValidadeDiaristaMeses] = useState("12");
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -87,6 +91,8 @@ export default function CadastroUniformes() {
     setNovoNome("");
     setNovoValor("");
     setNovoAtivo("1");
+    setNovoValidadePlantonistaMeses("12");
+    setNovoValidadeDiaristaMeses("12");
   };
 
   const cadastrarUniforme = async () => {
@@ -99,6 +105,8 @@ export default function CadastroUniformes() {
         itemName: novoNome.trim(),
         itemVal: novoValor.trim(),
         active: Number(novoAtivo),
+        validadePlantonistaMeses: Number(novoValidadePlantonistaMeses),
+        validadeDiaristaMeses: Number(novoValidadeDiaristaMeses),
       });
       if (res.data?.success) {
         showTemporaryPopup("Uniforme cadastrado com sucesso.", "success");
@@ -116,6 +124,8 @@ export default function CadastroUniformes() {
     setEditNome(u.itemName || "");
     setEditValor(formatarMoedaPtBrInput(u.itemVal || ""));
     setEditAtivo(String(u.active || 0));
+    setEditValidadePlantonistaMeses(String(u.validadePlantonistaMeses ?? 12));
+    setEditValidadeDiaristaMeses(String(u.validadeDiaristaMeses ?? 12));
   };
 
   const salvarEdicao = async () => {
@@ -130,6 +140,8 @@ export default function CadastroUniformes() {
         itemName: editNome.trim(),
         itemVal: editValor.trim(),
         active: Number(editAtivo),
+        validadePlantonistaMeses: Number(editValidadePlantonistaMeses),
+        validadeDiaristaMeses: Number(editValidadeDiaristaMeses),
       });
       if (res.data?.success) {
         showTemporaryPopup("Uniforme atualizado com sucesso.", "success");
@@ -182,6 +194,8 @@ export default function CadastroUniformes() {
                 <tr className="border-b text-left">
                   <th className="py-2">Nome</th>
                   <th>Valor</th>
+                  <th>Val. Plantonista</th>
+                  <th>Val. Diarista</th>
                   <th>Status</th>
                   <th>Ações</th>
                 </tr>
@@ -193,6 +207,8 @@ export default function CadastroUniformes() {
                   <tr key={u.id} className="border-b">
                     <td className="py-2">{u.itemName}</td>
                     <td>{formatarMoedaPtBrExibicao(u.itemVal)}</td>
+                    <td>{Number(u.validadePlantonistaMeses ?? 12)} mês(es)</td>
+                    <td>{Number(u.validadeDiaristaMeses ?? 12)} mês(es)</td>
                     <td>
                       <span className={`text-xs font-semibold ${u.active === 1 ? "text-green-700" : "text-red-700"}`}>
                         {u.active === 1 ? "Ativo" : "Inativo"}
@@ -272,6 +288,34 @@ export default function CadastroUniformes() {
               <option value="0">Inativo</option>
             </select>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Validade Plantonista (meses)</label>
+            <select
+              className="border rounded px-3 py-2 w-full"
+              value={novoValidadePlantonistaMeses}
+              onChange={(e) => setNovoValidadePlantonistaMeses(e.target.value)}
+            >
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <option key={`novo-plant-${idx + 1}`} value={idx + 1}>
+                  {idx + 1}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Validade Diarista (meses)</label>
+            <select
+              className="border rounded px-3 py-2 w-full"
+              value={novoValidadeDiaristaMeses}
+              onChange={(e) => setNovoValidadeDiaristaMeses(e.target.value)}
+            >
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <option key={`novo-dia-${idx + 1}`} value={idx + 1}>
+                  {idx + 1}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
         <div className="mt-3 flex gap-2">
           <button onClick={cadastrarUniforme} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">Salvar</button>
@@ -300,6 +344,34 @@ export default function CadastroUniformes() {
             <select className="border rounded px-3 py-2 w-full" value={editAtivo} onChange={(e) => setEditAtivo(e.target.value)}>
               <option value="1">Ativo</option>
               <option value="0">Inativo</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Validade Plantonista (meses)</label>
+            <select
+              className="border rounded px-3 py-2 w-full"
+              value={editValidadePlantonistaMeses}
+              onChange={(e) => setEditValidadePlantonistaMeses(e.target.value)}
+            >
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <option key={`edit-plant-${idx + 1}`} value={idx + 1}>
+                  {idx + 1}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Validade Diarista (meses)</label>
+            <select
+              className="border rounded px-3 py-2 w-full"
+              value={editValidadeDiaristaMeses}
+              onChange={(e) => setEditValidadeDiaristaMeses(e.target.value)}
+            >
+              {Array.from({ length: 12 }).map((_, idx) => (
+                <option key={`edit-dia-${idx + 1}`} value={idx + 1}>
+                  {idx + 1}
+                </option>
+              ))}
             </select>
           </div>
         </div>

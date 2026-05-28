@@ -13,6 +13,7 @@ const STATUS_RETIRADA_LABEL = {
 };
 
 export default function RetiradaUniformes() {
+  const [workType, setWorkType] = useState("");
   const [cpf, setCpf] = useState("");
   const [summary, setSummary] = useState(null);
   const [stockOptions, setStockOptions] = useState([]);
@@ -64,6 +65,13 @@ export default function RetiradaUniformes() {
     }
   }, [cpf, lastAutoCpfSearched]);
 
+  useEffect(() => {
+    const cpfDigits = String(cpf || "").replace(/\D/g, "");
+    if (cpfDigits.length === 11) {
+      loadSummary(cpfDigits);
+    }
+  }, [workType]);
+
   const loadSummary = async (cpfValue) => {
     if (!cpfValue?.trim()) {
       showTemporaryPopup("Informe o CPF para buscar o colaborador.", "error");
@@ -72,7 +80,9 @@ export default function RetiradaUniformes() {
 
     setLoading(true);
     try {
-      const res = await api.get(`/uniforms/employee/${cpfValue.trim()}/summary`);
+      const res = await api.get(`/uniforms/employee/${cpfValue.trim()}/summary`, {
+        params: { workType },
+      });
       if (res.data?.success) {
         setSummary(res.data.data);
         showTemporaryPopup("Resumo do colaborador carregado.", "success");
@@ -129,6 +139,11 @@ export default function RetiradaUniformes() {
   }, [summary, cartTotalQuantity]);
 
   const handleAddToCart = () => {
+    if (!workType) {
+      showTemporaryPopup("Selecione a jornada do colaborador antes de adicionar itens.", "error");
+      return;
+    }
+
     const stockId = String(selectedStockId);
     const qty = 1;
     if (!stockId || qty <= 0) {
@@ -158,6 +173,13 @@ export default function RetiradaUniformes() {
       return;
     }
 
+    const mesesValidade =
+      workType === "PLANTONISTA"
+        ? Number(selected.item?.validadePlantonistaMeses || 12)
+        : Number(selected.item?.validadeDiaristaMeses || 12);
+    const dataValidade = new Date();
+    dataValidade.setMonth(dataValidade.getMonth() + mesesValidade);
+
     setCart((prev) => [
       ...prev,
       {
@@ -165,6 +187,7 @@ export default function RetiradaUniformes() {
         uniformStockSizeId: Number(stockId),
         quantity: 1,
         label: `${selected.item?.itemName || "Item"} - Tam ${selected.size}`,
+        validadePrevista: dataValidade.toLocaleDateString("pt-BR"),
       },
     ]);
   };
@@ -194,6 +217,7 @@ export default function RetiradaUniformes() {
     try {
       const res = await api.post("/uniforms/withdraw", {
         cpf: summary.employee.cpf,
+        workType,
         items: cart,
         nonDeliveryJustification: justificativaExcedente?.trim() || null,
         notes: observacoesRetirada?.trim() || null,
@@ -269,11 +293,43 @@ export default function RetiradaUniformes() {
         <>
           <section className="bg-white rounded-xl shadow p-4 mb-3">
             <h3 className="font-semibold text-gray-700 mb-2">Resumo do Colaborador</h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-2 text-sm">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm mb-2">
               <div><strong>Nome:</strong> {summary.employee?.name}</div>
               <div><strong>CPF:</strong> {summary.employee?.cpf}</div>
-              <div><strong>Limite anual:</strong> {summary.limitApplied}</div>
-              <div><strong>Retiradas no ano:</strong> {summary.withdrawnInYear}</div>
+            </div>
+            <div className="mb-2">
+              <p className="text-sm font-semibold text-gray-700 mb-1">Jornada do colaborador</p>
+              <div className="flex flex-wrap items-center gap-4 text-sm">
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="workType"
+                    value="PLANTONISTA"
+                    checked={workType === "PLANTONISTA"}
+                    onChange={(e) => setWorkType(e.target.value)}
+                  />
+                  <span>Plantonista</span>
+                </label>
+                <label className="inline-flex items-center gap-2">
+                  <input
+                    type="radio"
+                    name="workType"
+                    value="DIARISTA"
+                    checked={workType === "DIARISTA"}
+                    onChange={(e) => setWorkType(e.target.value)}
+                  />
+                  <span>Diarista</span>
+                </label>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+              <div>
+                <strong>Limite anual:</strong>{" "}
+                {workType
+                  ? `${summary.limitApplied} (${workType === "PLANTONISTA" ? "Plantonista" : "Diarista"})`
+                  : "Selecione a jornada"}
+              </div>
+              <div><strong>Retiradas no ano:</strong> {workType ? summary.withdrawnInYear : "-"}</div>
             </div>
           </section>
 
@@ -327,7 +383,7 @@ export default function RetiradaUniformes() {
               />
               <button
                 onClick={handleAddToCart}
-                disabled={!selectedItemId || !selectedStockId || processing}
+                disabled={!workType || !selectedItemId || !selectedStockId || processing}
                 className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold px-4 py-2 rounded flex items-center justify-center"
                 title="Adicionar ao carrinho"
               >
@@ -352,7 +408,7 @@ export default function RetiradaUniformes() {
                       className="px-3 py-2 flex items-center justify-between gap-2"
                     >
                       <span className="text-sm text-gray-800">
-                        {c.label} - Qtd: {c.quantity}
+                        {c.label} - Qtd: {c.quantity} - Validade prevista: {c.validadePrevista}
                       </span>
                       <button
                         onClick={() => removeFromCart(c.uniformStockSizeId)}
@@ -421,7 +477,10 @@ export default function RetiradaUniformes() {
                     <div className="divide-y divide-gray-200">
                       {summary.lastWithdrawal.items.map((item) => (
                         <div key={item.id} className="px-3 py-2 text-sm text-gray-800">
-                          {item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size} - Qtd: {item.quantity}
+                          {item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size} - Qtd: {item.quantity} - Validade:{" "}
+                          {item.dueDate
+                            ? new Date(item.dueDate).toLocaleDateString("pt-BR")
+                            : "Sem prazo de devolução"}
                         </div>
                       ))}
                     </div>

@@ -144,11 +144,14 @@ export default function BaixaDpUniformes() {
 
                   <div className="space-y-2 mb-2">
                     {w.items.map((item) => (
-                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-7 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
+                      <div key={item.id} className="grid grid-cols-1 md:grid-cols-8 gap-2 items-center bg-gray-50 rounded p-2 text-sm">
                         <span className="md:col-span-2">{item.uniformStockSize?.item?.itemName} - Tam {item.uniformStockSize?.size}</span>
                         <span>Pendente: {item.pendingQuantity}</span>
                         <span>Unitário: R$ {Number(item.unitValue || 0).toFixed(2)}</span>
                         <span>Subtotal: R$ {Number(item.pendingValue || 0).toFixed(2)}</span>
+                        <span className={`text-xs font-semibold ${item.chargedAt ? "text-red-700" : "text-emerald-700"}`}>
+                          {item.chargedAt ? "Já cobrado" : "Cobrança pendente"}
+                        </span>
                         <input
                           type="number"
                           min="0"
@@ -156,14 +159,15 @@ export default function BaixaDpUniformes() {
                           className="border rounded px-2 py-1 md:max-w-[110px]"
                           placeholder="Qtd desconto"
                           value={discountQtyMap[item.id] || ""}
+                          disabled={Boolean(item.chargedAt)}
                           onChange={(e) => setDiscountQtyMap((prev) => ({ ...prev, [item.id]: e.target.value }))}
                         />
                         <button
-                          disabled={processing}
+                          disabled={processing || Boolean(item.chargedAt)}
                           onClick={() => confirmarBaixaItem(w, item)}
                           className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white font-semibold px-3 py-1.5 rounded md:justify-self-start"
                         >
-                          {processing ? "Aguarde..." : "Confirmar Baixa"}
+                          {item.chargedAt ? "Cobrado" : processing ? "Aguarde..." : "Confirmar Baixa"}
                         </button>
                       </div>
                     ))}

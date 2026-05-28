@@ -94,6 +94,33 @@ const getPendingLoanQuantity = (loanItem) =>
 const isStockMovementWithoutBalanceAllowed = (settings) =>
   Number(settings?.allowZeroOrNegativeStockMovement || 0) === 1;
 
+const WORK_TYPES = {
+  PLANTONISTA: "PLANTONISTA",
+  DIARISTA: "DIARISTA",
+};
+
+const normalizeWorkType = (value) => {
+  const normalized = String(value || "").trim().toUpperCase();
+  if (normalized === WORK_TYPES.PLANTONISTA) return WORK_TYPES.PLANTONISTA;
+  if (normalized === WORK_TYPES.DIARISTA) return WORK_TYPES.DIARISTA;
+  return null;
+};
+
+const resolveAnnualLimitByWorkType = (settings, workType) => {
+  const fallback = Number(settings?.annualLimit || 2);
+  if (workType === WORK_TYPES.PLANTONISTA) {
+    return Number(settings?.annualLimitPlantonista || fallback);
+  }
+  return Number(settings?.annualLimitDiarista || fallback);
+};
+
+const addMonthsSafely = (date, months) => {
+  const base = new Date(date);
+  const d = new Date(base.getTime());
+  d.setMonth(d.getMonth() + Number(months || 0));
+  return d;
+};
+
 const STATUS_RETIRADA_EMAIL_LABEL = {
   REGULAR: "Retirada",
   EXEMPT: "Extra",
@@ -298,8 +325,39 @@ export const updateUniformAnnualLimit = async (req, res) => {
   if (!requireAdmin(req, res)) return;
 
   try {
-    const annualLimit = Number(req.body?.annualLimit);
-    if (!Number.isInteger(annualLimit) || annualLimit <= 0) {
+    const body = req.body || {};
+    const hasOwn = (obj, key) => Object.prototype.hasOwnProperty.call(obj, key);
+
+    const annualLimitPlantonista = Number(body.annualLimitPlantonista);
+    const annualLimitDiarista = Number(body.annualLimitDiarista);
+    const annualLimitLegacy = Number(body.annualLimit);
+
+    const hasNewPayload =
+      hasOwn(body, "annualLimitPlantonista") || hasOwn(body, "annualLimitDiarista");
+    const hasLegacyPayload = hasOwn(body, "annualLimit");
+
+    if (!hasNewPayload && !hasLegacyPayload) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Payload inválido para configuração de limite anual. Informe limite por jornada.",
+      });
+    }
+
+    if (hasNewPayload) {
+      if (!Number.isInteger(annualLimitPlantonista) || annualLimitPlantonista <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Limite anual para plantonista deve ser inteiro maior que zero.",
+        });
+      }
+      if (!Number.isInteger(annualLimitDiarista) || annualLimitDiarista <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Limite anual para diarista deve ser inteiro maior que zero.",
+        });
+      }
+    } else if (!Number.isInteger(annualLimitLegacy) || annualLimitLegacy <= 0) {
       return res.status(400).json({
         success: false,
         message: "Limite anual deve ser um número inteiro maior que zero.",
@@ -312,7 +370,13 @@ export const updateUniformAnnualLimit = async (req, res) => {
       const result = await tx.uniformSetting.update({
         where: { id: settings.id },
         data: {
-          annualLimit,
+          annualLimit: hasNewPayload ? annualLimitDiarista : annualLimitLegacy,
+          annualLimitPlantonista: hasNewPayload
+            ? annualLimitPlantonista
+            : annualLimitLegacy,
+          annualLimitDiarista: hasNewPayload
+            ? annualLimitDiarista
+            : annualLimitLegacy,
           updatedByUserId: userId,
         },
       });
@@ -321,8 +385,21 @@ export const updateUniformAnnualLimit = async (req, res) => {
         data: {
           userId,
           action: "UNIFORM_UPDATE_ANNUAL_LIMIT",
-          changes: { annualLimit },
-          newData: { uniformSettingId: result.id, annualLimit: result.annualLimit },
+          changes: {
+            annualLimit: hasNewPayload ? annualLimitDiarista : annualLimitLegacy,
+            annualLimitPlantonista: hasNewPayload
+              ? annualLimitPlantonista
+              : annualLimitLegacy,
+            annualLimitDiarista: hasNewPayload
+              ? annualLimitDiarista
+              : annualLimitLegacy,
+          },
+          newData: {
+            uniformSettingId: result.id,
+            annualLimit: result.annualLimit,
+            annualLimitPlantonista: result.annualLimitPlantonista,
+            annualLimitDiarista: result.annualLimitDiarista,
+          },
         },
       });
 
@@ -389,6 +466,7 @@ export const getEmployeeUniformSummary = async (req, res) => {
   try {
     const { cpf } = req.params;
     const year = Number(req.query.year) || new Date().getFullYear();
+    const requestedWorkType = normalizeWorkType(req.query.workType) || WORK_TYPES.DIARISTA;
 
     const employee = await prisma.employee.findUnique({
       where: { cpf },
@@ -400,12 +478,20 @@ export const getEmployeeUniformSummary = async (req, res) => {
     }
 
     const settings = await getOrCreateUniformSetting();
-    const limitApplied = Number(settings.annualLimit || 2);
+    const limitsByWorkType = {
+      plantonista: resolveAnnualLimitByWorkType(settings, WORK_TYPES.PLANTONISTA),
+      diarista: resolveAnnualLimitByWorkType(settings, WORK_TYPES.DIARISTA),
+    };
+    const limitApplied = resolveAnnualLimitByWorkType(settings, requestedWorkType);
     const allowZeroOrNegativeStockMovement =
       isStockMovementWithoutBalanceAllowed(settings);
 
     const withdrawnInYear = await prisma.uniformWithdrawal.count({
-      where: { employeeId: employee.id, year },
+      where: {
+        employeeId: employee.id,
+        year,
+        workType: requestedWorkType,
+      },
     });
     const remaining = Math.max(limitApplied - withdrawnInYear, 0);
 
@@ -461,6 +547,8 @@ export const getEmployeeUniformSummary = async (req, res) => {
       data: {
         employee,
         year,
+        workType: requestedWorkType,
+        limitsByWorkType,
         limitApplied,
         withdrawnInYear,
         remaining,
@@ -478,12 +566,19 @@ export const createUniformWithdrawal = async (req, res) => {
   if (!requireOperatorOrAdmin(req, res)) return;
 
   try {
-    const { cpf, items, nonDeliveryJustification, notes } = req.body;
+    const { cpf, items, nonDeliveryJustification, notes, workType } = req.body;
+    const normalizedWorkType = normalizeWorkType(workType);
 
     if (!cpf || !Array.isArray(items) || items.length === 0) {
       return res.status(400).json({
         success: false,
         message: "CPF e lista de itens são obrigatórios.",
+      });
+    }
+    if (!normalizedWorkType) {
+      return res.status(400).json({
+        success: false,
+        message: "Jornada inválida. Informe plantonista ou diarista.",
       });
     }
 
@@ -500,7 +595,7 @@ export const createUniformWithdrawal = async (req, res) => {
     }
 
     const settings = await getOrCreateUniformSetting();
-    const limitApplied = Number(settings.annualLimit || 2);
+    const limitApplied = resolveAnnualLimitByWorkType(settings, normalizedWorkType);
     const allowZeroOrNegativeStockMovement =
       isStockMovementWithoutBalanceAllowed(settings);
 
@@ -516,7 +611,11 @@ export const createUniformWithdrawal = async (req, res) => {
     }
 
     const withdrawnInYear = await prisma.uniformWithdrawal.count({
-      where: { employeeId: employee.id, year },
+      where: {
+        employeeId: employee.id,
+        year,
+        workType: normalizedWorkType,
+      },
     });
     const willExceedLimit = withdrawnInYear + 1 > limitApplied;
 
@@ -534,7 +633,10 @@ export const createUniformWithdrawal = async (req, res) => {
     const userId = req.user.id;
 
     const stockIds = items.map((item) => Number(item.uniformStockSizeId));
-    const stockRecords = await prisma.uniformStockSize.findMany({ where: { id: { in: stockIds } } });
+    const stockRecords = await prisma.uniformStockSize.findMany({
+      where: { id: { in: stockIds } },
+      include: { item: true },
+    });
     const stockMap = new Map(stockRecords.map((s) => [s.id, s]));
 
     for (const item of items) {
@@ -558,6 +660,7 @@ export const createUniformWithdrawal = async (req, res) => {
           withdrawDate: now,
           totalQuantity,
           limitApplied,
+          workType: normalizedWorkType,
           status,
           nonDeliveryJustification: nonDeliveryJustification || null,
           chargeReason,
@@ -568,12 +671,22 @@ export const createUniformWithdrawal = async (req, res) => {
       for (const item of items) {
         const stockId = Number(item.uniformStockSizeId);
         const quantity = 1;
+        const stock = stockMap.get(stockId);
+        const validadeMeses =
+          normalizedWorkType === WORK_TYPES.PLANTONISTA
+            ? Number(stock?.item?.validadePlantonistaMeses || 12)
+            : Number(stock?.item?.validadeDiaristaMeses || 12);
+        const dueDate =
+          status === "EXEMPT" ? null : addMonthsSafely(now, validadeMeses);
 
         await tx.uniformWithdrawalItem.create({
           data: {
             uniformWithdrawalId: withdrawal.id,
             uniformStockSizeId: stockId,
             quantity,
+            dueDate,
+            expirationStatus: "ACTIVE",
+            isChargeableExtra: status === "EXEMPT" ? 1 : 0,
           },
         });
 
@@ -606,6 +719,7 @@ export const createUniformWithdrawal = async (req, res) => {
             totalQuantity,
             status,
             limitApplied,
+            workType: normalizedWorkType,
           },
           createdAt: now,
         },
@@ -1156,6 +1270,12 @@ export const settleUniformWithdrawal = async (req, res) => {
           message: `Quantidade de baixa acima do pendente no item ${withdrawalItemId}.`,
         });
       }
+      if (withdrawalItem.chargedAt) {
+        return res.status(400).json({
+          success: false,
+          message: `Item ${withdrawalItemId} já possui cobrança registrada.`,
+        });
+      }
 
       const unitValue = getItemUnitValue(withdrawalItem.uniformStockSize?.item?.itemVal);
       totalToDiscount += unitValue * quantity;
@@ -1176,7 +1296,12 @@ export const settleUniformWithdrawal = async (req, res) => {
       for (const { withdrawalItem, quantity } of discountItems) {
         await tx.uniformWithdrawalItem.update({
           where: { id: withdrawalItem.id },
-          data: { discountedQuantity: { increment: quantity } },
+          data: {
+            discountedQuantity: { increment: quantity },
+            chargedAt: now,
+            chargedByUserId: userId,
+            expirationStatus: "CHARGED",
+          },
         });
 
         await tx.uniformMovement.create({
