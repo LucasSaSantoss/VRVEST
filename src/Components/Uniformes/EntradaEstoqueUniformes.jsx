@@ -396,6 +396,47 @@ export default function EntradaEstoqueUniformes() {
     return texto;
   };
 
+  const extrairJustificativaMovimentacao = (movement) => {
+    const notes = String(movement?.notes || "").trim();
+    if (!notes) return "Não informada";
+
+    if (movement?.movementType === "REVERSAL") {
+      const motivoMatch = notes.match(/Motivo:\s*([^.]*)/i);
+      return motivoMatch?.[1]?.trim() || "Não informada";
+    }
+
+    if (notes.startsWith("NF:")) return "Não se aplica";
+
+    const marcadores = [
+      "Ajuste principal:",
+      "Ajuste empréstimos:",
+      "Descarte (MAIN):",
+      "Descarte (LOAN):",
+      "Transferência principal -> empréstimos.",
+      "Transferência principal -> emprestimos.",
+      "Devolução legada:",
+      "Devolução de empréstimo:",
+      "Devolução de emprestimo:",
+      "Ajuste manual.",
+    ];
+
+    for (const marcador of marcadores) {
+      const idx = notes.toLowerCase().indexOf(marcador.toLowerCase());
+      if (idx >= 0) {
+        const texto = notes.substring(idx + marcador.length).trim();
+        if (texto) return texto;
+      }
+    }
+
+    const partes = notes.split(":");
+    if (partes.length > 1) {
+      const justificativa = partes.slice(1).join(":").trim();
+      return justificativa || "Não informada";
+    }
+
+    return notes;
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-2 pb-4">
       <div className="mb-3 border-l-4 border-blue-500 pl-3">
@@ -773,9 +814,10 @@ export default function EntradaEstoqueUniformes() {
                   <th className="py-3 pr-3 w-[18%]">Data</th>
                   <th className="py-3 pr-3 w-[12%]">Tipo</th>
                   <th className="py-3 pr-3 w-[8%]">Qtd.</th>
-                  <th className="py-3 pr-3 w-[18%]">Usuário</th>
-                  <th className="py-3 pr-3 w-[28%]">Observação</th>
-                  <th className="py-3 w-[16%]">Ação</th>
+                  <th className="py-3 pr-3 w-[16%]">Usuário</th>
+                  <th className="py-3 pr-3 w-[22%]">Observação</th>
+                  <th className="py-3 pr-3 w-[14%]">Justificativa</th>
+                  <th className="py-3 w-[10%]">Ação</th>
                 </tr>
               </thead>
               <tbody>
@@ -809,6 +851,9 @@ export default function EntradaEstoqueUniformes() {
                       </td>
                       <td className="py-3 pr-3 break-words text-gray-700 leading-relaxed">
                         {formatarObservacaoMovimentacao(m.notes)}
+                      </td>
+                      <td className="py-3 pr-3 break-words text-gray-700 leading-relaxed">
+                        {extrairJustificativaMovimentacao(m)}
                       </td>
                       <td className="py-3">
                         {canReverse ? (
