@@ -21,6 +21,7 @@ export default function RelatorioRetiradasUniformes() {
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
+  const [agrupamento, setAgrupamento] = useState("none");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const ITENS_POR_PAGINA = 10;
@@ -147,6 +148,34 @@ export default function RelatorioRetiradasUniformes() {
     paginaAtual * ITENS_POR_PAGINA
   );
 
+  const linhasAgrupadas = (() => {
+    if (agrupamento === "none") return linhasPaginadas;
+
+    const source = linhasTabela;
+    const groupedRows = [];
+    const groupedMap = new Map();
+
+    source.forEach((linha) => {
+      const groupLabel =
+        agrupamento === "date"
+          ? String(linha.dataHora || "-").split(",")[0]
+          : `${linha.colaborador} (${linha.cpf})`;
+      if (!groupedMap.has(groupLabel)) groupedMap.set(groupLabel, []);
+      groupedMap.get(groupLabel).push(linha);
+    });
+
+    groupedMap.forEach((items, groupLabel) => {
+      groupedRows.push({
+        isGroupHeader: true,
+        key: `group-${agrupamento}-${groupLabel}`,
+        groupLabel,
+      });
+      items.forEach((item) => groupedRows.push(item));
+    });
+
+    return groupedRows;
+  })();
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
@@ -191,6 +220,15 @@ export default function RelatorioRetiradasUniformes() {
           >
             {loading ? "Buscando..." : "Buscar"}
           </button>
+          <select
+            className="border rounded px-3 py-2"
+            value={agrupamento}
+            onChange={(e) => setAgrupamento(e.target.value)}
+          >
+            <option value="none">Agrupamento: Nenhum</option>
+            <option value="date">Agrupar por Data</option>
+            <option value="employee">Agrupar por Colaborador</option>
+          </select>
         </div>
         <div className="mt-2">
           <button
@@ -225,40 +263,50 @@ export default function RelatorioRetiradasUniformes() {
                 </tr>
               </thead>
               <tbody>
-                {linhasPaginadas.map((linha) => (
-                  <tr key={linha.key} className="border-b align-top">
-                    <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
-                    <td className="py-2 pr-3">{linha.dataHora}</td>
-                    <td className="py-2 pr-3">{linha.colaborador}</td>
-                    <td className="py-2 pr-3">{linha.cpf}</td>
-                    <td className="py-2 pr-3">{linha.uniforme}</td>
-                    <td className="py-2 pr-3 font-semibold">{linha.qtdRetirada}</td>
-                    <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
-                    <td className="py-2 pr-3">{linha.status}</td>
-                    <td className="py-2">{linha.operador}</td>
-                  </tr>
-                ))}
+                {linhasAgrupadas.map((linha) =>
+                  linha?.isGroupHeader ? (
+                    <tr key={linha.key} className="bg-gray-100">
+                      <td colSpan={9} className="py-2 px-2 font-semibold text-gray-700">
+                        {linha.groupLabel}
+                      </td>
+                    </tr>
+                  ) : (
+                    <tr key={linha.key} className="border-b align-top">
+                      <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
+                      <td className="py-2 pr-3">{linha.dataHora}</td>
+                      <td className="py-2 pr-3">{linha.colaborador}</td>
+                      <td className="py-2 pr-3">{linha.cpf}</td>
+                      <td className="py-2 pr-3">{linha.uniforme}</td>
+                      <td className="py-2 pr-3 font-semibold">{linha.qtdRetirada}</td>
+                      <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
+                      <td className="py-2 pr-3">{linha.status}</td>
+                      <td className="py-2">{linha.operador}</td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
-            <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
-              <span>Página {paginaAtual} de {totalPaginas}</span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
-                  disabled={paginaAtual === 1}
-                  className="px-3 py-1 rounded border disabled:opacity-50"
-                >
-                  Anterior
-                </button>
-                <button
-                  onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
-                  disabled={paginaAtual >= totalPaginas}
-                  className="px-3 py-1 rounded border disabled:opacity-50"
-                >
-                  Próxima
-                </button>
+            {agrupamento === "none" && (
+              <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
+                <span>Página {paginaAtual} de {totalPaginas}</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
+                    disabled={paginaAtual === 1}
+                    className="px-3 py-1 rounded border disabled:opacity-50"
+                  >
+                    Anterior
+                  </button>
+                  <button
+                    onClick={() => setPaginaAtual((p) => Math.min(totalPaginas, p + 1))}
+                    disabled={paginaAtual >= totalPaginas}
+                    className="px-3 py-1 rounded border disabled:opacity-50"
+                  >
+                    Próxima
+                  </button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
         )}
       </section>

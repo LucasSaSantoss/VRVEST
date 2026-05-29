@@ -30,6 +30,7 @@ const WITHDRAWAL_STATUS_LABEL = {
 const EXPIRATION_STATUS_LABEL = {
   A_VENCER: "A vencer",
   VENCIDO: "Vencido",
+  ATRASO_ATUAL: "Atraso Atual",
 };
 
 export default function RelatorioVencimentosUniformes() {
@@ -38,6 +39,7 @@ export default function RelatorioVencimentosUniformes() {
   const [workType, setWorkType] = useState("");
   const [status, setStatus] = useState("");
   const [expirationFilter, setExpirationFilter] = useState("DUE_60");
+  const [customSituation, setCustomSituation] = useState("ALL");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +67,7 @@ export default function RelatorioVencimentosUniformes() {
       if (expirationFilter === "CUSTOM" && startDate && endDate) {
         params.startDate = startDate;
         params.endDate = endDate;
+        params.customSituation = customSituation;
       }
 
       const res = await api.get("/uniforms/reports/expirations", { params });
@@ -171,6 +174,9 @@ export default function RelatorioVencimentosUniformes() {
               <option value="DIARISTA">Diarista</option>
             </select>
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Status da retirada</label>
             <select
@@ -200,41 +206,55 @@ export default function RelatorioVencimentosUniformes() {
               <option value="CUSTOM">{FILTER_LABEL.CUSTOM}</option>
             </select>
           </div>
-          <div className="flex items-end">
-            <button
-              onClick={buscar}
-              className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded w-full"
-            >
-              {loading ? "Buscando..." : "Buscar"}
-            </button>
-          </div>
-          {expirationFilter === "CUSTOM" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Início do período</label>
-                <input
-                  type="date"
-                  className="border rounded px-3 py-2 w-full"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Fim do período</label>
-                <input
-                  type="date"
-                  className="border rounded px-3 py-2 w-full"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-            </>
-          )}
         </div>
-        <div className="mt-2">
+
+        {expirationFilter === "CUSTOM" && (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Início do período</label>
+              <input
+                type="date"
+                className="border rounded px-3 py-2 w-full"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Fim do período</label>
+              <input
+                type="date"
+                className="border rounded px-3 py-2 w-full"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Situação no período
+              </label>
+              <select
+                className="border rounded px-3 py-2 w-full"
+                value={customSituation}
+                onChange={(e) => setCustomSituation(e.target.value)}
+              >
+                <option value="ALL">Todos</option>
+                <option value="UPCOMING">A vencer</option>
+                <option value="OVERDUE">Vencidos</option>
+              </select>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-3 flex justify-end gap-2">
+          <button
+            onClick={buscar}
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded min-w-[140px]"
+          >
+            {loading ? "Buscando..." : "Buscar"}
+          </button>
           <button
             onClick={exportarExcel}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded min-w-[160px]"
           >
             Exportar Excel
           </button>

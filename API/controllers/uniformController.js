@@ -33,8 +33,25 @@ const UNIFORM_WITHDRAWAL_SAFE_SELECT = {
 const isOperatorOrAdmin = (level) => Number(level) >= 3;
 const isAdmin = (level) => Number(level) >= 4;
 const isRhOrAdmin = (level) => Number(level) === 2 || isAdmin(level);
+const UNIFORMES_RELEASE_MODE = String(
+  process.env.UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
+).toUpperCase();
+const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
 const requireOperatorOrAdmin = (req, res) => {
+  // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas admin acessa temporariamente rotinas de operador/RH.
+  // [MANUTENCAO] Data: 2026-05-29
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (isUniformesAdminOnly() && !isAdmin(req.user?.level)) {
+    res.status(403).json({
+      success: false,
+      message:
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para administrador.",
+    });
+    return false;
+  }
+
   if (!isOperatorOrAdmin(req.user?.level)) {
     res.status(403).json({
       success: false,
@@ -46,6 +63,19 @@ const requireOperatorOrAdmin = (req, res) => {
 };
 
 const requireRhOrAdmin = (req, res) => {
+  // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas admin acessa temporariamente rotinas de operador/RH.
+  // [MANUTENCAO] Data: 2026-05-29
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (isUniformesAdminOnly() && !isAdmin(req.user?.level)) {
+    res.status(403).json({
+      success: false,
+      message:
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para administrador.",
+    });
+    return false;
+  }
+
   if (!isRhOrAdmin(req.user?.level)) {
     res.status(403).json({
       success: false,
@@ -1567,6 +1597,7 @@ export const listUniformExpirations = async (req, res) => {
       expirationFilter = "DUE_60",
       startDate,
       endDate,
+      customSituation = "ALL",
     } = req.query;
 
     const today = new Date();
@@ -1627,7 +1658,7 @@ export const listUniformExpirations = async (req, res) => {
     const due60 = new Date(today.getTime());
     due60.setDate(due60.getDate() + 60);
 
-    const filtered = withPending.filter((item) => {
+    let filtered = withPending.filter((item) => {
       const due = item.dueDateObj;
       if (!due) return false;
 
@@ -1649,11 +1680,77 @@ export const listUniformExpirations = async (req, res) => {
       }
     });
 
+    // [MANUTENCAO] Motivo: aplicar regra de atraso consolidado por colaborador+uniforme.
+    // [MANUTENCAO] Impacto: em OVERDUE, considera apenas o atraso mais atual, desconsiderando
+    // atrasos anteriores quando houver retirada mais recente dentro da validade.
+    // [MANUTENCAO] Data: 2026-05-29
+    // [MANUTENCAO] Autor: Márlon Etiene
+    if (String(expirationFilter || "").toUpperCase() === "OVERDUE") {
+      const groups = new Map();
+      filtered.forEach((item) => {
+        const employeeId = Number(item.withdrawal?.employeeId || 0);
+        const itemId = Number(item.uniformStockSize?.itemId || 0);
+        const key = `${employeeId}:${itemId}`;
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(item);
+      });
+
+      const consolidated = [];
+      groups.forEach((itemsInGroup) => {
+        const sorted = [...itemsInGroup].sort((a, b) => {
+          const aDate = new Date(a.withdrawal?.withdrawDate || 0).getTime();
+          const bDate = new Date(b.withdrawal?.withdrawDate || 0).getTime();
+          return bDate - aDate;
+        });
+
+        const validCurrentDelays = sorted.filter((candidate) => {
+          const candidateWithdrawDate = new Date(
+            candidate.withdrawal?.withdrawDate || 0
+          );
+          const candidateDueDate = candidate.dueDateObj;
+          if (!candidateDueDate) return false;
+
+          const hasNewerWithdrawalWithinValidity = sorted.some((other) => {
+            if (other.id === candidate.id) return false;
+            const otherWithdrawDate = new Date(other.withdrawal?.withdrawDate || 0);
+            return (
+              otherWithdrawDate > candidateWithdrawDate &&
+              otherWithdrawDate <= candidateDueDate
+            );
+          });
+
+          return !hasNewerWithdrawalWithinValidity;
+        });
+
+        if (validCurrentDelays.length > 0) {
+          consolidated.push(validCurrentDelays[0]);
+        }
+      });
+
+      filtered = consolidated.sort((a, b) => {
+        const aDue = new Date(a.dueDateObj || 0).getTime();
+        const bDue = new Date(b.dueDateObj || 0).getTime();
+        return aDue - bDue;
+      });
+    }
+
+    if (String(expirationFilter || "").toUpperCase() === "CUSTOM") {
+      const customSituationNormalized = String(customSituation || "ALL").toUpperCase();
+      filtered = filtered.filter((item) => {
+        const due = item.dueDateObj;
+        if (!due) return false;
+        if (customSituationNormalized === "OVERDUE") return due < today;
+        if (customSituationNormalized === "UPCOMING") return due >= today;
+        return true;
+      });
+    }
+
     const data = filtered.map((item) => {
       const due = item.dueDateObj;
       const daysToExpire = due
         ? Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
         : null;
+      const normalizedFilter = String(expirationFilter || "").toUpperCase();
       return {
         id: item.id,
         withdrawalId: item.uniformWithdrawalId,
@@ -1661,7 +1758,11 @@ export const listUniformExpirations = async (req, res) => {
         dueDate: item.dueDate,
         daysToExpire,
         expirationStatus:
-          daysToExpire !== null && daysToExpire < 0 ? "VENCIDO" : "A_VENCER",
+          daysToExpire !== null && daysToExpire < 0
+            ? normalizedFilter === "OVERDUE"
+              ? "ATRASO_ATUAL"
+              : "VENCIDO"
+            : "A_VENCER",
         pendingQuantity: item.pendingQuantity,
         quantity: Number(item.quantity || 0),
         returnedQuantity: Number(item.returnedQuantity || 0),

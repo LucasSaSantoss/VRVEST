@@ -38,8 +38,36 @@ import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
 import EmprestimoUniformes from "../Components/Uniformes/EmprestimoUniformes";
 import DevolucaoEmprestimos from "../Components/Uniformes/DevolucaoEmprestimos";
 
+const UNIFORMES_RELEASE_MODE = String(
+  import.meta.env.VITE_UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
+).toUpperCase();
+
+const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
+
+const isUniformesTab = (tab) =>
+  [
+    "retiradaUniformes",
+    "devolucaoUniformes",
+    "emprestimoUniformes",
+    "devolucaoEmprestimos",
+    "baixaDpUniformes",
+    "cadastroUniformes",
+    "estoqueUniformes",
+    "relatorioRetiradasUniformes",
+    "relatorioEmprestimosUniformes",
+    "relatorioVencimentosUniformes",
+  ].includes(tab);
+
 const canAccessTabByLevel = (level, tab) => {
   const userLevel = Number(level || 0);
+  // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, frontend oculta acessos para não-admin mantendo backend como proteção final.
+  // [MANUTENCAO] Data: 2026-05-29
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (isUniformesAdminOnly() && isUniformesTab(tab)) {
+    return userLevel >= 4;
+  }
+
   switch (tab) {
     case "home":
       return userLevel >= 4;
