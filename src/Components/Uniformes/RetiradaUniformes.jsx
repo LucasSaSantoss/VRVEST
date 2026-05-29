@@ -299,26 +299,32 @@ export default function RetiradaUniformes() {
             </div>
             <div className="mb-2">
               <p className="text-sm font-semibold text-gray-700 mb-1">Jornada do colaborador</p>
-              <div className="flex flex-wrap items-center gap-4 text-sm">
-                <label className="inline-flex items-center gap-2">
+              <div className="relative flex flex-wrap rounded-lg bg-gray-200 p-1 w-full max-w-[320px] text-sm shadow-[0_0_0_1px_rgba(0,0,0,0.06)]">
+                <label className="flex-1 text-center">
                   <input
                     type="radio"
                     name="workType"
                     value="PLANTONISTA"
                     checked={workType === "PLANTONISTA"}
                     onChange={(e) => setWorkType(e.target.value)}
+                    className="peer sr-only"
                   />
-                  <span>Plantonista</span>
+                  <span className="flex cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-slate-700 transition-all duration-150 ease-in-out peer-checked:bg-white peer-checked:font-semibold">
+                    Plantonista
+                  </span>
                 </label>
-                <label className="inline-flex items-center gap-2">
+                <label className="flex-1 text-center">
                   <input
                     type="radio"
                     name="workType"
                     value="DIARISTA"
                     checked={workType === "DIARISTA"}
                     onChange={(e) => setWorkType(e.target.value)}
+                    className="peer sr-only"
                   />
-                  <span>Diarista</span>
+                  <span className="flex cursor-pointer items-center justify-center rounded-lg px-3 py-2 text-slate-700 transition-all duration-150 ease-in-out peer-checked:bg-white peer-checked:font-semibold">
+                    Diarista
+                  </span>
                 </label>
               </div>
             </div>

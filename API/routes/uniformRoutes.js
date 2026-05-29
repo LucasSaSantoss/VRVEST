@@ -7,6 +7,7 @@ import {
   getEmployeeUniformLoanSummary,
   getEmployeeUniformDpPendencies,
   getUniformSettings,
+  listUniformExpirations,
   listUniformStockOptions,
   listUniformLoanStockOptions,
   listUniformWithdrawals,
@@ -32,6 +33,7 @@ router.get("/loan/stock-options", authMiddleware, listUniformLoanStockOptions);
 router.post("/withdraw", authMiddleware, createUniformWithdrawal);
 router.post("/loan/withdraw", authMiddleware, createUniformLoan);
 router.get("/withdrawals", authMiddleware, listUniformWithdrawals);
+router.get("/reports/expirations", authMiddleware, listUniformExpirations);
 router.get("/loans", authMiddleware, listUniformLoans);
 router.post("/withdrawals/:id/return", authMiddleware, returnUniformWithdrawalItems);
 router.post("/returns/legacy", authMiddleware, registerLegacyUniformReturn);

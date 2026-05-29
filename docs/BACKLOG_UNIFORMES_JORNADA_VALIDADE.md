@@ -126,10 +126,14 @@ Transformar o plano técnico em etapas implementáveis, com ordem segura de exec
 - Arquivos-alvo:
   - `API/controllers/uniformController.js`
 - Entrega:
-  1. ajustar consulta de contagem anual;
-  2. regra de exclusão por item vencido conforme validação funcional.
+  1. **NÃO aplicar** exclusão de itens vencidos na contagem anual;
+  2. manter contagem anual por retirada conforme limite da jornada (`PLANTONISTA`/`DIARISTA`);
+  3. usar validade por item apenas para controle de prazo/devolução/cobrança.
 - Critério de pronto:
-  - cenário de item vencido não bloqueia retirada indevidamente.
+  - item vencido não altera o limite anual por si só;
+  - colaborador com limite anual 2 mantém no máximo 2 retiradas no ano, independentemente de vencimento.
+- Status:
+  - `Reclassificada`: regra anterior (desconsiderar vencidos) removida por validação funcional.
 
 ---
 
@@ -186,31 +190,20 @@ Transformar o plano técnico em etapas implementáveis, com ordem segura de exec
 
 ## EPIC 4 — Alertas e Relatórios
 
-### US-014 — Relatório de vencimento (2 meses)
+### US-014 — Relatório unificado de vencimentos (com filtros)
 - Prioridade: `P1`
 - Dependências: US-007
 - Entrega:
-  1. endpoint/filtro para dueDate <= 60 dias;
-  2. tela no submenu Relatórios.
+  1. endpoint único com filtros por parâmetro, contemplando:
+     - vencimento em até 60 dias;
+     - vencimento em até 30 dias;
+     - vencidos (`dueDate < hoje` e pendentes);
+     - faixa personalizada (opcional).
+  2. tela única no submenu Relatórios para consulta de vencimentos;
+  3. exportação Excel no mesmo relatório.
 - Critério de pronto:
-  - lista consistente com dados do banco.
-
-### US-015 — Relatório de vencimento (1 mês)
-- Prioridade: `P1`
-- Dependências: US-007
-- Entrega:
-  1. endpoint/filtro para dueDate <= 30 dias.
-- Critério de pronto:
-  - recorte de 30 dias funcionando.
-
-### US-016 — Relatório de vencidos
-- Prioridade: `P1`
-- Dependências: US-007
-- Entrega:
-  1. endpoint/filtro para `dueDate < hoje` não devolvidos;
-  2. exportação Excel.
-- Critério de pronto:
-  - relatório retorna apenas itens vencidos pendentes.
+  - filtros retornam recortes corretos sem duplicar módulos;
+  - exportação Excel disponível e consistente com os filtros aplicados.
 
 ---
 
@@ -259,10 +252,32 @@ Transformar o plano técnico em etapas implementáveis, com ordem segura de exec
 3. US-010, US-011, US-012
 4. US-008, US-013
 5. US-017, US-018, US-019
-6. US-009, US-014, US-015, US-016
+6. US-014
 
 ## Observações de Governança
 
 1. Cada US deve gerar commit isolado quando possível.
 2. Não alterar regra legada fora do escopo da US.
 3. Atualizar documentação em `docs/` ao fechar cada epic.
+
+---
+
+## Status Consolidado
+
+- `US-001`: Concluída
+- `US-002`: Concluída
+- `US-003`: Concluída
+- `US-004`: Concluída
+- `US-005`: Concluída
+- `US-006`: Concluída
+- `US-007`: Concluída
+- `US-008`: Concluída
+- `US-009`: Reclassificada (não implementar exclusão de vencidos no limite anual)
+- `US-010`: Concluída
+- `US-011`: Concluída
+- `US-012`: Concluída
+- `US-013`: Concluída
+- `US-014`: Concluída (relatório unificado com filtros + exportação Excel)
+- `US-017`: Concluída
+- `US-018`: Concluída
+- `US-019`: Em validação (checklist manual em `docs/CHECKLIST_REGRESSAO_UNIFORMES.md`)

@@ -1555,6 +1555,138 @@ export const listUniformWithdrawals = async (req, res) => {
   }
 };
 
+export const listUniformExpirations = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const {
+      cpf,
+      year,
+      status,
+      workType,
+      expirationFilter = "DUE_60",
+      startDate,
+      endDate,
+    } = req.query;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const whereWithdrawal = {
+      status: { in: ["REGULAR", "EXEMPT", "CHARGEABLE", "PARTIAL_RETURN"] },
+    };
+
+    if (status) whereWithdrawal.status = status;
+    if (year) whereWithdrawal.year = Number(year);
+    if (workType) whereWithdrawal.workType = String(workType).toUpperCase();
+
+    if (cpf) {
+      const employee = await prisma.employee.findUnique({
+        where: { cpf: String(cpf).replace(/\D/g, "") },
+        select: { id: true },
+      });
+      if (!employee) return res.json({ success: true, data: [] });
+      whereWithdrawal.employeeId = employee.id;
+    }
+
+    const items = await prisma.uniformWithdrawalItem.findMany({
+      where: {
+        dueDate: { not: null },
+        withdrawal: whereWithdrawal,
+      },
+      include: {
+        withdrawal: {
+          include: {
+            employee: { select: { id: true, name: true, cpf: true } },
+            user: { select: { id: true, name: true } },
+          },
+        },
+        uniformStockSize: {
+          include: { item: true },
+        },
+      },
+      orderBy: { dueDate: "asc" },
+    });
+
+    const withPending = items
+      .map((item) => {
+        const pendingQuantity = Math.max(getPendingQuantity(item), 0);
+        const due = item.dueDate ? new Date(item.dueDate) : null;
+        return {
+          ...item,
+          pendingQuantity,
+          dueDateObj: due,
+        };
+      })
+      .filter((item) => item.pendingQuantity > 0 && item.dueDateObj);
+
+    const parsedStart = startDate ? new Date(`${startDate}T00:00:00`) : null;
+    const parsedEnd = endDate ? new Date(`${endDate}T23:59:59`) : null;
+    const due30 = new Date(today.getTime());
+    due30.setDate(due30.getDate() + 30);
+    const due60 = new Date(today.getTime());
+    due60.setDate(due60.getDate() + 60);
+
+    const filtered = withPending.filter((item) => {
+      const due = item.dueDateObj;
+      if (!due) return false;
+
+      switch (String(expirationFilter || "DUE_60").toUpperCase()) {
+        case "UPCOMING":
+          return due >= today;
+        case "DUE_30":
+          return due >= today && due <= due30;
+        case "DUE_60":
+          return due >= today && due <= due60;
+        case "OVERDUE":
+          return due < today;
+        case "CUSTOM":
+          if (!parsedStart || !parsedEnd) return true;
+          return due >= parsedStart && due <= parsedEnd;
+        case "ALL":
+        default:
+          return true;
+      }
+    });
+
+    const data = filtered.map((item) => {
+      const due = item.dueDateObj;
+      const daysToExpire = due
+        ? Math.ceil((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        : null;
+      return {
+        id: item.id,
+        withdrawalId: item.uniformWithdrawalId,
+        withdrawalDate: item.withdrawal?.withdrawDate || null,
+        dueDate: item.dueDate,
+        daysToExpire,
+        expirationStatus:
+          daysToExpire !== null && daysToExpire < 0 ? "VENCIDO" : "A_VENCER",
+        pendingQuantity: item.pendingQuantity,
+        quantity: Number(item.quantity || 0),
+        returnedQuantity: Number(item.returnedQuantity || 0),
+        discountedQuantity: Number(item.discountedQuantity || 0),
+        employee: item.withdrawal?.employee || null,
+        operator: item.withdrawal?.user || null,
+        workType: item.withdrawal?.workType || null,
+        withdrawalStatus: item.withdrawal?.status || null,
+        uniformName: item.uniformStockSize?.item?.itemName || "-",
+        uniformSize: item.uniformStockSize?.size || "-",
+        itemUnitValue: getItemUnitValue(item.uniformStockSize?.item?.itemVal),
+      };
+    });
+
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Erro ao listar vencimentos de uniformes:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro no servidor.",
+      detail: error?.message || null,
+    });
+  }
+};
+
 export const listUniformLoans = async (req, res) => {
   if (!requireOperatorOrAdmin(req, res)) return;
 

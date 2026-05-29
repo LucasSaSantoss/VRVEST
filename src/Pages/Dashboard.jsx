@@ -22,6 +22,7 @@ import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
 import RelatorioRetiradasUniformes from "../Components/Relatorios/RelatorioRetiradasUniformes";
 import RelatorioEmprestimosUniformes from "../Components/Relatorios/RelatorioEmprestimosUniformes";
+import RelatorioVencimentosUniformes from "../Components/Relatorios/RelatorioVencimentosUniformes";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -63,6 +64,7 @@ const canAccessTabByLevel = (level, tab) => {
     case "relatorios":
     case "relatorioRetiradasUniformes":
     case "relatorioEmprestimosUniformes":
+    case "relatorioVencimentosUniformes":
       return userLevel >= 4;
     case "perfil":
       return true;
@@ -127,6 +129,7 @@ export default function Dashboard() {
       relatorios: <RelatorioFinanceiroAtrasados />,
       relatorioRetiradasUniformes: <RelatorioRetiradasUniformes />,
       relatorioEmprestimosUniformes: <RelatorioEmprestimosUniformes />,
+      relatorioVencimentosUniformes: <RelatorioVencimentosUniformes />,
       qrcode: <QrCodeVRVest />,
       funcionarioTemp: <CreateFuncTemp />,
       usuarios: <TabelaUsuarios />,
@@ -448,6 +451,12 @@ export default function Dashboard() {
                         onClick={() => selectTab("relatorioEmprestimosUniformes")}
                       >
                         Empréstimos de Uniformes
+                      </li>
+                      <li
+                        className="cursor-pointer hover:text-gray-300"
+                        onClick={() => selectTab("relatorioVencimentosUniformes")}
+                      >
+                        Vencimentos de Uniformes
                       </li>
                     </ul>
                   )}
