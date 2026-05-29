@@ -6,10 +6,12 @@ dotenv.config();
 import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
+const smtpPort = Number(process.env.EMAIL_PORT || 587);
+
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 465,
-  secure: true,
+  host: process.env.EMAIL_HOST,
+  port: smtpPort,
+  secure: smtpPort === 465,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -25,9 +27,6 @@ const transporter = nodemailer.createTransport({
  * @param {string|string[]}[bcc] - E-mails em cópia oculta
  */
 export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
-  const dateBRNow = new Date().toLocaleString("pt-BR", {
-    timeZone: "America/Sao_Paulo",
-  });
   try {
     const formatEmails = (emails) =>
       Array.isArray(emails) ? emails.join(", ") : emails;
@@ -50,7 +49,7 @@ export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
         data: {
           action: "Erro ao enviar email",
           newData: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-          createdAt: dateBRNow,
+          createdAt: new Date(),
           userId: 1,
         },
       });
