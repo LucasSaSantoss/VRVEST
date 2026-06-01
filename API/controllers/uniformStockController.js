@@ -96,7 +96,7 @@ export const listUniformSizesCatalog = async (req, res) => {
     await ensureDefaultUniformSizes();
     const data = await prisma.uniformSize.findMany({
       where: { active: 1 },
-      orderBy: { id: "asc" },
+      orderBy: { sorteOrder: "asc" },
     });
     return res.json({ success: true, data });
   } catch (error) {
@@ -125,6 +125,7 @@ export const createStockSize = async (req, res) => {
     const normalizedSize = String(size).trim().toUpperCase();
     const sizeInCatalog = await prisma.uniformSize.findFirst({
       where: { code: normalizedSize, active: 1 },
+      orderBy: { sorteOrder: "asc" },
     });
     if (!sizeInCatalog) {
       return res.status(400).json({
