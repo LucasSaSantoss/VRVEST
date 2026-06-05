@@ -126,17 +126,16 @@ export default function RetiradaUniformes() {
     [stockOptions, selectedItemId]
   );
 
-  const cartTotalQuantity = useMemo(
-    () => cart.reduce((acc, item) => acc + Number(item.quantity || 0), 0),
-    [cart]
-  );
-
   const willExceedLimit = useMemo(() => {
     if (!summary) return false;
     const alreadyWithdrawn = Number(summary.withdrawnInYear || 0);
     const annualLimit = Number(summary.limitApplied || 0);
-    return alreadyWithdrawn + cartTotalQuantity > annualLimit;
-  }, [summary, cartTotalQuantity]);
+    // [MANUTENCAO] Motivo: limite anual deve considerar número de retiradas, não quantidade de itens na mesma retirada.
+    // [MANUTENCAO] Impacto: evita pedir justificativa ao adicionar segundo item em uma única retirada válida.
+    // [MANUTENCAO] Data: 2026-06-05
+    // [MANUTENCAO] Autor: Márlon Etiene
+    return alreadyWithdrawn + 1 > annualLimit;
+  }, [summary]);
 
   const handleAddToCart = () => {
     if (!workType) {
