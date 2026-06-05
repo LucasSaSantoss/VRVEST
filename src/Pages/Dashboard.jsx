@@ -121,6 +121,22 @@ const canAccessTabByLevel = (level, tab) => {
   }
 };
 
+const getDefaultTabByLevel = (level) => {
+  const userLevel = Number(level || 0);
+
+  switch (userLevel) {
+    case PERFIL_SUPERVISOR:
+      return "home";
+    case PERFIL_DP:
+    case PERFIL_CONTROLADOR:
+      return "funcionarios";
+    case PERFIL_OPERADOR:
+      return "qrcode";
+    default:
+      return "home";
+  }
+};
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -218,7 +234,11 @@ export default function Dashboard() {
           showTemporaryPopup("Sua sessão expirou, faça login novamente.");
           setTimeout(() => navigate("/"), 3000);
         } else {
-          const nivel = decodedToken.level;
+          // [MANUTENCAO] Motivo: normalizar o nível do token antes das regras de menu do módulo de uniformes.
+          // [MANUTENCAO] Impacto: evita bloqueio visual quando o JWT entrega level como texto.
+          // [MANUTENCAO] Data: 2026-06-05
+          // [MANUTENCAO] Autor: Márlon Etiene
+          const nivel = Number(decodedToken.level || 0);
           console.log(nivel);
           setLevelUser(nivel);
           setUserName(decodedToken.name || decodedToken.username || "Usuário");
@@ -226,20 +246,7 @@ export default function Dashboard() {
           const hasRequestedTab =
             requestedTab && Object.prototype.hasOwnProperty.call(pages, requestedTab);
 
-          const defaultTab = (() => {
-            switch (nivel) {
-              case 4:
-                return "home";
-              case 3:
-                return "funcionarios";
-              case 2:
-                return "funcionarios";
-              case 1:
-                return "qrcode";
-              default:
-                return "home";
-            }
-          })();
+          const defaultTab = getDefaultTabByLevel(nivel);
 
           const initialTab = hasRequestedTab ? requestedTab : defaultTab;
           const allowedInitialTab = canAccessTabByLevel(nivel, initialTab)
