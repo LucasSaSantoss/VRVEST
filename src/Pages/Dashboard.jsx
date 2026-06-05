@@ -7,6 +7,8 @@ import {
   LuQrCode,
   LuUserCog,
   LuShirt,
+  LuChevronDown,
+  LuChevronUp,
 } from "react-icons/lu";
 import {
   FaHospitalUser,
@@ -23,6 +25,7 @@ import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFina
 import RelatorioRetiradasUniformes from "../Components/Relatorios/RelatorioRetiradasUniformes";
 import RelatorioEmprestimosUniformes from "../Components/Relatorios/RelatorioEmprestimosUniformes";
 import RelatorioVencimentosUniformes from "../Components/Relatorios/RelatorioVencimentosUniformes";
+import RelatorioEstoqueUniformes from "../Components/Relatorios/RelatorioEstoqueUniformes";
 import QrCodeVRVest from "../Components/QrCodeVRVest";
 import TabelaUsuarios from "../Components/FormUsuarios/FormUsuarios";
 import HeaderQRCode from "../Components/HeaderQRCode";
@@ -44,6 +47,11 @@ const UNIFORMES_RELEASE_MODE = String(
 
 const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
+const PERFIL_OPERADOR = 1;
+const PERFIL_CONTROLADOR = 2;
+const PERFIL_DP = 3;
+const PERFIL_SUPERVISOR = 4;
+
 const isUniformesTab = (tab) =>
   [
     "retiradaUniformes",
@@ -56,17 +64,27 @@ const isUniformesTab = (tab) =>
     "relatorioRetiradasUniformes",
     "relatorioEmprestimosUniformes",
     "relatorioVencimentosUniformes",
+    "relatorioEstoqueUniformes",
   ].includes(tab);
 
 const canAccessTabByLevel = (level, tab) => {
   const userLevel = Number(level || 0);
   // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
-  // [MANUTENCAO] Impacto: em ADMIN_ONLY, frontend oculta acessos para não-admin mantendo backend como proteção final.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, frontend oculta acessos para não-supervisor mantendo backend como proteção final.
   // [MANUTENCAO] Data: 2026-05-29
   // [MANUTENCAO] Autor: Márlon Etiene
   if (isUniformesAdminOnly() && isUniformesTab(tab)) {
-    return userLevel >= 4;
+    return userLevel === PERFIL_SUPERVISOR;
   }
+
+  // [MANUTENCAO] Motivo: alinhar o módulo de uniformes aos níveis oficiais: 1 OPERADOR, 2 CONTROLADOR, 3 DP, 4 SUPERVISOR.
+  // [MANUTENCAO] Impacto: altera apenas permissões das abas novas de uniformes, sem modificar menus legados.
+  // [MANUTENCAO] Data: 2026-06-05
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const isOperador = userLevel === PERFIL_OPERADOR;
+  const isControlador = userLevel === PERFIL_CONTROLADOR;
+  const isDp = userLevel === PERFIL_DP;
+  const isSupervisor = userLevel === PERFIL_SUPERVISOR;
 
   switch (tab) {
     case "home":
@@ -83,17 +101,19 @@ const canAccessTabByLevel = (level, tab) => {
     case "devolucaoUniformes":
     case "emprestimoUniformes":
     case "devolucaoEmprestimos":
-      return userLevel >= 3; // operador e admin
+      return isOperador || isSupervisor;
     case "baixaDpUniformes":
-      return userLevel === 2 || userLevel >= 4; // RH e admin
+      return isDp || isSupervisor;
     case "cadastroUniformes":
     case "estoqueUniformes":
+    case "relatorioEstoqueUniformes":
+      return isControlador || isSupervisor;
     case "baixa":
     case "relatorios":
     case "relatorioRetiradasUniformes":
     case "relatorioEmprestimosUniformes":
     case "relatorioVencimentosUniformes":
-      return userLevel >= 4;
+      return isSupervisor;
     case "perfil":
       return true;
     default:
@@ -158,6 +178,7 @@ export default function Dashboard() {
       relatorioRetiradasUniformes: <RelatorioRetiradasUniformes />,
       relatorioEmprestimosUniformes: <RelatorioEmprestimosUniformes />,
       relatorioVencimentosUniformes: <RelatorioVencimentosUniformes />,
+      relatorioEstoqueUniformes: <RelatorioEstoqueUniformes />,
       qrcode: <QrCodeVRVest />,
       funcionarioTemp: <CreateFuncTemp />,
       usuarios: <TabelaUsuarios />,
@@ -361,7 +382,17 @@ export default function Dashboard() {
                 </span>
               </li>
             )}
-            {(levelUser >= 3 || levelUser === 2) && (
+            {isUniformesTab(selected) ||
+            [
+              "retiradaUniformes",
+              "devolucaoUniformes",
+              "emprestimoUniformes",
+              "devolucaoEmprestimos",
+              "baixaDpUniformes",
+              "cadastroUniformes",
+              "estoqueUniformes",
+              "relatorioEstoqueUniformes",
+            ].some((tab) => canAccessTabByLevel(levelUser, tab)) ? (
               <li className="px-2.5 mt-2">
                 <div
                   className="flex items-center justify-between cursor-pointer py-2 rounded transition-colors duration-200 hover:bg-white hover:text-gray-800"
@@ -374,7 +405,9 @@ export default function Dashboard() {
                     </span>
                   </div>
                   {hovered && (
-                    <span className="text-sm">{submenuUniformesOpen ? "▲" : "▼"}</span>
+                    <span className="text-sm">
+                      {submenuUniformesOpen ? <LuChevronUp /> : <LuChevronDown />}
+                    </span>
                   )}
                 </div>
                 {submenuUniformesOpen && hovered && (
@@ -419,10 +452,13 @@ export default function Dashboard() {
                     {canAccessTabByLevel(levelUser, "baixaDpUniformes") && (
                       <li className="my-1 border-t border-white/30" />
                     )}
+                    {canAccessTabByLevel(levelUser, "relatorioEstoqueUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("relatorioEstoqueUniformes")}>Relatório de Estoque</li>
+                    )}
                   </ul>
                 )}
               </li>
-            )}
+            ) : null}
             {levelUser >= 4 && (
               <>
                 <li
@@ -457,7 +493,9 @@ export default function Dashboard() {
                       </span>
                     </div>
                     {hovered && (
-                      <span className="text-sm">{submenuOpen ? "▲" : "▼"}</span>
+                      <span className="text-sm">
+                        {submenuOpen ? <LuChevronUp /> : <LuChevronDown />}
+                      </span>
                     )}
                   </div>
                   {submenuOpen && hovered && (
@@ -485,6 +523,16 @@ export default function Dashboard() {
                         onClick={() => selectTab("relatorioVencimentosUniformes")}
                       >
                         Vencimentos de Uniformes
+                      </li>
+                      {/* [MANUTENCAO] Motivo: expor relatório completo de estoque no submenu de relatórios.
+                          [MANUTENCAO] Impacto: habilita consulta com filtros, paginação e exportação Excel sem alterar fluxos críticos.
+                          [MANUTENCAO] Data: 2026-06-01
+                          [MANUTENCAO] Autor: Márlon Etiene */}
+                      <li
+                        className="cursor-pointer hover:text-gray-300"
+                        onClick={() => selectTab("relatorioEstoqueUniformes")}
+                      >
+                        Estoque de Uniformes
                       </li>
                     </ul>
                   )}
@@ -535,3 +583,4 @@ export default function Dashboard() {
     </>
   );
 }
+

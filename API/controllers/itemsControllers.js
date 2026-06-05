@@ -1,7 +1,12 @@
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
-const ADMIN_LEVEL = 4;
+const PERFIL_CONTROLADOR = 2;
+const PERFIL_SUPERVISOR = 4;
+const UNIFORMES_RELEASE_MODE = String(
+  process.env.UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
+).toUpperCase();
+const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
 const normalizarMesesValidade = (value, fallback = 12) => {
   const parsed = Number(value);
@@ -10,10 +15,29 @@ const normalizarMesesValidade = (value, fallback = 12) => {
 };
 
 const requireAdmin = (req, res) => {
-  if (Number(req.user?.level) < ADMIN_LEVEL) {
+  // [MANUTENCAO] Motivo: liberar cadastro de uniformes para CONTROLADOR(2) e SUPERVISOR(4).
+  // [MANUTENCAO] Impacto: em BY_PROFILE aplica perfil oficial; item legado do pijama não usa este guard.
+  // [MANUTENCAO] Data: 2026-06-05
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (
+    isUniformesAdminOnly() &&
+    Number(req.user?.level) !== PERFIL_SUPERVISOR
+  ) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas administrador.",
+      message:
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para supervisor.",
+    });
+    return false;
+  }
+
+  if (
+    Number(req.user?.level) !== PERFIL_CONTROLADOR &&
+    Number(req.user?.level) !== PERFIL_SUPERVISOR
+  ) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas controlador ou supervisor.",
     });
     return false;
   }

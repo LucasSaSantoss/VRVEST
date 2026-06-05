@@ -30,9 +30,19 @@ const UNIFORM_WITHDRAWAL_SAFE_SELECT = {
   createdAt: true,
 };
 
-const isOperatorOrAdmin = (level) => Number(level) >= 3;
-const isAdmin = (level) => Number(level) >= 4;
-const isRhOrAdmin = (level) => Number(level) === 2 || isAdmin(level);
+const PERFIL_OPERADOR = 1;
+const PERFIL_DP = 3;
+const PERFIL_SUPERVISOR = 4;
+
+// [MANUTENCAO] Motivo: alinhar rotas do módulo de uniformes aos níveis oficiais de perfil.
+// [MANUTENCAO] Impacto: ajusta apenas rotinas novas de uniformes; fluxos legados permanecem inalterados.
+// [MANUTENCAO] Data: 2026-06-05
+// [MANUTENCAO] Autor: Márlon Etiene
+const isOperatorOrSupervisor = (level) =>
+  Number(level) === PERFIL_OPERADOR || Number(level) === PERFIL_SUPERVISOR;
+const isSupervisor = (level) => Number(level) === PERFIL_SUPERVISOR;
+const isDpOrSupervisor = (level) =>
+  Number(level) === PERFIL_DP || isSupervisor(level);
 const UNIFORMES_RELEASE_MODE = String(
   process.env.UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
 ).toUpperCase();
@@ -40,22 +50,22 @@ const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
 const requireOperatorOrAdmin = (req, res) => {
   // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
-  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas admin acessa temporariamente rotinas de operador/RH.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas supervisor acessa temporariamente rotinas de operador/DP.
   // [MANUTENCAO] Data: 2026-05-29
   // [MANUTENCAO] Autor: Márlon Etiene
-  if (isUniformesAdminOnly() && !isAdmin(req.user?.level)) {
+  if (isUniformesAdminOnly() && !isSupervisor(req.user?.level)) {
     res.status(403).json({
       success: false,
       message:
-        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para administrador.",
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para supervisor.",
     });
     return false;
   }
 
-  if (!isOperatorOrAdmin(req.user?.level)) {
+  if (!isOperatorOrSupervisor(req.user?.level)) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas operador ou administrador.",
+      message: "Acesso negado. Apenas operador ou supervisor.",
     });
     return false;
   }
@@ -64,22 +74,22 @@ const requireOperatorOrAdmin = (req, res) => {
 
 const requireRhOrAdmin = (req, res) => {
   // [MANUTENCAO] Motivo: habilitar implantação controlada dos módulos novos de uniformes.
-  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas admin acessa temporariamente rotinas de operador/RH.
+  // [MANUTENCAO] Impacto: em ADMIN_ONLY, apenas supervisor acessa temporariamente rotinas de operador/DP.
   // [MANUTENCAO] Data: 2026-05-29
   // [MANUTENCAO] Autor: Márlon Etiene
-  if (isUniformesAdminOnly() && !isAdmin(req.user?.level)) {
+  if (isUniformesAdminOnly() && !isSupervisor(req.user?.level)) {
     res.status(403).json({
       success: false,
       message:
-        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para administrador.",
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para supervisor.",
     });
     return false;
   }
 
-  if (!isRhOrAdmin(req.user?.level)) {
+  if (!isDpOrSupervisor(req.user?.level)) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas RH ou administrador.",
+      message: "Acesso negado. Apenas DP ou supervisor.",
     });
     return false;
   }
@@ -87,10 +97,10 @@ const requireRhOrAdmin = (req, res) => {
 };
 
 const requireAdmin = (req, res) => {
-  if (!isAdmin(req.user?.level)) {
+  if (!isSupervisor(req.user?.level)) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas administrador.",
+      message: "Acesso negado. Apenas supervisor.",
     });
     return false;
   }

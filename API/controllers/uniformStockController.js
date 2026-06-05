@@ -4,14 +4,38 @@ const prisma = new PrismaClient();
 
 const parseQty = (value) => Number(value || 0);
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const ADMIN_LEVEL = 4;
+const PERFIL_CONTROLADOR = 2;
+const PERFIL_SUPERVISOR = 4;
 const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
+const UNIFORMES_RELEASE_MODE = String(
+  process.env.UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
+).toUpperCase();
+const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
 const requireAdmin = (req, res) => {
-  if (Number(req.user?.level) < ADMIN_LEVEL) {
+  // [MANUTENCAO] Motivo: liberar estoque de uniformes para CONTROLADOR(2) e SUPERVISOR(4).
+  // [MANUTENCAO] Impacto: em BY_PROFILE aplica perfil oficial; em ADMIN_ONLY preserva liberação controlada.
+  // [MANUTENCAO] Data: 2026-06-05
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (
+    isUniformesAdminOnly() &&
+    Number(req.user?.level) !== PERFIL_SUPERVISOR
+  ) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas administrador pode operar o estoque de uniformes.",
+      message:
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para supervisor.",
+    });
+    return false;
+  }
+
+  if (
+    Number(req.user?.level) !== PERFIL_CONTROLADOR &&
+    Number(req.user?.level) !== PERFIL_SUPERVISOR
+  ) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas controlador ou supervisor pode operar o estoque de uniformes.",
     });
     return false;
   }
@@ -662,6 +686,3 @@ export const reverseMovement = async (req, res) => {
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
   }
 };
-
-
-

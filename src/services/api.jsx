@@ -1,4 +1,4 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -461,6 +461,20 @@ export const listarEstoqueUniformePorTamanho = async () => {
   }
 };
 
+// [MANUTENCAO] Motivo: disponibilizar serviço dedicado para relatório de estoque completo.
+// [MANUTENCAO] Impacto: reutiliza endpoint já existente sem alterar regra de negócio do backend.
+// [MANUTENCAO] Data: 2026-06-01
+// [MANUTENCAO] Autor: Márlon Etiene
+export const carregarRelatorioEstoqueUniformes = async () => {
+  try {
+    const response = await api.get("/uniform-stock/sizes");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao carregar relatório de estoque de uniformes:", error);
+    return { success: false, data: [], message: "Erro no servidor" };
+  }
+};
+
 export const cadastrarTamanhoUniforme = async (payload) => {
   try {
     const response = await api.post("/uniform-stock/sizes", payload);
@@ -558,3 +572,4 @@ api.interceptors.response.use(
 );
 
 export { api };
+
