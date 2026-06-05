@@ -137,6 +137,11 @@ export default function RetiradaUniformes() {
     return alreadyWithdrawn + 1 > annualLimit;
   }, [summary]);
 
+  const canAddToCart = Boolean(workType && selectedItemId && selectedStockId && !processing);
+  const addToCartDisabledReason = canAddToCart
+    ? "Adicionar ao carrinho"
+    : "Preencha os campos obrigatórios: jornada, uniforme e tamanho.";
+
   const handleAddToCart = () => {
     if (!workType) {
       showTemporaryPopup("Selecione a jornada do colaborador antes de adicionar itens.", "error");
@@ -189,6 +194,8 @@ export default function RetiradaUniformes() {
         validadePrevista: dataValidade.toLocaleDateString("pt-BR"),
       },
     ]);
+    setSelectedItemId("");
+    setSelectedStockId("");
   };
 
   const removeFromCart = (uniformStockSizeId) => {
@@ -297,7 +304,9 @@ export default function RetiradaUniformes() {
               <div><strong>CPF:</strong> {summary.employee?.cpf}</div>
             </div>
             <div className="mb-2">
-              <p className="text-sm font-semibold text-gray-700 mb-1">Jornada do colaborador</p>
+              <p className="text-sm font-semibold text-gray-700 mb-1">
+                Jornada do colaborador <span className="text-red-600">*</span>
+              </p>
               <div className="relative flex flex-wrap rounded-lg bg-gray-200 p-1 w-full max-w-[320px] text-sm shadow-[0_0_0_1px_rgba(0,0,0,0.06)]">
                 <label className="flex-1 text-center">
                   <input
@@ -341,59 +350,78 @@ export default function RetiradaUniformes() {
           <section className="bg-white rounded-xl shadow p-4 mb-3">
             <h3 className="font-semibold text-gray-700 mb-2">Nova Retirada</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-              <select
-                className="border rounded px-3 py-2"
-                value={selectedItemId}
-                onChange={(e) => {
-                  setSelectedItemId(e.target.value);
-                  setSelectedStockId("");
-                }}
-              >
-                <option value="">Selecione o uniforme/produto</option>
-                {productOptions.map((p) => (
-                  <option key={p.itemId} value={p.itemId}>
-                    {p.itemName}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Uniforme <span className="text-red-600">*</span>
+                </label>
+                <select
+                  className="border rounded px-3 py-2 w-full"
+                  value={selectedItemId}
+                  onChange={(e) => {
+                    setSelectedItemId(e.target.value);
+                    setSelectedStockId("");
+                  }}
+                >
+                  <option value="">Selecione o uniforme/produto</option>
+                  {productOptions.map((p) => (
+                    <option key={p.itemId} value={p.itemId}>
+                      {p.itemName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Tamanho <span className="text-red-600">*</span>
+                </label>
+                <select
+                  className="border rounded px-3 py-2 w-full"
+                  value={selectedStockId}
+                  onChange={(e) => setSelectedStockId(e.target.value)}
+                  disabled={!selectedItemId}
+                >
+                  <option value="">
+                    {selectedItemId
+                      ? "Selecione o tamanho"
+                      : "..."}
                   </option>
-                ))}
-              </select>
-              <select
-                className="border rounded px-3 py-2"
-                value={selectedStockId}
-                onChange={(e) => setSelectedStockId(e.target.value)}
-                disabled={!selectedItemId}
-              >
-                <option value="">
-                  {selectedItemId
-                    ? "Selecione o tamanho"
-                    : "..."}
-                </option>
-                {sizeOptionsByProduct.map((s) => (
-                  <option key={s.id} value={s.id}>
-                    Tam {s.size} (Saldo: {s.qtyMainStock})
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                className="border rounded px-3 py-2 bg-gray-100"
-                value="1"
-                placeholder={
-                  selectedItemId
-                    ? selectedStockId
-                      ? "Quantidade fixa: 1"
-                      : "Selecione o tamanho"
-                    : "Selecione o uniforme/produto"
-                }
-                disabled
-              />
-              <button
-                onClick={handleAddToCart}
-                disabled={!workType || !selectedItemId || !selectedStockId || processing}
-                className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold px-4 py-2 rounded flex items-center justify-center"
-                title="Adicionar ao carrinho"
-              >
-                <LuPlus className="text-xl" />
-              </button>
+                  {sizeOptionsByProduct.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      Tam {s.size} (Saldo: {s.qtyMainStock})
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Quantidade
+                </label>
+                <input
+                  type="number"
+                  className="border rounded px-3 py-2 bg-gray-100 w-full"
+                  value="1"
+                  placeholder={
+                    selectedItemId
+                      ? selectedStockId
+                        ? "Quantidade fixa: 1"
+                        : "Selecione o tamanho"
+                      : "Selecione o uniforme/produto"
+                  }
+                  disabled
+                />
+              </div>
+              <div className="flex items-end">
+                <span className="w-full" title={addToCartDisabledReason}>
+                  <button
+                    onClick={handleAddToCart}
+                    disabled={!canAddToCart}
+                    className="bg-green-600 hover:bg-green-700 disabled:bg-green-300 text-white font-semibold px-4 py-2 rounded flex items-center justify-center w-full"
+                    title={addToCartDisabledReason}
+                  >
+                    <LuPlus className="text-xl" />
+                  </button>
+                </span>
+              </div>
             </div>
 
             <div className="mb-3 border border-gray-200 rounded-lg bg-gray-50/70">
