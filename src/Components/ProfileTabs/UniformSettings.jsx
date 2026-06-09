@@ -1,5 +1,6 @@
 ﻿import { useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
+import ImportacaoCautelasLegadasUniformes from "../Uniformes/ImportacaoCautelasLegadasUniformes";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
@@ -163,6 +164,12 @@ export default function UniformSettings() {
           >
             {saving ? "Salvando..." : "Salvar Configurações"}
           </button>
+
+          {/* [MANUTENCAO] Motivo: separar importação administrativa da consulta operacional de cautelas legadas.
+              [MANUTENCAO] Impacto: importação fica na configuração restrita a supervisor/admin, sem alterar a consulta do menu.
+              [MANUTENCAO] Data: 2026-06-08
+              [MANUTENCAO] Autor: Márlon Etiene */}
+          <ImportacaoCautelasLegadasUniformes />
         </div>
       )}
 

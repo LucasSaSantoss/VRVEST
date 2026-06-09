@@ -34,6 +34,7 @@ import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
 import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUniformes";
+import CautelasLegadasUniformes from "../Components/Uniformes/CautelasLegadasUniformes";
 import RetiradaUniformes from "../Components/Uniformes/RetiradaUniformes";
 import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
@@ -61,6 +62,7 @@ const isUniformesTab = (tab) =>
     "baixaDpUniformes",
     "cadastroUniformes",
     "estoqueUniformes",
+    "cautelasLegadasUniformes",
     "relatorioRetiradasUniformes",
     "relatorioEmprestimosUniformes",
     "relatorioVencimentosUniformes",
@@ -104,6 +106,12 @@ const canAccessTabByLevel = (level, tab) => {
       return isOperador || isSupervisor;
     case "baixaDpUniformes":
       return isDp || isSupervisor;
+    case "cautelasLegadasUniformes":
+      // [MANUTENCAO] Motivo: separar consulta operacional da importação administrativa de cautelas legadas.
+      // [MANUTENCAO] Impacto: consulta fica disponível para todos os perfis autenticados no módulo, mantendo importação restrita nas configurações.
+      // [MANUTENCAO] Data: 2026-06-08
+      // [MANUTENCAO] Autor: Márlon Etiene
+      return userLevel >= PERFIL_OPERADOR;
     case "cadastroUniformes":
     case "estoqueUniformes":
     case "relatorioEstoqueUniformes":
@@ -202,6 +210,7 @@ export default function Dashboard() {
       baixa: <ListaPendencias />,
       perfil: <ProfileContainer />,
       estoqueUniformes: <EntradaEstoqueUniformes />,
+      cautelasLegadasUniformes: <CautelasLegadasUniformes />,
       retiradaUniformes: <RetiradaUniformes />,
       devolucaoUniformes: <DevolucaoUniformes />,
       emprestimoUniformes: <EmprestimoUniformes />,
@@ -398,6 +407,7 @@ export default function Dashboard() {
               "baixaDpUniformes",
               "cadastroUniformes",
               "estoqueUniformes",
+              "cautelasLegadasUniformes",
               "relatorioEstoqueUniformes",
             ].some((tab) => canAccessTabByLevel(levelUser, tab)) ? (
               <li className="px-2.5 mt-2">
@@ -429,8 +439,15 @@ export default function Dashboard() {
                     {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
                     )}
+                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
+                      <li className="my-1 border-t border-white/30" />
+                    )}                    
+                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Cautelas Legadas</li>
+                    )}
                     {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
-                      canAccessTabByLevel(levelUser, "estoqueUniformes")) && (
+                      canAccessTabByLevel(levelUser, "estoqueUniformes") ||
+                      canAccessTabByLevel(levelUser, "cautelasLegadasUniformes")) && (
                       <li className="my-1 border-t border-white/30" />
                     )}
                     {canAccessTabByLevel(levelUser, "retiradaUniformes") && (

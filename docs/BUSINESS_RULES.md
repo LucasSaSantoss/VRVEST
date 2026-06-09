@@ -1,4 +1,4 @@
-﻿# BUSINESS_RULES.md
+# BUSINESS_RULES.md
 
 ## Objetivo
 
@@ -9,15 +9,15 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
 1. Login exige usuário ativo e senha válida.
 2. Autorização usa `User.level` no JWT.
 3. Estoque de uniformes:
-   - acesso somente admin (`level >= 4`);
+   - acesso para controlador e supervisor (`level === 2` ou `level === 4`);
    - operações com registro de auditoria.
 4. Retirada de uniformes:
-   - acesso para operador e admin (`level >= 3`);
+   - acesso para operador e supervisor (`level === 1` ou `level === 4`);
    - retirada por CPF;
    - quantidade fixa `1` por item da retirada;
    - não permite repetir o mesmo uniforme no carrinho da mesma retirada.
 5. Devolução de uniformes:
-   - acesso para operador e admin (`level >= 3`);
+   - acesso para operador e supervisor (`level === 1` ou `level === 4`);
    - devolução por item;
    - quantidade inicial preenchida com pendência do item;
    - devolução normal entra no estoque de empréstimos.
@@ -27,7 +27,7 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
    - exige justificativa obrigatória;
    - gera entrada no estoque de empréstimos com auditoria.
 7. Empréstimo de uniformes:
-   - acesso para operador e admin (`level >= 3`);
+   - acesso para operador e supervisor (`level === 1` ou `level === 4`);
    - módulo específico para saída de empréstimo;
    - não possui limite anual;
    - não permite empréstimo com saldo de empréstimos zerado/insuficiente.
@@ -35,10 +35,19 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
    - módulo específico separado da saída de empréstimo;
    - devolução por item/quantidade pendente.
 9. Baixa de uniformes no DP:
-   - acesso para RH e admin (`level === 2` ou `level >= 4`);
+   - acesso para DP e supervisor (`level === 3` ou `level === 4`);
    - baixa financeira por item/quantidade pendente.
 10. Limite anual:
    - controlado por configuração global (`UniformSetting`).
+11. Cautelas legadas de uniformes:
+   - acesso para controlador e supervisor (`level === 2` ou `level === 4`);
+   - planilha legada é vinculada por CPF normalizado e matrícula como fallback;
+   - grava somente `employeeId` e `lastWithdrawalDate` em `UniformLegacyWithdrawalBaseline`;
+   - não cria retirada oficial, item, pendência ou movimentação de estoque;
+   - importações repetidas atualizam o baseline do colaborador, sem duplicar;
+   - rejeitos são retornados para exportação, sem gravação em `UserLog`;
+   - criação/alteração válida registra `UserLog`;
+   - alerta considera vencida a cautela com 6 meses ou mais.
 
 ## Regras Inferidas
 
@@ -69,17 +78,20 @@ Consolidar regras de negócio do módulo de uniformes, separando o que está con
 
 ## Permissões por Perfil (Uniformes)
 
-1. `level = 4` (Admin):
+1. `level = 4` (Supervisor):
    - todos os módulos de uniformes.
-2. `level = 3` (Operador):
+2. `level = 3` (DP):
+   - baixa de uniformes - DP.
+3. `level = 2` (Controlador):
+   - cadastro de uniformes;
+   - estoque de uniformes;
+   - cautelas legadas de uniformes;
+   - relatório de estoque.
+4. `level = 1` (Operador):
    - retirada de uniformes;
    - devolução de uniformes;
    - empréstimo de uniformes;
    - devolução de empréstimos.
-3. `level = 2` (RH/DP):
-   - baixa de uniformes - DP.
-4. `level = 1`:
-   - não participa do fluxo de uniformes.
 
 ## Glossário de Status (Uniformes)
 

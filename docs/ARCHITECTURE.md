@@ -1,4 +1,4 @@
-﻿# ARCHITECTURE.md
+# ARCHITECTURE.md
 
 ## Estrutura Geral
 
@@ -33,6 +33,8 @@
 - `POST /api/uniforms/loan/:id/return`
 - `GET /api/uniforms/withdrawals`
 - `GET /api/uniforms/loans`
+- `GET /api/uniforms/legacy-baselines/alerts`
+- `POST /api/uniforms/legacy-baselines/import`
 
 ## Frontend
 
@@ -45,6 +47,7 @@
 
 - `src/Components/Uniformes/EntradaEstoqueUniformes.jsx`
 - `src/Components/Uniformes/CadastroUniformes.jsx`
+- `src/Components/Uniformes/CautelasLegadasUniformes.jsx`
 - `src/Components/Uniformes/RetiradaUniformes.jsx`
 - `src/Components/Uniformes/DevolucaoUniformes.jsx`
 - `src/Components/Uniformes/EmprestimoUniformes.jsx`
@@ -55,17 +58,19 @@
 
 - `src/Components/Relatorios/RelatorioRetiradasUniformes.jsx`
 - `src/Components/Relatorios/RelatorioEmprestimosUniformes.jsx`
+- `src/Components/Relatorios/RelatorioVencimentosUniformes.jsx`
+- `src/Components/Relatorios/RelatorioEstoqueUniformes.jsx`
 
 ## Autenticação e Autorização (estado atual)
 
-1. `level = 4` (Admin):
+1. `level = 4` (Supervisor):
    - acesso a todos os módulos de uniformes.
-2. `level = 3` (Operador):
-   - retirada, devolução, empréstimo e devolução de empréstimos.
-3. `level = 2` (RH/DP):
+2. `level = 3` (DP):
    - baixa de uniformes - DP.
-4. `level = 1`:
-   - acesso básico legado.
+3. `level = 2` (Controlador):
+   - cadastro, estoque e relatório de estoque para controlador/supervisor; consulta de cautelas legadas para todos os perfis autenticados.
+4. `level = 1` (Operador):
+   - retirada, devolução, empréstimo e devolução de empréstimos.
 
 ## Notificações de E-mail (arquitetura de fluxo)
 
@@ -78,9 +83,10 @@
 
 ## Reforços de Segurança
 
-- Backend de estoque (`uniformStockController`) exige admin.
-- Backend de baixa DP (`uniformController`) exige RH ou admin.
-- Backend de fluxos operacionais exige operador ou admin.
+- Backend de estoque (`uniformStockController`) exige controlador ou supervisor.
+- Backend de cautelas legadas (`uniformLegacyBaselineController`) separa permissões: consulta exige usuário autenticado; importação exige supervisor/admin.
+- Backend de baixa DP (`uniformController`) exige DP ou supervisor.
+- Backend de fluxos operacionais exige operador ou supervisor.
 - Frontend bloqueia acesso por menu e por query `?tab=` sem permissão.
 
 ## Observações de Manutenção

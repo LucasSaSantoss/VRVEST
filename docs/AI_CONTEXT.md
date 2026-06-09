@@ -1,4 +1,4 @@
-﻿# AI_CONTEXT.md
+# AI_CONTEXT.md
 
 ## Objetivo do Projeto
 
@@ -8,24 +8,26 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 
 ### Confirmado no código
 
-1. `level = 4` (Admin):
+1. `level = 4` (Supervisor):
    - estoque de uniformes;
    - cadastro de uniformes;
-   - retirada de uniformes;
-   - devolução de uniformes;
-   - empréstimo de uniformes;
-   - devolução de empréstimos;
+   - cautelas legadas de uniformes;
+   - relatórios administrativos de uniformes;
    - baixa DP de uniformes;
+   - retirada/devolução/empréstimos;
    - módulos administrativos existentes.
-2. `level = 3` (Operador):
+2. `level = 3` (DP):
+   - baixa DP de uniformes.
+3. `level = 2` (Controlador):
+   - cadastro de uniformes;
+   - estoque de uniformes;
+   - cautelas legadas de uniformes;
+   - relatório de estoque.
+4. `level = 1` (Operador):
    - retirada de uniformes;
    - devolução de uniformes;
    - empréstimo de uniformes;
    - devolução de empréstimos.
-3. `level = 2` (RH/DP):
-   - baixa DP de uniformes.
-4. `level = 1`:
-   - perfil básico legado (QR Code).
 
 ## Módulos de Uniformes (separação atual)
 
@@ -36,15 +38,17 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 5. `Baixa de Uniformes - DP`.
 6. `Cadastro de Uniformes`.
 7. `Estoque de Uniformes`.
+8. `Cautelas Legadas de Uniformes`.
 
 ## Fluxos Principais (Uniformes)
 
-1. Estoque (`/api/uniform-stock/*`): somente admin.
-2. Retirada (`/api/uniforms/*`): operador/admin.
-3. Devolução (`/api/uniforms/*`): operador/admin.
-4. Empréstimo (`/api/uniforms/loan/*`): operador/admin.
-5. Devolução de empréstimos (`/api/uniforms/loan/*`): operador/admin.
-6. Baixa DP (`/api/uniforms/dp/*` e settlement): RH/admin.
+1. Estoque (`/api/uniform-stock/*`): controlador/supervisor.
+2. Retirada (`/api/uniforms/*`): operador/supervisor.
+3. Devolução (`/api/uniforms/*`): operador/supervisor.
+4. Empréstimo (`/api/uniforms/loan/*`): operador/supervisor.
+5. Devolução de empréstimos (`/api/uniforms/loan/*`): operador/supervisor.
+6. Baixa DP (`/api/uniforms/dp/*` e settlement): DP/supervisor.
+7. Cautelas legadas: consulta (`GET /api/uniforms/legacy-baselines/alerts`) liberada para usuários autenticados; importação (`POST /api/uniforms/legacy-baselines/import`) restrita a supervisor/admin.
 
 ## Notificações de E-mail (Uniformes)
 
@@ -62,7 +66,21 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 
 1. Relatório de retiradas de uniformes.
 2. Relatório de empréstimos de uniformes.
-3. Ambos com exportação para Excel (`.xlsx`).
+3. Relatório de vencimentos de uniformes.
+4. Relatório de estoque de uniformes.
+5. Consulta de cautelas legadas com exportação para Excel (`.xlsx`).
+
+## Cautelas Legadas de Uniformes
+
+### Confirmado no código
+
+1. A planilha legada não gera `UniformWithdrawal`, `UniformWithdrawalItem` nem `UniformMovement`.
+2. A tabela `UniformLegacyWithdrawalBaseline` guarda somente `employeeId` e `lastWithdrawalDate` como dados de negócio.
+3. A importação cruza primeiro por CPF normalizado para 11 dígitos; matrícula é fallback/validação de conflito.
+4. Importações repetidas atualizam o registro existente por `employeeId`, sem duplicar.
+5. Rejeitos retornam para exportação no frontend e não são gravados em `UserLog`.
+6. Criação/alteração de baseline válida registra `UserLog`.
+7. O alerta considera vencida a cautela com 6 meses ou mais desde a data mais recente entre `UniformLegacyWithdrawalBaseline.lastWithdrawalDate` e `UniformWithdrawal.withdrawDate`; a consulta inicia em `TODOS` e permite filtrar por `VENCIDOS` ou `NO_PRAZO` e pesquisar por matrícula, CPF ou nome; a coluna de prazo mostra dias para vencer, com valor negativo quando vencido.
 
 ## Glossário de Status (Uniformes)
 

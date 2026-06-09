@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import * as XLSX from "xlsx";
 import { api, obterMensagemErroApi } from "../../services/api";
 
@@ -290,6 +290,17 @@ export default function RelatorioRetiradasUniformes() {
               <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
                 <span>Página {paginaAtual} de {totalPaginas}</span>
                 <div className="flex gap-2">
+                  {/* [MANUTENCAO] Motivo: padronizar paginação dos módulos novos com navegação para primeira e última página.
+                      [MANUTENCAO] Impacto: altera apenas controles visuais de navegação da tabela.
+                      [MANUTENCAO] Data: 2026-06-09
+                      [MANUTENCAO] Autor: Márlon Etiene */}
+                  <button
+                    onClick={() => setPaginaAtual(1)}
+                    disabled={paginaAtual === 1}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                  >
+                    Primeiro
+                  </button>
                   <button
                     onClick={() => setPaginaAtual((p) => Math.max(1, p - 1))}
                     disabled={paginaAtual === 1}
@@ -303,6 +314,13 @@ export default function RelatorioRetiradasUniformes() {
                     className="px-3 py-1 rounded border disabled:opacity-50"
                   >
                     Próxima
+                  </button>
+                  <button
+                    onClick={() => setPaginaAtual(totalPaginas)}
+                    disabled={paginaAtual >= totalPaginas}
+                    className="px-3 py-1 border rounded disabled:opacity-50"
+                  >
+                    Último
                   </button>
                 </div>
               </div>

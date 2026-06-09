@@ -19,6 +19,10 @@ import {
   updateUniformAnnualLimit,
   updateUniformStockMovementPolicy,
 } from "../controllers/uniformController.js";
+import {
+  importLegacyUniformBaselines,
+  listLegacyUniformBaselineAlerts,
+} from "../controllers/uniformLegacyBaselineController.js";
 
 const router = express.Router();
 
@@ -34,6 +38,8 @@ router.post("/withdraw", authMiddleware, createUniformWithdrawal);
 router.post("/loan/withdraw", authMiddleware, createUniformLoan);
 router.get("/withdrawals", authMiddleware, listUniformWithdrawals);
 router.get("/reports/expirations", authMiddleware, listUniformExpirations);
+router.get("/legacy-baselines/alerts", authMiddleware, listLegacyUniformBaselineAlerts);
+router.post("/legacy-baselines/import", authMiddleware, importLegacyUniformBaselines);
 router.get("/loans", authMiddleware, listUniformLoans);
 router.post("/withdrawals/:id/return", authMiddleware, returnUniformWithdrawalItems);
 router.post("/returns/legacy", authMiddleware, registerLegacyUniformReturn);

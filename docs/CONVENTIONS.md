@@ -50,7 +50,8 @@ Registrar padrões observados no projeto para manutenção incremental com menor
   - devolução de empréstimos;
   - baixa de uniformes - DP;
   - cadastro de uniformes;
-  - estoque de uniformes.
+  - estoque de uniformes;
+  - cautelas legadas de uniformes.
 
 ### Diretriz de manutenção
 
@@ -84,6 +85,11 @@ Registrar padrões observados no projeto para manutenção incremental com menor
    - filtros por CPF/ano/status;
    - detalhamento por item;
    - exportação para Excel (`.xlsx`).
+4. Cautelas legadas:
+   - leitura de planilha no frontend com `xlsx`;
+   - validação e persistência no backend;
+   - rejeitos retornados para exportação;
+   - sem criação de retirada oficial ou movimentação de estoque.
 
 ## 6) Como Criar/Alterar Componentes React com Segurança
 
@@ -101,7 +107,17 @@ Registrar padrões observados no projeto para manutenção incremental com menor
 4. Registrar `UserLog` em operações críticas.
 5. Atualizar consumo no frontend.
 
-## 8) Mensagens de Erro e Textos
+## 8) Importações Legadas
+
+1. Não inserir dados legados diretamente em tabelas transacionais oficiais quando faltarem informações críticas.
+2. Usar tabela separada de baseline quando o dado for apenas referência histórica.
+3. Quando houver `employeeId`, não duplicar nome, CPF ou matrícula como dado de negócio.
+4. CPF de planilha deve ser normalizado removendo caracteres não numéricos e preenchendo zeros à esquerda até 11 dígitos.
+5. Matrícula deve ser fallback ou validação de conflito, não chave principal quando CPF válido existir.
+6. Rejeitos de importação devem retornar para exportação/correção, sem gravação obrigatória em `UserLog`.
+7. Criar/alterar registros persistidos deve gerar `UserLog`.
+
+## 9) Mensagens de Erro e Textos
 
 1. Mensagens de erro devem estar em português brasileiro.
 2. Evitar mensagens genéricas quando houver causa conhecida.
