@@ -57,7 +57,10 @@ export async function cadastrarEmail({ cpf, email }) {
     return res.data;
   } catch (err) {
     console.error("Erro ao cadastrar email:", err);
-    return { success: false, message: "Erro ao cadastrar email" };
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro ao cadastrar email",
+    };
   }
 }
 
@@ -183,7 +186,14 @@ export async function alterarFuncionario(id, dados) {
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
-    return { success: false, message: "Registro sem alteração." };
+    // [MANUTENCAO] Motivo: preservar mensagens específicas do backend legado em erros de cadastro/alteração de colaborador.
+    // [MANUTENCAO] Impacto: evita ocultar duplicidade de e-mail/CPF atrás de mensagem genérica no frontend.
+    // [MANUTENCAO] Data: 2026-06-09
+    // [MANUTENCAO] Autor: Márlon Etiene
+    return {
+      success: false,
+      message: err.response?.data?.message || "Registro sem alteração.",
+    };
   }
 }
 

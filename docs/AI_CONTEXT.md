@@ -103,6 +103,14 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 
 - `ENTRY`, `EXIT`, `LOAN_EXIT`, `LOAN_RETURN`, `RETURN_TO_LOAN`, `ADJUSTMENT`, `DISCARD`, `DISCOUNT`, `REVERSAL`.
 
+## Legado de Colaboradores
+
+### Confirmado no código
+
+1. Cadastro e alteração de colaboradores continuam no fluxo legado `/api/empl`.
+2. Violações de chave única do Prisma (`P2002`) devem retornar mensagem específica quando envolverem `email` ou `cpf`.
+3. Frontend deve preservar a mensagem retornada pelo backend para evitar erro genérico quando a causa for conhecida.
+
 ## Pontos de Atenção
 
 1. Em base legada importada, datas inválidas (`0000-00-00`) podem quebrar consultas Prisma.

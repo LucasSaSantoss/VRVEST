@@ -77,6 +77,15 @@ Mapear o fluxo de dados principal para manutenção segura.
 6. Rejeitos retornam na resposta para exportação em Excel e não são gravados no banco principal.
 7. Consulta de alertas usa `GET /api/uniforms/legacy-baselines/alerts`, é separada da importação, cruza cautela legada com retiradas oficiais do sistema, considera vencida cautela com 6 meses ou mais e aceita filtros `TODOS`, `VENCIDOS` e `NO_PRAZO`; a tela também aplica busca local por matrícula, CPF ou nome e exibe dias para vencer, com valor negativo quando vencido.
 
+## Fluxo Legado de Colaboradores
+
+### 1) Cadastro de colaborador
+
+1. Front chama `POST /api/empl`.
+2. Backend valida campos obrigatórios e duplicidade conhecida de e-mail/CPF.
+3. Se o banco retornar violação de chave única (`P2002`), backend devolve mensagem específica para e-mail ou CPF já cadastrado.
+4. Front deve exibir a mensagem retornada pelo backend, sem substituir por erro genérico quando a causa for conhecida.
+
 ## Relatórios
 
 ### 1) Retiradas de uniformes
