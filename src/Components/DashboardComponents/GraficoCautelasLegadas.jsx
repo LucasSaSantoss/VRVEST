@@ -87,16 +87,18 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
             {cards.map((card) => (
               <div
                 key={card.label}
-                className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${card.container}`}
+                className={`flex items-center justify-center rounded-2xl border px-4 py-3 ${card.container}`}
               >
-                <span className={`text-sm font-semibold tracking-wide ${card.text}`}>
-                  {card.label}
-                </span>
-                <span
-                  className={`min-w-12 rounded-full px-3 py-1 text-center text-sm font-bold text-white shadow ${card.badge}`}
-                >
-                  {card.value}
-                </span>
+                <div className="flex min-w-[220px] items-center justify-between gap-4">
+                  <span className={`text-sm font-semibold tracking-wide ${card.text}`}>
+                    {card.label}
+                  </span>
+                  <span
+                    className={`min-w-12 rounded-full px-3 py-1 text-center text-sm font-bold text-white shadow ${card.badge}`}
+                  >
+                    {card.value}
+                  </span>
+                </div>
               </div>
             ))}
           </div>
