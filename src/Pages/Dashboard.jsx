@@ -53,6 +53,12 @@ const PERFIL_CONTROLADOR = 2;
 const PERFIL_DP = 3;
 const PERFIL_SUPERVISOR = 4;
 
+// [MANUTENCAO] Motivo: ocultar temporariamente a consulta de cautelas legadas para subida controlada em produção.
+// [MANUTENCAO] Impacto: mantém código e backend disponíveis, mas remove acesso pelo menu e por URL (?tab=cautelasLegadasUniformes).
+// [MANUTENCAO] Data: 2026-06-10
+// [MANUTENCAO] Autor: Márlon Etiene
+const ENABLE_CAUTELAS_LEGADAS_UI = false;
+
 const isUniformesTab = (tab) =>
   [
     "retiradaUniformes",
@@ -107,11 +113,11 @@ const canAccessTabByLevel = (level, tab) => {
     case "baixaDpUniformes":
       return isDp || isSupervisor;
     case "cautelasLegadasUniformes":
-      // [MANUTENCAO] Motivo: separar consulta operacional da importação administrativa de cautelas legadas.
-      // [MANUTENCAO] Impacto: consulta fica disponível para todos os perfis autenticados no módulo, mantendo importação restrita nas configurações.
-      // [MANUTENCAO] Data: 2026-06-08
+      // [MANUTENCAO] Motivo: ocultar temporariamente a consulta de cautelas legadas para subida controlada em produção.
+      // [MANUTENCAO] Impacto: bloqueia menu e acesso direto por URL sem remover a implementação para reativação futura.
+      // [MANUTENCAO] Data: 2026-06-10
       // [MANUTENCAO] Autor: Márlon Etiene
-      return userLevel >= PERFIL_OPERADOR;
+      return ENABLE_CAUTELAS_LEGADAS_UI && userLevel >= PERFIL_OPERADOR;
     case "cadastroUniformes":
     case "estoqueUniformes":
     case "relatorioEstoqueUniformes":

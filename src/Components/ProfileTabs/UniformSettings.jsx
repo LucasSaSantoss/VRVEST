@@ -1,6 +1,10 @@
 ﻿import { useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
-import ImportacaoCautelasLegadasUniformes from "../Uniformes/ImportacaoCautelasLegadasUniformes";
+// [MANUTENCAO] Motivo: ocultar temporariamente upload/importação de cautelas legadas para subida controlada em produção.
+// [MANUTENCAO] Impacto: componente permanece no projeto, mas não é importado nem renderizado na configuração geral.
+// [MANUTENCAO] Data: 2026-06-10
+// [MANUTENCAO] Autor: Márlon Etiene
+// import ImportacaoCautelasLegadasUniformes from "../Uniformes/ImportacaoCautelasLegadasUniformes";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
@@ -165,11 +169,10 @@ export default function UniformSettings() {
             {saving ? "Salvando..." : "Salvar Configurações"}
           </button>
 
-          {/* [MANUTENCAO] Motivo: separar importação administrativa da consulta operacional de cautelas legadas.
-              [MANUTENCAO] Impacto: importação fica na configuração restrita a supervisor/admin, sem alterar a consulta do menu.
-              [MANUTENCAO] Data: 2026-06-08
+          {/* [MANUTENCAO] Motivo: ocultar temporariamente upload/importação de cautelas legadas para subida controlada em produção.
+              [MANUTENCAO] Impacto: componente ImportacaoCautelasLegadasUniformes permanece disponível para reativação futura, mas não aparece na configuração geral.
+              [MANUTENCAO] Data: 2026-06-10
               [MANUTENCAO] Autor: Márlon Etiene */}
-          <ImportacaoCautelasLegadasUniformes />
         </div>
       )}
 
