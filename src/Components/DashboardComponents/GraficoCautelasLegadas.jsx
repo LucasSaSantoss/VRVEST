@@ -1,21 +1,9 @@
 import { useMemo } from "react";
-import { Bar } from "react-chartjs-2";
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
 
 export default function GraficoCautelasLegadas({ values = [], loading = false }) {
   const totais = useMemo(() => {
     // [MANUTENCAO] Motivo: resumir cautelas históricas no dashboard por faixa de vencimento.
-    // [MANUTENCAO] Impacto: usa dados já calculados pela consulta legada, sem alterar regras do backend.
+    // [MANUTENCAO] Impacto: usa dados já calculados pela consulta histórica, sem alterar regras do backend.
     // [MANUTENCAO] Data: 2026-06-10
     // [MANUTENCAO] Autor: Márlon Etiene
     return values.reduce(
@@ -28,7 +16,7 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
         }
 
         if (Number.isFinite(diasParaVencer) && diasParaVencer <= 30) {
-          acc.ateUmMes += 1;
+          acc.ateTrintaDias += 1;
           return acc;
         }
 
@@ -45,71 +33,73 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
       },
       {
         vencidas: 0,
-        ateUmMes: 0,
+        ateTrintaDias: 0,
         deTrintaUmAOitentaNoveDias: 0,
         noventaDiasOuMais: 0,
       }
     );
   }, [values]);
 
-  const data = {
-    labels: ["Vencidas", "Até 30 dias", "31 a 89 dias", "90 dias ou mais"],
-    datasets: [
-      {
-        label: "Cautelas históricas",
-        data: [
-          totais.vencidas,
-          totais.ateUmMes,
-          totais.deTrintaUmAOitentaNoveDias,
-          totais.noventaDiasOuMais,
-        ],
-        backgroundColor: ["#DC2626", "#EAB308", "#2563EB", "#16A34A"],
-        borderRadius: 8,
-        maxBarThickness: 56,
-      },
-    ],
-  };
-
-  const options = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        backgroundColor: "#1f2937",
-        titleColor: "#fff",
-        bodyColor: "#fff",
-      },
+  const cards = [
+    {
+      label: "Vencidas",
+      value: totais.vencidas,
+      container: "bg-red-50 border-red-100",
+      text: "text-red-800",
+      badge: "bg-red-600",
     },
-    scales: {
-      y: {
-        beginAtZero: true,
-        grid: { color: "#e5e7eb" },
-        ticks: { precision: 0, color: "#374151" },
-      },
-      x: {
-        grid: { display: false },
-        ticks: { color: "#374151" },
-      },
+    {
+      label: "Até 30 dias",
+      value: totais.ateTrintaDias,
+      container: "bg-yellow-50 border-yellow-100",
+      text: "text-yellow-800",
+      badge: "bg-yellow-500",
     },
-  };
+    {
+      label: "31 a 89 dias",
+      value: totais.deTrintaUmAOitentaNoveDias,
+      container: "bg-blue-50 border-blue-100",
+      text: "text-blue-800",
+      badge: "bg-blue-600",
+    },
+    {
+      label: "90 dias ou mais",
+      value: totais.noventaDiasOuMais,
+      container: "bg-green-50 border-green-100",
+      text: "text-green-800",
+      badge: "bg-green-600",
+    },
+  ];
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl w-full h-[19rem] p-2 mt-1">
-      <p className="text-md font-bold text-gray-800 mb-1 text-center">
+    <div className="bg-white shadow-lg rounded-2xl w-full h-[19rem] p-4 mt-1">
+      <p className="text-md font-bold text-gray-800 mb-3 text-center">
         Vencimento de Cautelas
       </p>
-      <p className="text-xs text-gray-500 text-center mb-2">
-        {/*Faixas não cumulativas por prazo de vencimento.*/}
-      </p>
 
-      <div className="w-full h-[15.5rem]">
+      <div className="w-full h-[15rem]">
         {loading ? (
           <div className="h-full flex items-center justify-center text-sm text-gray-500">
             Carregando cautelas...
           </div>
         ) : (
-          <Bar data={data} options={options} />
+          <div className="h-full flex flex-col justify-center gap-3">
+            {cards.map((card) => (
+              <div
+                key={card.label}
+                className={`flex items-center justify-between rounded-2xl border px-4 py-3 ${card.container}`}
+              >
+                <span className={`text-sm font-semibold tracking-wide ${card.text}`}>
+                  {card.label}
+                </span>
+                <span
+                  className={`min-w-12 rounded-full px-3 py-1 text-center text-sm font-bold text-white shadow ${card.badge}`}
+                >
+                  {card.value}
+                </span>
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>
