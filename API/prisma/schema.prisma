@@ -94,17 +94,9 @@ model itemsCloth {
   id                       Int                @id @default(autoincrement())
   itemName                 String             @db.VarChar(100)
   itemVal                  String             @db.VarChar(10)
-  // [MANUTENCAO] Motivo: preparar cadastro legado para módulo de estoque de uniformes sem impacto no fluxo atual.
-  // [MANUTENCAO] Impacto: campos opcionais/default para uso apenas em novas rotinas de uniformes/estoque.
-  // [MANUTENCAO] Data: 2026-05-19
-  // [MANUTENCAO] Autor: Márlon Etiene
   minStock                 Int                @default(0)
   isUniform                Int                @default(0)
   active                   Int                @default(1)
-  // [MANUTENCAO] Motivo: suportar validade por tipo de jornada no modulo de uniformes.
-  // [MANUTENCAO] Impacto: habilita calculo de prazo por item retirado (plantonista/diarista).
-  // [MANUTENCAO] Data: 2026-05-28
-  // [MANUTENCAO] Autor: Márlon Etiene
   validadePlantonistaMeses Int                @default(12)
   validadeDiaristaMeses    Int                @default(12)
   uniformStockSizes        UniformStockSize[]
@@ -167,10 +159,6 @@ model UniformWithdrawal {
   withdrawDate             DateTime
   totalQuantity            Int
   limitApplied             Int
-  // [MANUTENCAO] Motivo: registrar jornada da retirada para aplicar limite e validade corretos.
-  // [MANUTENCAO] Impacto: permite diferenciar regras entre plantonista e diarista.
-  // [MANUTENCAO] Data: 2026-05-28
-  // [MANUTENCAO] Autor: Márlon Etiene
   workType                 String   @default("DIARISTA") @db.VarChar(20)
   status                   String   @db.VarChar(30)
   nonDeliveryJustification String?  @db.VarChar(500)
@@ -191,10 +179,6 @@ model UniformWithdrawalItem {
   quantity            Int
   returnedQuantity    Int       @default(0)
   discountedQuantity  Int       @default(0)
-  // [MANUTENCAO] Motivo: controlar vencimento e status de cobranca por item retirado.
-  // [MANUTENCAO] Impacto: base para regras de expiracao, baixa e bloqueio de cobranca duplicada.
-  // [MANUTENCAO] Data: 2026-05-28
-  // [MANUTENCAO] Autor: Márlon Etiene
   dueDate             DateTime?
   expiredAt           DateTime?
   expirationStatus    String    @default("ACTIVE") @db.VarChar(30)
@@ -226,10 +210,6 @@ model UniformMovement {
 model UniformSetting {
   id                               Int      @id @default(autoincrement())
   annualLimit                      Int      @default(2)
-  // [MANUTENCAO] Motivo: substituir limite anual global por limites por jornada.
-  // [MANUTENCAO] Impacto: permite regra de retirada especifica para plantonista e diarista.
-  // [MANUTENCAO] Data: 2026-05-28
-  // [MANUTENCAO] Autor: Márlon Etiene
   annualLimitPlantonista           Int      @default(1)
   annualLimitDiarista              Int      @default(2)
   allowZeroOrNegativeStockMovement Int      @default(0)

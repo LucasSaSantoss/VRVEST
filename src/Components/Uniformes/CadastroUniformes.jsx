@@ -241,10 +241,6 @@ export default function CadastroUniformes() {
                 Página {paginaAtual} de {Math.max(1, Math.ceil(uniformes.length / ITENS_POR_PAGINA))}
               </span>
               <div className="flex gap-2">
-                {/* [MANUTENCAO] Motivo: padronizar paginação dos módulos novos com navegação para primeira e última página.
-                    [MANUTENCAO] Impacto: altera apenas controles visuais de navegação da tabela.
-                    [MANUTENCAO] Data: 2026-06-09
-                    [MANUTENCAO] Autor: Márlon Etiene */}
                 <button
                   onClick={() => setPaginaAtual(1)}
                   disabled={paginaAtual === 1}

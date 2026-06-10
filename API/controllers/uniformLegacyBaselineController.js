@@ -449,10 +449,6 @@ export const listLegacyUniformBaselineAlerts = async (req, res) => {
         updatedAt: row.updatedAt,
         vencido,
         diasDesdeUltimaCautela,
-        // [MANUTENCAO] Motivo: exibir prazo operacional com dias negativos quando a cautela já estiver vencida.
-        // [MANUTENCAO] Impacto: adiciona campo calculado sem alterar a regra de vencimento de 6 meses.
-        // [MANUTENCAO] Data: 2026-06-09
-        // [MANUTENCAO] Autor: Márlon Etiene
         diasParaVencer,
         employee: {
           id: row.employee.id,
@@ -467,10 +463,6 @@ export const listLegacyUniformBaselineAlerts = async (req, res) => {
       };
     });
 
-    // [MANUTENCAO] Motivo: permitir consulta padrão completa e filtro específico de cautelas ainda no prazo.
-    // [MANUTENCAO] Impacto: mantém compatibilidade com VENCIDOS/TODOS e adiciona NO_PRAZO sem alterar cálculo de vencimento.
-    // [MANUTENCAO] Data: 2026-06-08
-    // [MANUTENCAO] Autor: Márlon Etiene
     const filtered =
       status === "TODOS"
         ? normalized

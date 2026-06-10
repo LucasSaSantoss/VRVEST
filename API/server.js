@@ -35,10 +35,6 @@ app.use("/api/mod", modalityRoutes);
 app.use("/api/spe", specialtyRoutes);
 app.use("/api/items", itemsRoutes);
 app.use("/api/log", logRoutes);
-// [MANUTENCAO] Motivo: incluir módulos novos de uniformes e estoque de uniformes na Fase 1 técnica.
-// [MANUTENCAO] Impacto: disponibiliza endpoints dedicados sem alterar fluxo legado de pijamas/pendências.
-// [MANUTENCAO] Data: 2026-05-19
-// [MANUTENCAO] Autor: Márlon Etiene
 app.use("/api/uniforms", uniformRoutes);
 app.use("/api/uniform-stock", uniformStockRoutes);
 

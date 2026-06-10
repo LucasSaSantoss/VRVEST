@@ -53,12 +53,6 @@ const PERFIL_CONTROLADOR = 2;
 const PERFIL_DP = 3;
 const PERFIL_SUPERVISOR = 4;
 
-// [MANUTENCAO] Motivo: ocultar temporariamente a consulta de cautelas legadas para subida controlada em produção.
-// [MANUTENCAO] Impacto: mantém código e backend disponíveis, mas remove acesso pelo menu e por URL (?tab=cautelasLegadasUniformes).
-// [MANUTENCAO] Data: 2026-06-10
-// [MANUTENCAO] Autor: Márlon Etiene
-const ENABLE_CAUTELAS_LEGADAS_UI = false;
-
 const isUniformesTab = (tab) =>
   [
     "retiradaUniformes",
@@ -85,10 +79,6 @@ const canAccessTabByLevel = (level, tab) => {
     return userLevel === PERFIL_SUPERVISOR;
   }
 
-  // [MANUTENCAO] Motivo: alinhar o módulo de uniformes aos níveis oficiais: 1 OPERADOR, 2 CONTROLADOR, 3 DP, 4 SUPERVISOR.
-  // [MANUTENCAO] Impacto: altera apenas permissões das abas novas de uniformes, sem modificar menus legados.
-  // [MANUTENCAO] Data: 2026-06-05
-  // [MANUTENCAO] Autor: Márlon Etiene
   const isOperador = userLevel === PERFIL_OPERADOR;
   const isControlador = userLevel === PERFIL_CONTROLADOR;
   const isDp = userLevel === PERFIL_DP;
@@ -113,11 +103,7 @@ const canAccessTabByLevel = (level, tab) => {
     case "baixaDpUniformes":
       return isDp || isSupervisor;
     case "cautelasLegadasUniformes":
-      // [MANUTENCAO] Motivo: ocultar temporariamente a consulta de cautelas legadas para subida controlada em produção.
-      // [MANUTENCAO] Impacto: bloqueia menu e acesso direto por URL sem remover a implementação para reativação futura.
-      // [MANUTENCAO] Data: 2026-06-10
-      // [MANUTENCAO] Autor: Márlon Etiene
-      return ENABLE_CAUTELAS_LEGADAS_UI && userLevel >= PERFIL_OPERADOR;
+      return userLevel >= PERFIL_OPERADOR;
     case "cadastroUniformes":
     case "estoqueUniformes":
     case "relatorioEstoqueUniformes":
@@ -554,10 +540,7 @@ export default function Dashboard() {
                       >
                         Vencimentos de Uniformes
                       </li>
-                      {/* [MANUTENCAO] Motivo: expor relatório completo de estoque no submenu de relatórios.
-                          [MANUTENCAO] Impacto: habilita consulta com filtros, paginação e exportação Excel sem alterar fluxos críticos.
-                          [MANUTENCAO] Data: 2026-06-01
-                          [MANUTENCAO] Autor: Márlon Etiene */}
+
                       <li
                         className="cursor-pointer hover:text-gray-300"
                         onClick={() => selectTab("relatorioEstoqueUniformes")}

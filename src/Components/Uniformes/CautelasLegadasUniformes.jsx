@@ -18,6 +18,20 @@ const limitarTexto = (value, limit = 25) => {
   return text.length > limit ? `${text.slice(0, limit)}...` : text;
 };
 
+const calcularDataVencimento = (value) => {
+  if (!value) return null;
+  const data = new Date(value);
+  if (Number.isNaN(data.getTime())) return null;
+  const vencimento = new Date(data);
+  vencimento.setMonth(vencimento.getMonth() + 6);
+  return vencimento;
+};
+
+const formatarDataPtBr = (value) => {
+  const data = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(data.getTime()) ? "-" : data.toLocaleDateString("pt-BR");
+};
+
 const exportJsonToExcel = (rows, sheetName, fileName) => {
   const worksheet = XLSX.utils.json_to_sheet(rows);
   const workbook = XLSX.utils.book_new();
@@ -31,7 +45,7 @@ export default function CautelasLegadasUniformes() {
   const [statusFiltro, setStatusFiltro] = useState("TODOS");
   const [termoBusca, setTermoBusca] = useState("");
   const [paginaAtual, setPaginaAtual] = useState(1);
-  const [itensPorPagina, setItensPorPagina] = useState(25);
+  const [itensPorPagina, setItensPorPagina] = useState(10);
   const [popup, setPopup] = useState(INITIAL_POPUP);
 
   const showTemporaryPopup = (message, type = "info") => {
@@ -68,20 +82,22 @@ export default function CautelasLegadasUniformes() {
 
   const linhasAlerta = useMemo(
     () =>
-      alerts.map((row) => ({
-        Matrícula: row.employee?.matricula || "-",
-        Colaborador: row.employee?.name || "-",
-        CPF: row.employee?.cpf || "-",
-        Setor: row.employee?.sector || "-",
-        Cargo: row.employee?.position || "-",
-        "Última cautela": row.lastWithdrawalDate
-          ? new Date(row.lastWithdrawalDate).toLocaleDateString("pt-BR")
-          : "-",
-        Origem: row.origemUltimaCautela === "SISTEMA" ? "Sistema" : "Legado",
-        "Dias para vencer": row.diasParaVencer,
-        Status: row.vencido ? "Vencido" : "A vencer",
-        Ativo: Number(row.employee?.active || 0) === 1 ? "Sim" : "Não",
-      })),
+      alerts.map((row) => {
+        const dataVencimento = calcularDataVencimento(row.lastWithdrawalDate);
+
+        return {
+          Matrícula: row.employee?.matricula || "-",
+          Colaborador: row.employee?.name || "-",
+          CPF: row.employee?.cpf || "-",
+          Setor: row.employee?.sector || "-",
+          Cargo: row.employee?.position || "-",
+          "Última cautela": row.lastWithdrawalDate ? formatarDataPtBr(row.lastWithdrawalDate) : "-",
+          Origem: row.origemUltimaCautela === "SISTEMA" ? "Sistema" : "Legado",
+          Vencimento: dataVencimento ? formatarDataPtBr(dataVencimento) : "-",
+          Status: row.vencido ? "Vencido" : "A vencer",
+          Ativo: Number(row.employee?.active || 0) === 1 ? "Sim" : "Não",
+        };
+      }),
     [alerts]
   );
 
@@ -89,10 +105,6 @@ export default function CautelasLegadasUniformes() {
     const termo = normalizarBusca(termoBusca);
     if (!termo) return linhasAlerta;
 
-    // [MANUTENCAO] Motivo: permitir busca operacional por matrícula, CPF ou nome na consulta de cautelas legadas.
-    // [MANUTENCAO] Impacto: filtro local sobre os dados já carregados, sem alterar contrato da API.
-    // [MANUTENCAO] Data: 2026-06-09
-    // [MANUTENCAO] Autor: Márlon Etiene
     return linhasAlerta.filter((row) =>
       [row.Matrícula, row.CPF, row.Colaborador].some((value) =>
         normalizarBusca(value).includes(termo)
@@ -180,7 +192,7 @@ export default function CautelasLegadasUniformes() {
           <span>
             {linhasFiltradas.length
               ? `Exibindo ${inicioPagina + 1} a ${Math.min(fimPagina, linhasFiltradas.length)} de ${linhasFiltradas.length} registro(s).`
-              : "Nenhum registro encontrado."}
+              : ""}
           </span>
           <label className="flex items-center gap-2">
             Registros por página
@@ -214,11 +226,7 @@ export default function CautelasLegadasUniformes() {
                     <th className="py-2 pr-3">Cargo</th>
                     <th className="py-2 pr-3">Última cautela</th>
                     <th className="py-2 pr-3">Origem</th>
-                    {/* [MANUTENCAO] Motivo: exibir prazo operacional com dias negativos quando a cautela estiver vencida.
-                        [MANUTENCAO] Impacto: alteração apenas textual na consulta de cautelas legadas.
-                        [MANUTENCAO] Data: 2026-06-09
-                        [MANUTENCAO] Autor: Márlon Etiene */}
-                    <th className="py-2 pr-3 text-right">Dias para vencer</th>
+                    <th className="py-2 pr-3">Vencimento</th>
                     <th className="py-2">Status</th>
                   </tr>
                 </thead>
@@ -228,25 +236,17 @@ export default function CautelasLegadasUniformes() {
                       <td className="py-2 pr-3">{row.Matrícula}</td>
                       <td className="py-2 pr-3">{row.Colaborador}</td>
                       <td className="py-2 pr-3">{row.CPF}</td>
-                      {/* [MANUTENCAO] Motivo: preservar largura da consulta truncando cargos longos apenas na exibição.
-                          [MANUTENCAO] Impacto: exportação mantém o cargo completo; tabela mostra reticências acima de 25 caracteres.
-                          [MANUTENCAO] Data: 2026-06-09
-                          [MANUTENCAO] Autor: Márlon Etiene */}
                       <td className="py-2 pr-3" title={row.Cargo}>
                         {limitarTexto(row.Cargo)}
                       </td>
                       <td className="py-2 pr-3">{row["Última cautela"]}</td>
                       <td className="py-2 pr-3">{row.Origem}</td>
-                      {/* [MANUTENCAO] Motivo: destacar visualmente cautelas vencidas pelo prazo negativo.
-                          [MANUTENCAO] Impacto: alteração visual restrita à coluna de dias para vencer.
-                          [MANUTENCAO] Data: 2026-06-09
-                          [MANUTENCAO] Autor: Márlon Etiene */}
                       <td
-                        className={`py-2 pr-3 font-semibold text-right ${
-                          Number(row["Dias para vencer"]) < 0 ? "text-red-600" : "text-gray-900"
+                        className={`py-2 pr-3 font-semibold ${
+                          row.Status === "Vencido" ? "text-red-600" : "text-gray-900"
                         }`}
                       >
-                        {row["Dias para vencer"]}
+                        {row.Vencimento}
                       </td>
                       <td className="py-2">{row.Status}</td>
                     </tr>
