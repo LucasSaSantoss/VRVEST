@@ -4,8 +4,9 @@ import TabelaPendencias from "./TabelaPendencias";
 import GraficoDoughnut from "./GraficoDoughnut";
 import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import MovPorHora from "./GraficoMovPorHora";
+import GraficoCautelasLegadas from "./GraficoCautelasLegadas";
 import FiltroDatas from "./ComponenteData/DateInput";
-import { carregarPendencias } from "../../services/api";
+import { api, carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 
 export default function Dashboard() {
@@ -14,7 +15,9 @@ export default function Dashboard() {
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
   const [dadosGrafico, setDadosGrafico] = useState([]);
+  const [dadosCautelasLegadas, setDadosCautelasLegadas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingCautelasLegadas, setLoadingCautelasLegadas] = useState(false);
 
   const [popup, setPopup] = useState({
     mostrar: false,
@@ -122,6 +125,26 @@ export default function Dashboard() {
     }
   };
 
+  const listarCautelasLegadas = async () => {
+    setLoadingCautelasLegadas(true);
+    try {
+      // [MANUTENCAO] Motivo: incluir resumo de cautelas históricas no dashboard sem criar novo contrato de API.
+      // [MANUTENCAO] Impacto: consome a consulta existente considerando o cruzamento legado/sistema já feito no backend.
+      // [MANUTENCAO] Data: 2026-06-10
+      // [MANUTENCAO] Autor: Márlon Etiene
+      const res = await api.get("/uniforms/legacy-baselines/alerts", {
+        params: { status: "TODOS" },
+      });
+      setDadosCautelasLegadas(res.data?.success ? res.data.data || [] : []);
+    } catch (err) {
+      console.error(err);
+      setDadosCautelasLegadas([]);
+      mostrarPopup("Erro ao carregar cautelas históricas.", "error");
+    } finally {
+      setLoadingCautelasLegadas(false);
+    }
+  };
+
   // ------------------- Inicialização -------------------
   useEffect(() => {
     const ontem = new Date(dataBR);
@@ -133,6 +156,7 @@ export default function Dashboard() {
     const seisMesesAtras = new Date();
     seisMesesAtras.setMonth(new Date().getMonth() - 5);
     listarRetiradosDevolvidos(seisMesesAtras, dataBR);
+    listarCautelasLegadas();
   }, []);
 
   useEffect(() => {
@@ -203,8 +227,20 @@ export default function Dashboard() {
           />
         </div>
       </div>
-      <div>
-        <MovPorHora className="w-full mt-2" values={dadosGrafico} />
+      {/* [MANUTENCAO] Motivo: ajustar proporção da última linha do dashboard ao volume de informação dos cards.
+          [MANUTENCAO] Impacto: retirados/devolvidos ocupa 2/3 e cautelas históricas 1/3 em desktop; em telas menores, os cards empilham.
+          [MANUTENCAO] Data: 2026-06-10
+          [MANUTENCAO] Autor: Márlon Etiene */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full mt-2">
+        <div className="xl:col-span-2">
+          <MovPorHora values={dadosGrafico} />
+        </div>
+        <div className="xl:col-span-1">
+          <GraficoCautelasLegadas
+            values={dadosCautelasLegadas}
+            loading={loadingCautelasLegadas}
+          />
+        </div>
       </div>
 
       {/* Loading */}

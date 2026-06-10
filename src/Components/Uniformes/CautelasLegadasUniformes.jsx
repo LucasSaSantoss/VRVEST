@@ -68,7 +68,7 @@ export default function CautelasLegadasUniformes() {
     } catch (error) {
       setAlerts([]);
       showTemporaryPopup(
-        obterMensagemErroApi(error, "Erro ao carregar cautelas legadas."),
+        obterMensagemErroApi(error, "Erro ao carregar cautelas históricas."),
         "error"
       );
     } finally {
@@ -92,7 +92,7 @@ export default function CautelasLegadasUniformes() {
           Setor: row.employee?.sector || "-",
           Cargo: row.employee?.position || "-",
           "Última cautela": row.lastWithdrawalDate ? formatarDataPtBr(row.lastWithdrawalDate) : "-",
-          Origem: row.origemUltimaCautela === "SISTEMA" ? "Sistema" : "Legado",
+          Origem: row.origemUltimaCautela === "SISTEMA" ? "Sistema" : "Histórico",
           Vencimento: dataVencimento ? formatarDataPtBr(dataVencimento) : "-",
           Status: row.vencido ? "Vencido" : "A vencer",
           Ativo: Number(row.employee?.active || 0) === 1 ? "Sim" : "Não",
@@ -125,8 +125,8 @@ export default function CautelasLegadasUniformes() {
     }
     exportJsonToExcel(
       linhasFiltradas,
-      "Cautelas Legadas",
-      `alertas_cautelas_legadas_${new Date().toISOString().slice(0, 10)}.xlsx`
+      "Cautelas Históricas",
+      `alertas_cautelas_historicas_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 
@@ -143,9 +143,9 @@ export default function CautelasLegadasUniformes() {
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
-        <h2 className="text-xl font-bold text-gray-800">Consulta de Cautelas Legadas</h2>
+        <h2 className="text-xl font-bold text-gray-800">Consulta de Cautelas Históricas</h2>
         <p className="text-gray-600 text-sm">
-          Consulte colaboradores cuja última cautela legada de uniforme está vencida há 6 meses ou mais.
+          Consulte colaboradores cuja última cautela histórica de uniforme está vencida há 6 meses ou mais.
         </p>
       </div>
 

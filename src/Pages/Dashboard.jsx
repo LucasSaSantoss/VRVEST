@@ -435,7 +435,7 @@ export default function Dashboard() {
                       <li className="my-1 border-t border-white/30" />
                     )}                    
                     {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Cautelas Legadas</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Cautelas Históricas</li>
                     )}
                     {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
                       canAccessTabByLevel(levelUser, "estoqueUniformes") ||
@@ -522,6 +522,8 @@ export default function Dashboard() {
                       >
                         Relatório de Pendências
                       </li>
+
+                      <li className="my-1 border-2 border-t border-white/30" />
                       <li
                         className="cursor-pointer hover:text-gray-300"
                         onClick={() => selectTab("relatorioRetiradasUniformes")}

@@ -103,7 +103,7 @@ export default function ImportacaoCautelasLegadasUniformes() {
       setParsedRows(parsed);
       showTemporaryPopup(`${parsed.length} linhas lidas da planilha.`, "success");
     } catch (error) {
-      console.error("Erro ao ler planilha de cautelas legadas:", error);
+      console.error("Erro ao ler planilha de cautelas históricas:", error);
       showTemporaryPopup("Erro ao ler a planilha enviada.", "error");
     }
   };
@@ -142,7 +142,7 @@ export default function ImportacaoCautelasLegadasUniformes() {
       showTemporaryPopup("Importação processada.", "success");
     } catch (error) {
       showTemporaryPopup(
-        obterMensagemErroApi(error, "Erro ao importar cautelas legadas."),
+        obterMensagemErroApi(error, "Erro ao importar cautelas históricas."),
         "error"
       );
     } finally {
@@ -153,20 +153,20 @@ export default function ImportacaoCautelasLegadasUniformes() {
   const exportarRejeitos = () => {
     const rejeitados = importResult?.rejeitados || [];
     if (!rejeitados.length) {
-      showTemporaryPopup("Não há rejeitos para exportar.", "error");
+      showTemporaryPopup("Não há registros rejeitados para exportar.", "error");
       return;
     }
     exportJsonToExcel(
       rejeitados,
-      "Rejeitos",
-      `rejeitos_cautelas_legadas_${new Date().toISOString().slice(0, 10)}.xlsx`
+      "Registros Rejeitados",
+      `rejeitos_cautelas_historicas_${new Date().toISOString().slice(0, 10)}.xlsx`
     );
   };
 
   return (
     <section className="border border-gray-200 rounded-lg p-4 max-w-4xl relative">
       <h2 className="text-lg font-semibold text-gray-800 mb-1">
-        Importação de Cautelas Legadas
+        Importação de Cautelas Históricas
       </h2>
       <p className="text-sm text-gray-600 mb-4">
         Área restrita para importar a última cautela informada pela rouparia.
@@ -199,7 +199,7 @@ export default function ImportacaoCautelasLegadasUniformes() {
           disabled={!importResult?.rejeitados?.length || loading}
           className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-semibold px-4 py-2 rounded"
         >
-          Baixar rejeitos
+          Registros rejeitados
         </button>
       </div>
 
