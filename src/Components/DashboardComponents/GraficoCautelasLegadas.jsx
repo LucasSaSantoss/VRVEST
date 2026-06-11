@@ -77,7 +77,7 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
         Validade de Cautelas
       </p>
       <p className="mx-auto max-w-[360px] text-[11px] leading-snug text-gray-500 text-center mb-2">
-        Por colaborador, considerando cautelas legadas e sistêmicas.
+        Por colaborador, considerando cautelas importadas e sistêmicas.
       </p>
 
       <div className="w-full">
