@@ -72,25 +72,25 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
   ];
 
   return (
-    <div className="bg-white shadow-lg rounded-2xl w-full h-[19rem] p-4 mt-1">
+    <div className="bg-white shadow-lg rounded-2xl w-full min-h-[19rem] p-4 mt-1 overflow-hidden">
       <p className="text-md font-bold text-gray-800 text-center">
-        Validade da Última Cautela
+        Validade de Cautelas
       </p>
-      <p className="text-[11px] text-gray-500 text-center mb-2">
+      <p className="mx-auto max-w-[360px] text-[11px] leading-snug text-gray-500 text-center mb-2">
         Colaboradores por última cautela considerada. Não representa itens ou retiradas em aberto.
       </p>
 
-      <div className="w-full h-[14.5rem]">
+      <div className="w-full">
         {loading ? (
-          <div className="h-full flex items-center justify-center text-sm text-gray-500">
+          <div className="min-h-[14.5rem] flex items-center justify-center text-sm text-gray-500">
             Carregando cautelas...
           </div>
         ) : (
-          <div className="h-full flex flex-col justify-center gap-3">
+          <div className="flex flex-col justify-center gap-3">
             {cards.map((card) => (
               <div
                 key={card.label}
-                className={`mx-auto flex w-full max-w-[300px] items-center justify-center rounded-2xl border px-4 py-3 ${card.container}`}
+                className={`mx-auto flex w-full max-w-[300px] items-center justify-center rounded-2xl border px-4 py-2.5 ${card.container}`}
               >
                 <div className="flex w-full items-center justify-between gap-4">
                   <span className={`text-sm font-semibold tracking-wide ${card.text}`}>
