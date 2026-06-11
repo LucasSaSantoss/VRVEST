@@ -399,34 +399,55 @@ export const listLegacyUniformBaselineAlerts = async (req, res) => {
       orderBy: { lastWithdrawalDate: "asc" },
     });
 
-    const employeeIds = data.map((row) => row.employeeId);
     // [MANUTENCAO] Motivo: cautela legada deve ser cruzada com retiradas oficiais já registradas no sistema.
     // [MANUTENCAO] Impacto: consulta considera a data mais recente entre baseline importado e UniformWithdrawal.withdrawDate.
     // [MANUTENCAO] Data: 2026-06-08
     // [MANUTENCAO] Autor: Márlon Etiene
-    const latestSystemWithdrawals = employeeIds.length
-      ? await prisma.uniformWithdrawal.groupBy({
-          by: ["employeeId"],
-          where: { employeeId: { in: employeeIds } },
-          _max: { withdrawDate: true },
-        })
-      : [];
+    const latestSystemWithdrawals = await prisma.uniformWithdrawal.groupBy({
+      by: ["employeeId"],
+      _max: { withdrawDate: true },
+    });
     const latestSystemWithdrawalByEmployeeId = new Map(
       latestSystemWithdrawals.map((row) => [
         row.employeeId,
         row._max.withdrawDate || null,
       ])
     );
+    // [MANUTENCAO] Motivo: cautelas historicas tambem devem considerar colaboradores com retiradas apenas no sistema.
+    // [MANUTENCAO] Impacto: consulta/dashboard passam a usar a uniao entre baseline importado e UniformWithdrawal, sem depender de importacao previa.
+    // [MANUTENCAO] Data: 2026-06-11
+    // [MANUTENCAO] Autor: Márlon Etiene
+    const baselineByEmployeeId = new Map(data.map((row) => [row.employeeId, row]));
+    const baselineEmployeeIds = new Set(data.map((row) => row.employeeId));
+    const systemOnlyEmployeeIds = latestSystemWithdrawals
+      .map((row) => row.employeeId)
+      .filter((employeeId) => !baselineEmployeeIds.has(employeeId));
+    const systemOnlyEmployees = systemOnlyEmployeeIds.length
+      ? await prisma.employee.findMany({
+          where: { id: { in: systemOnlyEmployeeIds } },
+        })
+      : [];
+    const rowsToNormalize = [
+      ...data,
+      ...systemOnlyEmployees.map((employee) => ({
+        id: `sistema-${employee.id}`,
+        employeeId: employee.id,
+        lastWithdrawalDate: null,
+        source: "SISTEMA",
+        updatedAt: null,
+        employee,
+      })),
+    ];
 
-    const normalized = data.map((row) => {
-      const legacyDate = row.lastWithdrawalDate;
+    const normalized = rowsToNormalize.map((row) => {
+      const legacyDate = baselineByEmployeeId.get(row.employeeId)?.lastWithdrawalDate || null;
       const systemDate = latestSystemWithdrawalByEmployeeId.get(row.employeeId) || null;
       const lastDate =
-        systemDate && systemDate.getTime() > legacyDate.getTime()
+        systemDate && (!legacyDate || systemDate.getTime() > legacyDate.getTime())
           ? systemDate
           : legacyDate;
       const origemUltimaCautela =
-        systemDate && systemDate.getTime() > legacyDate.getTime()
+        systemDate && (!legacyDate || systemDate.getTime() > legacyDate.getTime())
           ? "SISTEMA"
           : "LEGADO";
       const diffMs = referenceDate.getTime() - lastDate.getTime();
