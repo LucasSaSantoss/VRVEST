@@ -1558,7 +1558,15 @@ export const listUniformWithdrawals = async (req, res) => {
     const { status, cpf, year } = req.query;
     const where = {};
 
-    if (status) where.status = status;
+    // [MANUTENCAO] Motivo: disponibilizar filtro funcional "Em aberto" no relatório de retiradas de uniformes.
+    // [MANUTENCAO] Impacto: OPEN agrupa retiradas ainda não encerradas, sem alterar os status gravados no banco.
+    // [MANUTENCAO] Data: 2026-06-11
+    // [MANUTENCAO] Autor: Márlon Etiene
+    if (status === "OPEN") {
+      where.status = { in: ["REGULAR", "EXEMPT", "CHARGEABLE", "PARTIAL_RETURN"] };
+    } else if (status) {
+      where.status = status;
+    }
     if (year) where.year = Number(year);
 
     if (cpf) {

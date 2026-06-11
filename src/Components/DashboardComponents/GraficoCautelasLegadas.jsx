@@ -2,9 +2,9 @@ import { useMemo } from "react";
 
 export default function GraficoCautelasLegadas({ values = [], loading = false }) {
   const totais = useMemo(() => {
-    // [MANUTENCAO] Motivo: resumir cautelas históricas no dashboard por faixa de vencimento.
-    // [MANUTENCAO] Impacto: usa dados já calculados pela consulta histórica, sem alterar regras do backend.
-    // [MANUTENCAO] Data: 2026-06-10
+    // [MANUTENCAO] Motivo: resumir cautelas históricas/sistêmicas no dashboard por faixa de vencimento.
+    // [MANUTENCAO] Impacto: conta colaboradores pela última cautela considerada, não itens nem retiradas abertas.
+    // [MANUTENCAO] Data: 2026-06-11
     // [MANUTENCAO] Autor: Márlon Etiene
     return values.reduce(
       (acc, item) => {
@@ -73,11 +73,14 @@ export default function GraficoCautelasLegadas({ values = [], loading = false })
 
   return (
     <div className="bg-white shadow-lg rounded-2xl w-full h-[19rem] p-4 mt-1">
-      <p className="text-md font-bold text-gray-800 mb-3 text-center">
-        Vencimento de Cautelas
+      <p className="text-md font-bold text-gray-800 text-center">
+        Validade da Última Cautela
+      </p>
+      <p className="text-[11px] text-gray-500 text-center mb-2">
+        Colaboradores por última cautela considerada. Não representa itens ou retiradas em aberto.
       </p>
 
-      <div className="w-full h-[15rem]">
+      <div className="w-full h-[14.5rem]">
         {loading ? (
           <div className="h-full flex items-center justify-center text-sm text-gray-500">
             Carregando cautelas...

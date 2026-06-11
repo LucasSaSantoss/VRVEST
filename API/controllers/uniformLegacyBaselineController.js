@@ -4,6 +4,12 @@ const prisma = new PrismaClient();
 
 const PERFIL_SUPERVISOR = 4;
 const SOURCE_IMPORTACAO_ROUPARIA = "IMPORTACAO_PLANILHA_ROUPARIA";
+const ACTIVE_UNIFORM_WITHDRAWAL_STATUSES = [
+  "REGULAR",
+  "EXEMPT",
+  "CHARGEABLE",
+  "PARTIAL_RETURN",
+];
 
 const requireSupervisor = (req, res) => {
   // [MANUTENCAO] Motivo: restringir importação de cautelas legadas à configuração administrativa do módulo.
@@ -405,6 +411,7 @@ export const listLegacyUniformBaselineAlerts = async (req, res) => {
     // [MANUTENCAO] Autor: Márlon Etiene
     const latestSystemWithdrawals = await prisma.uniformWithdrawal.groupBy({
       by: ["employeeId"],
+      where: { status: { in: ACTIVE_UNIFORM_WITHDRAWAL_STATUSES } },
       _max: { withdrawDate: true },
     });
     const latestSystemWithdrawalByEmployeeId = new Map(

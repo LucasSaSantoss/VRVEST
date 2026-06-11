@@ -5,7 +5,7 @@ import { api, obterMensagemErroApi } from "../../services/api";
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
 const STATUS_LABEL = {
-  REGULAR: "Retirada",
+  REGULAR: "Retirada sem devolução",
   EXEMPT: "Extra",
   CHARGEABLE: "Com Cobrança",
   PARTIAL_RETURN: "Devolução Parcial",
@@ -207,7 +207,8 @@ export default function RelatorioRetiradasUniformes() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">Todos os status</option>
-            <option value="REGULAR">Retirada</option>
+            <option value="OPEN">Em aberto</option>
+            <option value="REGULAR">Retirada sem devolução</option>
             <option value="EXEMPT">Extra</option>
             <option value="CHARGEABLE">Com Cobrança</option>
             <option value="PARTIAL_RETURN">Devolução Parcial</option>
