@@ -3,14 +3,28 @@ import * as XLSX from "xlsx";
 import { api, obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
+const ITENS_POR_PAGINA = 10;
 
 const STATUS_LABEL = {
-  OPEN: "Em Aberto",
-  PARTIAL_RETURN: "Devolução Parcial",
-  SETTLED_RETURN: "Devolução Total",
+  OPEN: "Em aberto",
+  PARTIAL_RETURN: "Devolução parcial",
+  SETTLED_RETURN: "Devolução total",
 };
 
 const formatStatus = (status) => STATUS_LABEL[status] || status || "-";
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+};
+
+const getReturnDate = (item) =>
+  Number(item?.returnedQuantity || 0) > 0 ? formatDateTime(item?.returnInfo?.date) : "-";
+
+const getReturnUser = (item) =>
+  Number(item?.returnedQuantity || 0) > 0 ? item?.returnInfo?.user?.name || "-" : "-";
 
 export default function RelatorioEmprestimosUniformes() {
   const [cpf, setCpf] = useState("");
@@ -20,7 +34,6 @@ export default function RelatorioEmprestimosUniformes() {
   const [rows, setRows] = useState([]);
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
-  const ITENS_POR_PAGINA = 10;
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -55,47 +68,70 @@ export default function RelatorioEmprestimosUniformes() {
     }
   };
 
+  const linhasTabela = rows.flatMap((loan) => {
+    const itens = loan.items || [];
+    if (!itens.length) {
+      return [
+        {
+          key: `loan-${loan.id}`,
+          ordem: `Empréstimo #${loan.id}`,
+          dataRetirada: formatDateTime(loan.loanDate),
+          colaborador: loan.employee?.name || "-",
+          cpf: loan.employee?.cpf || "-",
+          uniforme: "-",
+          qtdRetirada: 0,
+          responsavelRetirada: loan.user?.name || "-",
+          qtdDevolvida: 0,
+          dataDevolucao: "-",
+          responsavelDevolucao: "-",
+          status: formatStatus(loan.status),
+        },
+      ];
+    }
+
+    return itens.map((item, itemIndex) => ({
+      key: `loan-${loan.id}-item-${item.id || itemIndex}`,
+      ordem: `Empréstimo #${loan.id}`,
+      dataRetirada: formatDateTime(loan.loanDate),
+      colaborador: loan.employee?.name || "-",
+      cpf: loan.employee?.cpf || "-",
+      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
+        item.uniformStockSize?.size || "-"
+      })`,
+      qtdRetirada: Number(item.quantity || 0),
+      responsavelRetirada: loan.user?.name || "-",
+      qtdDevolvida: Number(item.returnedQuantity || 0),
+      dataDevolucao: getReturnDate(item),
+      responsavelDevolucao: getReturnUser(item),
+      status: formatStatus(loan.status),
+    }));
+  });
+
+  const totalPaginas = Math.max(1, Math.ceil(linhasTabela.length / ITENS_POR_PAGINA));
+  const linhasPaginadas = linhasTabela.slice(
+    (paginaAtual - 1) * ITENS_POR_PAGINA,
+    paginaAtual * ITENS_POR_PAGINA
+  );
+
   const exportarExcel = () => {
-    if (!rows.length) {
+    if (!linhasTabela.length) {
       showTemporaryPopup("Não há dados para exportar.", "error");
       return;
     }
 
-    const linhas = [];
-    rows.forEach((loan) => {
-      const itens = loan.items || [];
-
-      if (!itens.length) {
-        linhas.push({
-          Ordem: `Empréstimo #${loan.id}`,
-          "Data/Hora": new Date(loan.loanDate).toLocaleString("pt-BR"),
-          Colaborador: loan.employee?.name || "-",
-          CPF: loan.employee?.cpf || "-",
-          Uniforme: "-",
-          "Qtd. Emprestada": 0,
-          "Qtd. Devolvida": 0,
-          Status: formatStatus(loan.status),
-          Operador: loan.user?.name || "-",
-        });
-        return;
-      }
-
-      itens.forEach((item) => {
-        linhas.push({
-          Ordem: `Empréstimo #${loan.id}`,
-          "Data/Hora": new Date(loan.loanDate).toLocaleString("pt-BR"),
-          Colaborador: loan.employee?.name || "-",
-          CPF: loan.employee?.cpf || "-",
-          Uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
-            item.uniformStockSize?.size || "-"
-          })`,
-          "Qtd. Emprestada": Number(item.quantity || 0),
-          "Qtd. Devolvida": Number(item.returnedQuantity || 0),
-          Status: formatStatus(loan.status),
-          Operador: loan.user?.name || "-",
-        });
-      });
-    });
+    const linhas = linhasTabela.map((linha) => ({
+      Ordem: linha.ordem,
+      "Data/Hora Retirada": linha.dataRetirada,
+      Colaborador: linha.colaborador,
+      CPF: linha.cpf,
+      Uniforme: linha.uniforme,
+      Qtd: linha.qtdRetirada,
+      "Responsável Retirada": linha.responsavelRetirada,
+      "Qtd. Devolvida": linha.qtdDevolvida,
+      "Data/Hora Devolução": linha.dataDevolucao,
+      "Responsável Devolução": linha.responsavelDevolucao,
+      Status: linha.status,
+    }));
 
     const worksheet = XLSX.utils.json_to_sheet(linhas);
     const workbook = XLSX.utils.book_new();
@@ -106,50 +142,12 @@ export default function RelatorioEmprestimosUniformes() {
     );
   };
 
-  const linhasTabela = rows.flatMap((loan) => {
-    const itens = loan.items || [];
-    if (!itens.length) {
-      return [
-        {
-          key: `loan-${loan.id}`,
-          ordem: `Empréstimo #${loan.id}`,
-          dataHora: new Date(loan.loanDate).toLocaleString("pt-BR"),
-          colaborador: loan.employee?.name || "-",
-          cpf: loan.employee?.cpf || "-",
-          uniforme: "-",
-          qtdEmprestada: 0,
-          qtdDevolvida: 0,
-          status: formatStatus(loan.status),
-          operador: loan.user?.name || "-",
-        },
-      ];
-    }
-    return itens.map((item, itemIndex) => ({
-      key: `loan-${loan.id}-item-${item.id || itemIndex}`,
-      ordem: `Empréstimo #${loan.id}`,
-      dataHora: new Date(loan.loanDate).toLocaleString("pt-BR"),
-      colaborador: loan.employee?.name || "-",
-      cpf: loan.employee?.cpf || "-",
-      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${item.uniformStockSize?.size || "-"})`,
-      qtdEmprestada: Number(item.quantity || 0),
-      qtdDevolvida: Number(item.returnedQuantity || 0),
-      status: formatStatus(loan.status),
-      operador: loan.user?.name || "-",
-    }));
-  });
-
-  const totalPaginas = Math.max(1, Math.ceil(linhasTabela.length / ITENS_POR_PAGINA));
-  const linhasPaginadas = linhasTabela.slice(
-    (paginaAtual - 1) * ITENS_POR_PAGINA,
-    paginaAtual * ITENS_POR_PAGINA
-  );
-
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
         <h2 className="text-xl font-bold text-gray-800">Relatório de Empréstimos de Uniformes</h2>
         <p className="text-gray-600 text-sm">
-          Consulta de empréstimos e devoluções por colaborador, item, quantidade e data/hora.
+          Consulta de empréstimos e devoluções por colaborador, item, responsável e data/hora.
         </p>
       </div>
 
@@ -175,9 +173,9 @@ export default function RelatorioEmprestimosUniformes() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">Todos os status</option>
-            <option value="OPEN">Em Aberto</option>
-            <option value="PARTIAL_RETURN">Devolução Parcial</option>
-            <option value="SETTLED_RETURN">Devolução Total</option>
+            <option value="OPEN">Em aberto</option>
+            <option value="PARTIAL_RETURN">Devolução parcial</option>
+            <option value="SETTLED_RETURN">Devolução total</option>
           </select>
           <button
             onClick={buscar}
@@ -208,28 +206,32 @@ export default function RelatorioEmprestimosUniformes() {
               <thead>
                 <tr className="border-b text-left">
                   <th className="py-2 pr-3">Ordem</th>
-                  <th className="py-2 pr-3">Data/Hora</th>
+                  <th className="py-2 pr-3">Data/Hora Retirada</th>
                   <th className="py-2 pr-3">Colaborador</th>
                   <th className="py-2 pr-3">CPF</th>
                   <th className="py-2 pr-3">Uniforme</th>
-                  <th className="py-2 pr-3">Qtd. Emprestada</th>
+                  <th className="py-2 pr-3">Qtd</th>
+                  <th className="py-2 pr-3">Responsável Retirada</th>
                   <th className="py-2 pr-3">Qtd. Devolvida</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2">Operador</th>
+                  <th className="py-2 pr-3">Data/Hora Devolução</th>
+                  <th className="py-2 pr-3">Responsável Devolução</th>
+                  <th className="py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {linhasPaginadas.map((linha) => (
                   <tr key={linha.key} className="border-b align-top">
                     <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
-                    <td className="py-2 pr-3">{linha.dataHora}</td>
+                    <td className="py-2 pr-3">{linha.dataRetirada}</td>
                     <td className="py-2 pr-3">{linha.colaborador}</td>
                     <td className="py-2 pr-3">{linha.cpf}</td>
                     <td className="py-2 pr-3">{linha.uniforme}</td>
-                    <td className="py-2 pr-3 font-semibold">{linha.qtdEmprestada}</td>
+                    <td className="py-2 pr-3 font-semibold">{linha.qtdRetirada}</td>
+                    <td className="py-2 pr-3">{linha.responsavelRetirada}</td>
                     <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
-                    <td className="py-2 pr-3">{linha.status}</td>
-                    <td className="py-2">{linha.operador}</td>
+                    <td className="py-2 pr-3">{linha.dataDevolucao}</td>
+                    <td className="py-2 pr-3">{linha.responsavelDevolucao}</td>
+                    <td className="py-2">{linha.status}</td>
                   </tr>
                 ))}
               </tbody>

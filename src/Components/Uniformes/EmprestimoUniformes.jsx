@@ -118,6 +118,14 @@ export default function EmprestimoUniformes() {
     setQuantity("1");
   };
 
+  const handleRemoveFromCart = (indexToRemove) => {
+    // [MANUTENCAO] Motivo: permitir correção do carrinho antes de confirmar empréstimo de uniformes.
+    // [MANUTENCAO] Impacto: remove apenas o item selecionado localmente, sem movimentar estoque ou alterar backend.
+    // [MANUTENCAO] Data: 2026-06-16
+    // [MANUTENCAO] Autor: Márlon Etiene
+    setCart((prev) => prev.filter((_, index) => index !== indexToRemove));
+  };
+
   const handleCreateLoan = async () => {
     if (!summary?.employee?.cpf) {
       showTemporaryPopup("Busque o colaborador antes de registrar empréstimo.", "error");
@@ -248,8 +256,21 @@ export default function EmprestimoUniformes() {
               {cart.length === 0
                 ? "Carrinho vazio."
                 : cart.map((c, idx) => (
-                    <div key={`${c.uniformStockSizeId}-${idx}`}>
-                      {c.label} - Qtd: {c.quantity}
+                    <div
+                      key={`${c.uniformStockSizeId}-${idx}`}
+                      className="flex items-center justify-between gap-3 border-b py-2 last:border-b-0"
+                    >
+                      <span>
+                        {c.label} - Qtd: {c.quantity}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFromCart(idx)}
+                        disabled={processing}
+                        className="bg-red-600 hover:bg-red-700 disabled:bg-red-300 text-white text-xs font-semibold px-3 py-1 rounded"
+                      >
+                        Remover
+                      </button>
                     </div>
                   ))}
             </div>

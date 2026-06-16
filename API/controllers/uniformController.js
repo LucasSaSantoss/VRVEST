@@ -161,6 +161,22 @@ const addMonthsSafely = (date, months) => {
   return d;
 };
 
+const formatarDataHoraPtBr = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return new Intl.DateTimeFormat("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    dateStyle: "short",
+    timeStyle: "medium",
+  }).format(date);
+};
+
+const extrairIdItemMovimentacao = (notes, fieldName) => {
+  const match = String(notes || "").match(new RegExp(`${fieldName}=(\\d+)`, "i"));
+  return match ? Number(match[1]) : null;
+};
+
 const STATUS_RETIRADA_EMAIL_LABEL = {
   REGULAR: "Retirada",
   EXEMPT: "Extra",
@@ -189,7 +205,7 @@ const montarTextoEmailRetirada = ({
   retiradaItems,
 }) => {
   const dataHora = withdrawal?.withdrawDate
-    ? new Date(withdrawal.withdrawDate).toLocaleString("pt-BR")
+    ? formatarDataHoraPtBr(withdrawal.withdrawDate)
     : "-";
   const linhasItens = retiradaItems
     .map((item, idx) => {
@@ -234,8 +250,9 @@ const montarTextoEmailDevolucao = ({
   devolucaoItems,
   tipoDevolucao,
   observacoes,
+  operationDate,
 }) => {
-  const dataHora = new Date().toLocaleString("pt-BR");
+  const dataHora = formatarDataHoraPtBr(operationDate || new Date());
   const linhasItens = devolucaoItems
     .map((item, idx) => {
       const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
@@ -275,7 +292,7 @@ const montarTextoEmailEmprestimo = ({
   loanItems,
 }) => {
   const dataHora = loan?.loanDate
-    ? new Date(loan.loanDate).toLocaleString("pt-BR")
+    ? formatarDataHoraPtBr(loan.loanDate)
     : "-";
   const linhasItens = loanItems
     .map((item, idx) => {
@@ -315,8 +332,9 @@ const montarTextoEmailDevolucaoEmprestimo = ({
   loan,
   devolucaoItems,
   observacoes,
+  operationDate,
 }) => {
-  const dataHora = new Date().toLocaleString("pt-BR");
+  const dataHora = formatarDataHoraPtBr(operationDate || new Date());
   const linhasItens = devolucaoItems
     .map((item, idx) => {
       const nome = item?.uniformStockSize?.item?.itemName || "Uniforme";
@@ -1016,6 +1034,7 @@ export const returnUniformWithdrawalItems = async (req, res) => {
         devolucaoItems,
         tipoDevolucao,
         observacoes: notes || withdrawal.notes || null,
+        operationDate: now,
       });
 
       if (withdrawal.employee?.email) {
@@ -1596,7 +1615,42 @@ export const listUniformWithdrawals = async (req, res) => {
       },
     });
 
-    return res.json({ success: true, data });
+    // [MANUTENCAO] Motivo: relatório de retiradas deve exibir data/hora e responsável da devolução por item.
+    // [MANUTENCAO] Impacto: usa movimentações já registradas, sem alterar estrutura do banco.
+    // [MANUTENCAO] Data: 2026-06-16
+    // [MANUTENCAO] Autor: Márlon Etiene
+    const withdrawalIds = data.map((row) => row.id);
+    const returnMovements = withdrawalIds.length
+      ? await prisma.uniformMovement.findMany({
+          where: {
+            referenceType: "UniformWithdrawal",
+            referenceId: { in: withdrawalIds },
+            movementType: "RETURN_TO_LOAN",
+          },
+          include: { user: { select: { id: true, name: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+    const latestReturnByWithdrawalItemId = new Map();
+    returnMovements.forEach((movement) => {
+      const itemId = extrairIdItemMovimentacao(movement.notes, "ItemRetirada");
+      if (itemId && !latestReturnByWithdrawalItemId.has(itemId)) {
+        latestReturnByWithdrawalItemId.set(itemId, {
+          date: movement.createdAt,
+          user: movement.user || null,
+          quantity: Number(movement.quantity || 0),
+        });
+      }
+    });
+    const dataWithReturnInfo = data.map((withdrawal) => ({
+      ...withdrawal,
+      items: (withdrawal.items || []).map((item) => ({
+        ...item,
+        returnInfo: latestReturnByWithdrawalItemId.get(item.id) || null,
+      })),
+    }));
+
+    return res.json({ success: true, data: dataWithReturnInfo });
   } catch (error) {
     console.error("Erro ao listar retiradas de uniformes:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
@@ -1850,7 +1904,51 @@ export const listUniformLoans = async (req, res) => {
       },
     });
 
-    return res.json({ success: true, data });
+    // [MANUTENCAO] Motivo: relatório de empréstimos deve exibir data/hora e responsável da devolução por item.
+    // [MANUTENCAO] Impacto: usa movimentações existentes; quando não houver id do item no histórico, associa por estoque/tamanho.
+    // [MANUTENCAO] Data: 2026-06-16
+    // [MANUTENCAO] Autor: Márlon Etiene
+    const loanIds = data.map((row) => row.id);
+    const returnMovements = loanIds.length
+      ? await prisma.uniformMovement.findMany({
+          where: {
+            referenceType: "UniformLoan",
+            referenceId: { in: loanIds },
+            movementType: "LOAN_RETURN",
+          },
+          include: { user: { select: { id: true, name: true } } },
+          orderBy: { createdAt: "desc" },
+        })
+      : [];
+    const latestReturnByLoanItemId = new Map();
+    const latestReturnByLoanAndStock = new Map();
+    returnMovements.forEach((movement) => {
+      const itemId = extrairIdItemMovimentacao(movement.notes, "ItemEmprestimo");
+      const info = {
+        date: movement.createdAt,
+        user: movement.user || null,
+        quantity: Number(movement.quantity || 0),
+      };
+      if (itemId && !latestReturnByLoanItemId.has(itemId)) {
+        latestReturnByLoanItemId.set(itemId, info);
+      }
+      const fallbackKey = `${movement.referenceId}:${movement.uniformStockSizeId}`;
+      if (!latestReturnByLoanAndStock.has(fallbackKey)) {
+        latestReturnByLoanAndStock.set(fallbackKey, info);
+      }
+    });
+    const dataWithReturnInfo = data.map((loan) => ({
+      ...loan,
+      items: (loan.items || []).map((item) => ({
+        ...item,
+        returnInfo:
+          latestReturnByLoanItemId.get(item.id) ||
+          latestReturnByLoanAndStock.get(`${loan.id}:${item.uniformStockSizeId}`) ||
+          null,
+      })),
+    }));
+
+    return res.json({ success: true, data: dataWithReturnInfo });
   } catch (error) {
     console.error("Erro ao listar empréstimos de uniformes:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
@@ -2209,7 +2307,7 @@ export const returnUniformLoanItems = async (req, res) => {
             referenceId: loan.id,
             quantity,
             userId,
-            notes: "Devolução de empréstimo por colaborador.",
+            notes: `Devolução de empréstimo por colaborador. ItemEmprestimo=${loanItemId}.`,
           },
         });
       }
@@ -2259,6 +2357,7 @@ export const returnUniformLoanItems = async (req, res) => {
         loan: result,
         devolucaoItems,
         observacoes: notes || loan.notes || null,
+        operationDate: now,
       });
 
       if (loan.employee?.email) {

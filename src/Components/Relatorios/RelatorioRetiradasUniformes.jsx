@@ -3,17 +3,31 @@ import * as XLSX from "xlsx";
 import { api, obterMensagemErroApi } from "../../services/api";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
+const ITENS_POR_PAGINA = 10;
 
 const STATUS_LABEL = {
   REGULAR: "Retirada sem devolução",
   EXEMPT: "Extra",
-  CHARGEABLE: "Com Cobrança",
-  PARTIAL_RETURN: "Devolução Parcial",
-  SETTLED_RETURN: "Devolução Total",
-  SETTLED_DISCOUNT: "Baixa Financeira",
+  CHARGEABLE: "Com cobrança",
+  PARTIAL_RETURN: "Devolução parcial",
+  SETTLED_RETURN: "Devolução total",
+  SETTLED_DISCOUNT: "Baixa financeira",
 };
 
 const formatStatus = (status) => STATUS_LABEL[status] || status || "-";
+
+const formatDateTime = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+};
+
+const getReturnDate = (item) =>
+  Number(item?.returnedQuantity || 0) > 0 ? formatDateTime(item?.returnInfo?.date) : "-";
+
+const getReturnUser = (item) =>
+  Number(item?.returnedQuantity || 0) > 0 ? item?.returnInfo?.user?.name || "-" : "-";
 
 export default function RelatorioRetiradasUniformes() {
   const [cpf, setCpf] = useState("");
@@ -24,7 +38,6 @@ export default function RelatorioRetiradasUniformes() {
   const [agrupamento, setAgrupamento] = useState("none");
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
-  const ITENS_POR_PAGINA = 10;
 
   const showTemporaryPopup = (message, type = "info") => {
     setPopup({ show: true, message, type });
@@ -59,57 +72,6 @@ export default function RelatorioRetiradasUniformes() {
     }
   };
 
-  const exportarExcel = () => {
-    if (!rows.length) {
-      showTemporaryPopup("Não há dados para exportar.", "error");
-      return;
-    }
-
-    const linhas = [];
-    rows.forEach((w) => {
-      const itens = w.items || [];
-
-      if (!itens.length) {
-        linhas.push({
-          Ordem: `Retirada #${w.id}`,
-          "Data/Hora": new Date(w.withdrawDate).toLocaleString("pt-BR"),
-          Colaborador: w.employee?.name || "-",
-          CPF: w.employee?.cpf || "-",
-          Uniforme: "-",
-          "Qtd. Retirada": Number(w.totalQuantity || 0),
-          "Qtd. Devolvida": 0,
-          Status: formatStatus(w.status),
-          Operador: w.user?.name || "-",
-        });
-        return;
-      }
-
-      itens.forEach((item) => {
-        linhas.push({
-          Ordem: `Retirada #${w.id}`,
-          "Data/Hora": new Date(w.withdrawDate).toLocaleString("pt-BR"),
-          Colaborador: w.employee?.name || "-",
-          CPF: w.employee?.cpf || "-",
-          Uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
-            item.uniformStockSize?.size || "-"
-          })`,
-          "Qtd. Retirada": Number(item.quantity || 0),
-          "Qtd. Devolvida": Number(item.returnedQuantity || 0),
-          Status: formatStatus(w.status),
-          Operador: w.user?.name || "-",
-        });
-      });
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(linhas);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Retiradas");
-    XLSX.writeFile(
-      workbook,
-      `relatorio_retiradas_uniformes_${new Date().toISOString().slice(0, 10)}.xlsx`
-    );
-  };
-
   const linhasTabela = rows.flatMap((w) => {
     const itens = w.items || [];
     if (!itens.length) {
@@ -117,28 +79,35 @@ export default function RelatorioRetiradasUniformes() {
         {
           key: `withdrawal-${w.id}`,
           ordem: `Retirada #${w.id}`,
-          dataHora: new Date(w.withdrawDate).toLocaleString("pt-BR"),
+          dataRetirada: formatDateTime(w.withdrawDate),
           colaborador: w.employee?.name || "-",
           cpf: w.employee?.cpf || "-",
           uniforme: "-",
           qtdRetirada: Number(w.totalQuantity || 0),
+          responsavelRetirada: w.user?.name || "-",
           qtdDevolvida: 0,
+          dataDevolucao: "-",
+          responsavelDevolucao: "-",
           status: formatStatus(w.status),
-          operador: w.user?.name || "-",
         },
       ];
     }
+
     return itens.map((item, itemIndex) => ({
       key: `withdrawal-${w.id}-item-${item.id || itemIndex}`,
       ordem: `Retirada #${w.id}`,
-      dataHora: new Date(w.withdrawDate).toLocaleString("pt-BR"),
+      dataRetirada: formatDateTime(w.withdrawDate),
       colaborador: w.employee?.name || "-",
       cpf: w.employee?.cpf || "-",
-      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${item.uniformStockSize?.size || "-"})`,
+      uniforme: `${item.uniformStockSize?.item?.itemName || "Item"} (Tam ${
+        item.uniformStockSize?.size || "-"
+      })`,
       qtdRetirada: Number(item.quantity || 0),
+      responsavelRetirada: w.user?.name || "-",
       qtdDevolvida: Number(item.returnedQuantity || 0),
+      dataDevolucao: getReturnDate(item),
+      responsavelDevolucao: getReturnUser(item),
       status: formatStatus(w.status),
-      operador: w.user?.name || "-",
     }));
   });
 
@@ -151,14 +120,13 @@ export default function RelatorioRetiradasUniformes() {
   const linhasAgrupadas = (() => {
     if (agrupamento === "none") return linhasPaginadas;
 
-    const source = linhasTabela;
     const groupedRows = [];
     const groupedMap = new Map();
 
-    source.forEach((linha) => {
+    linhasTabela.forEach((linha) => {
       const groupLabel =
         agrupamento === "date"
-          ? String(linha.dataHora || "-").split(",")[0]
+          ? String(linha.dataRetirada || "-").split(",")[0]
           : `${linha.colaborador} (${linha.cpf})`;
       if (!groupedMap.has(groupLabel)) groupedMap.set(groupLabel, []);
       groupedMap.get(groupLabel).push(linha);
@@ -176,12 +144,41 @@ export default function RelatorioRetiradasUniformes() {
     return groupedRows;
   })();
 
+  const exportarExcel = () => {
+    if (!linhasTabela.length) {
+      showTemporaryPopup("Não há dados para exportar.", "error");
+      return;
+    }
+
+    const linhas = linhasTabela.map((linha) => ({
+      Ordem: linha.ordem,
+      "Data/Hora Retirada": linha.dataRetirada,
+      Colaborador: linha.colaborador,
+      CPF: linha.cpf,
+      Uniforme: linha.uniforme,
+      Qtd: linha.qtdRetirada,
+      "Responsável Retirada": linha.responsavelRetirada,
+      "Qtd. Devolvida": linha.qtdDevolvida,
+      "Data/Hora Devolução": linha.dataDevolucao,
+      "Responsável Devolução": linha.responsavelDevolucao,
+      Status: linha.status,
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(linhas);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Retiradas");
+    XLSX.writeFile(
+      workbook,
+      `relatorio_retiradas_uniformes_${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
+  };
+
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
       <div className="mb-4 border-l-4 border-blue-500 pl-3">
         <h2 className="text-xl font-bold text-gray-800">Relatório de Retiradas de Uniformes</h2>
         <p className="text-gray-600 text-sm">
-          Consulta de quem retirou, o que retirou, quantidade e data/hora da retirada.
+          Consulta de retirada e devolução por colaborador, item, responsável e data/hora.
         </p>
       </div>
 
@@ -210,10 +207,10 @@ export default function RelatorioRetiradasUniformes() {
             <option value="OPEN">Em aberto</option>
             <option value="REGULAR">Retirada sem devolução</option>
             <option value="EXEMPT">Extra</option>
-            <option value="CHARGEABLE">Com Cobrança</option>
-            <option value="PARTIAL_RETURN">Devolução Parcial</option>
-            <option value="SETTLED_RETURN">Devolução Total</option>
-            <option value="SETTLED_DISCOUNT">Baixa Financeira</option>
+            <option value="CHARGEABLE">Com cobrança</option>
+            <option value="PARTIAL_RETURN">Devolução parcial</option>
+            <option value="SETTLED_RETURN">Devolução total</option>
+            <option value="SETTLED_DISCOUNT">Baixa financeira</option>
           </select>
           <button
             onClick={buscar}
@@ -253,35 +250,39 @@ export default function RelatorioRetiradasUniformes() {
               <thead>
                 <tr className="border-b text-left">
                   <th className="py-2 pr-3">Ordem</th>
-                  <th className="py-2 pr-3">Data/Hora</th>
+                  <th className="py-2 pr-3">Data/Hora Retirada</th>
                   <th className="py-2 pr-3">Colaborador</th>
                   <th className="py-2 pr-3">CPF</th>
                   <th className="py-2 pr-3">Uniforme</th>
-                  <th className="py-2 pr-3">Qtd. Retirada</th>
+                  <th className="py-2 pr-3">Qtd</th>
+                  <th className="py-2 pr-3">Responsável Retirada</th>
                   <th className="py-2 pr-3">Qtd. Devolvida</th>
-                  <th className="py-2 pr-3">Status</th>
-                  <th className="py-2">Operador</th>
+                  <th className="py-2 pr-3">Data/Hora Devolução</th>
+                  <th className="py-2 pr-3">Responsável Devolução</th>
+                  <th className="py-2">Status</th>
                 </tr>
               </thead>
               <tbody>
                 {linhasAgrupadas.map((linha) =>
                   linha?.isGroupHeader ? (
                     <tr key={linha.key} className="bg-gray-100">
-                      <td colSpan={9} className="py-2 px-2 font-semibold text-gray-700">
+                      <td colSpan={11} className="py-2 px-2 font-semibold text-gray-700">
                         {linha.groupLabel}
                       </td>
                     </tr>
                   ) : (
                     <tr key={linha.key} className="border-b align-top">
                       <td className="py-2 pr-3 font-semibold">{linha.ordem}</td>
-                      <td className="py-2 pr-3">{linha.dataHora}</td>
+                      <td className="py-2 pr-3">{linha.dataRetirada}</td>
                       <td className="py-2 pr-3">{linha.colaborador}</td>
                       <td className="py-2 pr-3">{linha.cpf}</td>
                       <td className="py-2 pr-3">{linha.uniforme}</td>
                       <td className="py-2 pr-3 font-semibold">{linha.qtdRetirada}</td>
+                      <td className="py-2 pr-3">{linha.responsavelRetirada}</td>
                       <td className="py-2 pr-3 font-semibold">{linha.qtdDevolvida}</td>
-                      <td className="py-2 pr-3">{linha.status}</td>
-                      <td className="py-2">{linha.operador}</td>
+                      <td className="py-2 pr-3">{linha.dataDevolucao}</td>
+                      <td className="py-2 pr-3">{linha.responsavelDevolucao}</td>
+                      <td className="py-2">{linha.status}</td>
                     </tr>
                   )
                 )}
