@@ -1192,9 +1192,15 @@ export const registerLegacyUniformReturn = async (req, res) => {
     };
 
     try {
+      // [MANUTENCAO] Motivo: explicar a devolução sem utilizar o termo técnico "legada".
+      // [MANUTENCAO] Impacto: altera somente o texto do e-mail desta devolução específica.
+      // [MANUTENCAO] Data: 2026-06-22
+      // [MANUTENCAO] Autor: Márlon Etiene
       const textoEmail = `Olá ${employee?.name || "colaborador(a)"},
 
-Foi registrada uma devolução legada de uniforme em seu nome.
+Foi registrada a devolução do uniforme informado abaixo.
+
+A retirada deste uniforme não estava cadastrada no sistema. Por isso, a devolução foi registrada separadamente.
 
 Data/Hora da operação: ${new Date().toLocaleString("pt-BR")}
 Colaborador: ${employee?.name || "-"}
@@ -1209,7 +1215,7 @@ Justificativa: ${String(notes).trim()}
       if (employee?.email) {
         await enviarEmail(
           employee.email,
-          "Comprovante de Devolução Legada de Uniforme",
+          "Comprovante de Devolução de Uniforme sem Retirada Registrada",
           textoEmail
         );
         emailNotification.details.employee = true;
@@ -1218,7 +1224,7 @@ Justificativa: ${String(notes).trim()}
       if (emailCopiado) {
         await enviarEmail(
           emailCopiado,
-          `Aviso de Devolução Legada de Uniforme - ${employee?.name || "Colaborador"}`,
+          `Aviso de Devolução sem Retirada Registrada - ${employee?.name || "Colaborador"}`,
           textoEmail
         );
         emailNotification.details.system = true;

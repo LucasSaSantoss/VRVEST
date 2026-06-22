@@ -317,9 +317,16 @@ export default function DevolucaoUniformes() {
 
           {(summary.openWithdrawals || []).length === 0 && (
             <div className="mt-4 border-t pt-4">
-              <h4 className="font-semibold text-gray-700 mb-2">Devolução Legada</h4>
-              <p className="text-xs text-gray-500 mb-2">
-                Use esta opção para devoluções de uniformes retirados antes do sistema.
+              <h4 className="font-semibold text-gray-700 mb-2">
+                Devolução sem retirada registrada
+              </h4>
+              {/* [MANUTENCAO] Motivo: substituir termo técnico e destacar quando esta opção deve ser utilizada. */}
+              {/* [MANUTENCAO] Impacto: altera somente textos da interface; o fluxo interno de devolução legada permanece inalterado. */}
+              {/* [MANUTENCAO] Data: 2026-06-22 */}
+              {/* [MANUTENCAO] Autor: Márlon Etiene */}
+              <p className="text-sm text-red-600 font-bold mb-3 animate-pulse">
+                Atenção: use esta opção somente quando o uniforme estiver sendo devolvido,
+                mas a retirada não aparecer no sistema.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
                 <select
@@ -375,19 +382,26 @@ export default function DevolucaoUniformes() {
                   </div>
                 </div>
               )}
+              <label
+                htmlFor="justificativa-devolucao-sem-retirada"
+                className="block text-sm text-red-600 font-bold mb-1 animate-pulse"
+              >
+                Justificativa obrigatória: informe por que a retirada não foi registrada.
+              </label>
               <textarea
-                className="border rounded px-3 py-2 w-full mb-2"
+                id="justificativa-devolucao-sem-retirada"
+                className="border border-red-500 rounded px-3 py-2 w-full mb-2 focus:outline-none focus:ring-2 focus:ring-red-300"
                 rows={2}
                 value={legacyNotes}
                 onChange={(e) => setLegacyNotes(e.target.value)}
-                placeholder="Justificativa obrigatória para devolução legada"
+                placeholder="Digite a justificativa"
               />
               <button
                 onClick={registrarDevolucaoLegada}
                 disabled={processing}
                 className="bg-amber-600 hover:bg-amber-700 disabled:bg-amber-300 text-white font-semibold px-3 py-2 rounded"
               >
-                {processing ? "Aguarde..." : "Registrar Devolução Legada"}
+                {processing ? "Aguarde..." : "Registrar Devolução"}
               </button>
             </div>
           )}
