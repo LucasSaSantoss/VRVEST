@@ -265,7 +265,7 @@ export default function DevolucaoUniformes() {
           </p>
 
           {(summary.openWithdrawals || []).length === 0 ? (
-            <p className="text-sm text-gray-600">Nenhuma retirada pendente para este colaborador.</p>
+            <p className="text-base text-red-600 font-bold animate-pulse">Nenhuma retirada pendente para este colaborador.</p>
           ) : (
             <div className="space-y-4">
               {summary.openWithdrawals.map((w) => (
