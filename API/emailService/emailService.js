@@ -38,6 +38,7 @@ const enviar = async (
       bcc: bcc ? formatEmails(bcc) : undefined,
     });
     console.log(`E-mail enviado para ${formatEmails(to)}`);
+    return { success: true };
   } catch (error) {
     console.error("Erro ao enviar e-mail:", error.message);
 
@@ -45,7 +46,13 @@ const enviar = async (
       await prisma.userLog.create({
         data: {
           action: "Erro ao enviar email",
-          newData: JSON.stringify(error, Object.getOwnPropertyNames(error)),
+          newData: {
+            recipient: formatEmails(to) || null,
+            subject: subject || null,
+            error: error?.message || String(error),
+            code: error?.code || null,
+            command: error?.command || null,
+          },
           createdAt: new Date(),
           userId: 1,
         },
@@ -54,7 +61,15 @@ const enviar = async (
       console.error("Erro ao salvar log de e-mail no banco:", logErr.message);
     }
 
+    // [MANUTENCAO] Motivo: preservar fluxos legados e, ao mesmo tempo, informar falha real aos chamadores.
+    // [MANUTENCAO] Impacto: chamadas legadas recebem success=false sem interromper a operação; chamadas confirmadas relançam o erro.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
     if (throwOnError) throw error;
+    return {
+      success: false,
+      message: error?.message || "Falha no envio de e-mail.",
+    };
   }
 };
 
