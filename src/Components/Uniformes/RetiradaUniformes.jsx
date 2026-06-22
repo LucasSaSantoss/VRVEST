@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
 import { LuPlus } from "react-icons/lu";
+import SearchableSelect from "../Common/SearchableSelect";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 const STATUS_RETIRADA_LABEL = {
@@ -354,21 +355,19 @@ export default function RetiradaUniformes() {
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Uniforme <span className="text-red-600">*</span>
                 </label>
-                <select
-                  className="border rounded px-3 py-2 w-full"
+                <SearchableSelect
                   value={selectedItemId}
-                  onChange={(e) => {
-                    setSelectedItemId(e.target.value);
+                  onChange={(value) => {
+                    setSelectedItemId(value);
                     setSelectedStockId("");
                   }}
-                >
-                  <option value="">Selecione o uniforme/produto</option>
-                  {productOptions.map((p) => (
-                    <option key={p.itemId} value={p.itemId}>
-                      {p.itemName}
-                    </option>
-                  ))}
-                </select>
+                  options={productOptions.map((product) => ({
+                    value: product.itemId,
+                    label: product.itemName,
+                  }))}
+                  placeholder="Selecione o uniforme/produto"
+                  searchPlaceholder="Buscar uniforme..."
+                />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

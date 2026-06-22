@@ -1,5 +1,6 @@
 ﻿import { useCallback, useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
+import { useMemo } from "react";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
@@ -47,6 +48,8 @@ export default function CadastroUniformes() {
   const [paginaAtual, setPaginaAtual] = useState(1);
   const [popup, setPopup] = useState(INITIAL_POPUP);
   const [loading, setLoading] = useState(false);
+  const [filtroNome, setFiltroNome] = useState("");
+  const [filtroStatus, setFiltroStatus] = useState("TODOS");
   const ITENS_POR_PAGINA = 10;
 
   const [novoNome, setNovoNome] = useState("");
@@ -86,6 +89,23 @@ export default function CadastroUniformes() {
   useEffect(() => {
     carregarUniformes();
   }, [carregarUniformes]);
+
+  const uniformesFiltrados = useMemo(() => {
+    const termo = filtroNome.trim().toLocaleLowerCase("pt-BR");
+    return uniformes.filter((uniforme) => {
+      const correspondeNome =
+        !termo || String(uniforme.itemName || "").toLocaleLowerCase("pt-BR").includes(termo);
+      const correspondeStatus =
+        filtroStatus === "TODOS" ||
+        (filtroStatus === "ATIVOS" && Number(uniforme.active) === 1) ||
+        (filtroStatus === "INATIVOS" && Number(uniforme.active) !== 1);
+      return correspondeNome && correspondeStatus;
+    });
+  }, [uniformes, filtroNome, filtroStatus]);
+
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [filtroNome, filtroStatus]);
 
   const resetNovo = () => {
     setNovoNome("");
@@ -183,10 +203,33 @@ export default function CadastroUniformes() {
           </button>
         </div>
 
+        {/* [MANUTENCAO] Motivo: facilitar localização de uniformes no cadastro.
+            [MANUTENCAO] Impacto: filtros locais por nome e status, sem alterar contrato da API.
+            [MANUTENCAO] Data: 2026-06-22
+            [MANUTENCAO] Autor: Márlon Etiene */}
+        <div className="grid grid-cols-1 gap-2 mb-3 md:grid-cols-[1fr_220px]">
+          <input
+            type="text"
+            value={filtroNome}
+            onChange={(event) => setFiltroNome(event.target.value)}
+            placeholder="Buscar uniforme por nome"
+            className="rounded border px-3 py-2 text-sm"
+          />
+          <select
+            value={filtroStatus}
+            onChange={(event) => setFiltroStatus(event.target.value)}
+            className="rounded border px-3 py-2 text-sm"
+          >
+            <option value="TODOS">Todos os status</option>
+            <option value="ATIVOS">Somente ativos</option>
+            <option value="INATIVOS">Somente inativos</option>
+          </select>
+        </div>
+
         {loading ? (
           <p className="text-gray-600">Carregando...</p>
-        ) : uniformes.length === 0 ? (
-          <p className="text-gray-600">Nenhum uniforme cadastrado.</p>
+        ) : uniformesFiltrados.length === 0 ? (
+          <p className="text-gray-600">Nenhum uniforme encontrado.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -201,7 +244,7 @@ export default function CadastroUniformes() {
                 </tr>
               </thead>
               <tbody>
-                {uniformes
+                {uniformesFiltrados
                   .slice((paginaAtual - 1) * ITENS_POR_PAGINA, paginaAtual * ITENS_POR_PAGINA)
                   .map((u) => (
                   <tr key={u.id} className="border-b">
@@ -238,7 +281,7 @@ export default function CadastroUniformes() {
             </table>
             <div className="flex items-center justify-between mt-3 text-sm text-gray-700">
               <span>
-                Página {paginaAtual} de {Math.max(1, Math.ceil(uniformes.length / ITENS_POR_PAGINA))}
+                Página {paginaAtual} de {Math.max(1, Math.ceil(uniformesFiltrados.length / ITENS_POR_PAGINA))}
               </span>
               <div className="flex gap-2">
                 <button
@@ -258,20 +301,20 @@ export default function CadastroUniformes() {
                 <button
                   onClick={() =>
                     setPaginaAtual((p) =>
-                      Math.min(Math.ceil(uniformes.length / ITENS_POR_PAGINA), p + 1)
+                      Math.min(Math.ceil(uniformesFiltrados.length / ITENS_POR_PAGINA), p + 1)
                     )
                   }
-                  disabled={paginaAtual >= Math.ceil(uniformes.length / ITENS_POR_PAGINA)}
+                  disabled={paginaAtual >= Math.ceil(uniformesFiltrados.length / ITENS_POR_PAGINA)}
                   className="px-3 py-1 rounded border disabled:opacity-50"
                 >
                   Próxima
                 </button>
                 <button
                   onClick={() =>
-                    setPaginaAtual(Math.max(1, Math.ceil(uniformes.length / ITENS_POR_PAGINA)))
+                    setPaginaAtual(Math.max(1, Math.ceil(uniformesFiltrados.length / ITENS_POR_PAGINA)))
                   }
                   disabled={
-                    paginaAtual >= Math.max(1, Math.ceil(uniformes.length / ITENS_POR_PAGINA))
+                    paginaAtual >= Math.max(1, Math.ceil(uniformesFiltrados.length / ITENS_POR_PAGINA))
                   }
                   className="px-3 py-1 border rounded disabled:opacity-50"
                 >

@@ -2,6 +2,7 @@
 import { listarItems } from "../../services/api";
 import { api } from "../../services/api";
 import { obterMensagemErroApi } from "../../services/api";
+import SearchableSelect from "../Common/SearchableSelect";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 const INITIAL_MODAL = { open: false, type: "" };
@@ -460,18 +461,16 @@ export default function EntradaEstoqueUniformes() {
         <label className="block text-sm font-medium text-gray-700 mb-1">
           Selecione o produto/uniforme (com tamanho)
         </label>
-        <select
-          className="border rounded px-3 py-1.5 w-full text-sm"
+        <SearchableSelect
           value={selectedStockId}
-          onChange={(e) => setSelectedStockId(e.target.value)}
-        >
-          <option value="">Selecione</option>
-          {sizes.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.item?.itemName} - Tam {s.size}
-            </option>
-          ))}
-        </select>
+          onChange={setSelectedStockId}
+          options={sizes.map((stock) => ({
+            value: stock.id,
+            label: `${stock.item?.itemName || "Item"} - Tam ${stock.size}`,
+          }))}
+          placeholder="Selecione"
+          searchPlaceholder="Buscar uniforme ou tamanho..."
+        />
       </section>
 
       {!selectedStock && (
@@ -578,18 +577,16 @@ export default function EntradaEstoqueUniformes() {
           <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
             <div className="md:col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">Produto/Uniforme</label>
-            <select
-              className="border rounded px-3 py-2 w-full"
+            <SearchableSelect
               value={sizeItemId}
-              onChange={(e) => setSizeItemId(e.target.value)}
-            >
-              <option value="">Selecione</option>
-              {uniformItems.map((item) => (
-                <option key={item.id} value={item.id}>
-                  {item.itemName}
-                </option>
-              ))}
-            </select>
+              onChange={setSizeItemId}
+              options={uniformItems.map((item) => ({
+                value: item.id,
+                label: item.itemName,
+              }))}
+              placeholder="Selecione"
+              searchPlaceholder="Buscar uniforme..."
+            />
             </div>
             <div className="md:col-span-1">
             <label className="block text-sm font-medium text-gray-700 mb-1">Tamanho</label>
