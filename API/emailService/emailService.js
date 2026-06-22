@@ -1,11 +1,10 @@
 import nodemailer from "nodemailer";
-
 import dotenv from "dotenv";
+import { PrismaClient } from "@prisma/client";
+
 dotenv.config();
 
-import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
-
 const smtpPort = Number(process.env.EMAIL_PORT || 587);
 
 const transporter = nodemailer.createTransport({
@@ -18,19 +17,18 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-/**
- * Envia email para funcionário
- * @param {string|string[]} to - Email do funcionário
- * @param {string} subject - Assunto
- * @param {string} text - Texto do corpo
- * @param {string|string[]}[cc] - E-mails em cópia
- * @param {string|string[]}[bcc] - E-mails em cópia oculta
- */
-export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
-  try {
-    const formatEmails = (emails) =>
-      Array.isArray(emails) ? emails.join(", ") : emails;
+const enviar = async (
+  to,
+  subject,
+  text,
+  cc = null,
+  bcc = null,
+  throwOnError = false
+) => {
+  const formatEmails = (emails) =>
+    Array.isArray(emails) ? emails.join(", ") : emails;
 
+  try {
     await transporter.sendMail({
       from: `"Equipe e-Vestuário" <${process.env.EMAIL_USER}>`,
       to,
@@ -39,11 +37,10 @@ export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
       cc: cc ? formatEmails(cc) : undefined,
       bcc: bcc ? formatEmails(bcc) : undefined,
     });
-    console.log(`✅ Email enviado para ${to}`);
+    console.log(`E-mail enviado para ${formatEmails(to)}`);
   } catch (error) {
-    console.error("❌ Erro ao enviar email:", error.message);
+    console.error("Erro ao enviar e-mail:", error.message);
 
-    // Log no banco com Prisma
     try {
       await prisma.userLog.create({
         data: {
@@ -54,7 +51,26 @@ export const enviarEmail = async (to, subject, text, cc = null, bcc = null) => {
         },
       });
     } catch (logErr) {
-      console.error("❌ Erro ao salvar log no banco:", logErr.message);
+      console.error("Erro ao salvar log de e-mail no banco:", logErr.message);
     }
+
+    if (throwOnError) throw error;
   }
 };
+
+/**
+ * Mantém o comportamento legado: registra a falha, sem interromper o fluxo chamador.
+ */
+export const enviarEmail = async (to, subject, text, cc = null, bcc = null) =>
+  enviar(to, subject, text, cc, bcc, false);
+
+/**
+ * Propaga a falha para fluxos que tratam a notificação separadamente da operação.
+ */
+export const enviarEmailComConfirmacao = async (
+  to,
+  subject,
+  text,
+  cc = null,
+  bcc = null
+) => enviar(to, subject, text, cc, bcc, true);

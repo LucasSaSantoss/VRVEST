@@ -1,5 +1,9 @@
 ﻿import { PrismaClient } from "@prisma/client";
-import { enviarEmail } from "../emailService/emailService.js";
+// [MANUTENCAO] Motivo: distinguir falha real de e-mail nas operações modernas de uniformes.
+// [MANUTENCAO] Impacto: operação permanece registrada e o frontend recebe emailNotification com a falha.
+// [MANUTENCAO] Data: 2026-06-22
+// [MANUTENCAO] Autor: Márlon Etiene
+import { enviarEmailComConfirmacao as enviarEmail } from "../emailService/emailService.js";
 
 const prisma = new PrismaClient();
 const emailCopiado = process.env.EMAIL_COPIADO;
