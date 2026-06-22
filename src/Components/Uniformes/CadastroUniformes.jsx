@@ -1,8 +1,14 @@
 ﻿import { useCallback, useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
+
+const normalizarNomeUniforme = (value) =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleUpperCase("pt-BR");
 
 const formatarMoedaPtBrInput = (valor) => {
   const somenteDigitos = String(valor || "").replace(/\D/g, "");
@@ -50,6 +56,8 @@ export default function CadastroUniformes() {
   const [loading, setLoading] = useState(false);
   const [filtroNome, setFiltroNome] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("TODOS");
+  const [processingAction, setProcessingAction] = useState("");
+  const actionLockRef = useRef(new Set());
   const ITENS_POR_PAGINA = 10;
 
   const [novoNome, setNovoNome] = useState("");
@@ -115,29 +123,51 @@ export default function CadastroUniformes() {
     setNovoValidadeDiaristaMeses("12");
   };
 
-  const cadastrarUniforme = async () => {
+  const executarAcaoUnica = async (actionKey, callback) => {
+    if (actionLockRef.current.has(actionKey)) return;
+    actionLockRef.current.add(actionKey);
+    setProcessingAction(actionKey);
     try {
-      if (!novoNome.trim() || !novoValor.trim()) {
-        showTemporaryPopup("Informe nome e valor do uniforme.", "error");
-        return;
-      }
-      const res = await api.post("/items/uniforms", {
-        itemName: novoNome.trim(),
-        itemVal: novoValor.trim(),
-        active: Number(novoAtivo),
-        validadePlantonistaMeses: Number(novoValidadePlantonistaMeses),
-        validadeDiaristaMeses: Number(novoValidadeDiaristaMeses),
-      });
-      if (res.data?.success) {
-        showTemporaryPopup("Uniforme cadastrado com sucesso.", "success");
-        setShowNovoModal(false);
-        resetNovo();
-        await carregarUniformes();
-      }
-    } catch (error) {
-      showTemporaryPopup(obterMensagemErroApi(error, "Erro ao cadastrar uniforme."), "error");
+      await callback();
+    } finally {
+      actionLockRef.current.delete(actionKey);
+      setProcessingAction("");
     }
   };
+
+  const cadastrarUniforme = () =>
+    executarAcaoUnica("create", async () => {
+      try {
+        if (!novoNome.trim() || !novoValor.trim()) {
+          showTemporaryPopup("Informe nome e valor do uniforme.", "error");
+          return;
+        }
+        const nomeDuplicado = uniformes.some(
+          (uniforme) =>
+            normalizarNomeUniforme(uniforme.itemName) ===
+            normalizarNomeUniforme(novoNome)
+        );
+        if (nomeDuplicado) {
+          showTemporaryPopup("Já existe um uniforme cadastrado com esse nome.", "error");
+          return;
+        }
+        const res = await api.post("/items/uniforms", {
+          itemName: novoNome.trim(),
+          itemVal: novoValor.trim(),
+          active: Number(novoAtivo),
+          validadePlantonistaMeses: Number(novoValidadePlantonistaMeses),
+          validadeDiaristaMeses: Number(novoValidadeDiaristaMeses),
+        });
+        if (res.data?.success) {
+          showTemporaryPopup("Uniforme cadastrado com sucesso.", "success");
+          setShowNovoModal(false);
+          resetNovo();
+          await carregarUniformes();
+        }
+      } catch (error) {
+        showTemporaryPopup(obterMensagemErroApi(error, "Erro ao cadastrar uniforme."), "error");
+      }
+    });
 
   const abrirEdicao = (u) => {
     setEditando(u);
@@ -148,42 +178,54 @@ export default function CadastroUniformes() {
     setEditValidadeDiaristaMeses(String(u.validadeDiaristaMeses ?? 12));
   };
 
-  const salvarEdicao = async () => {
-    try {
-      if (!editando) return;
-      if (!editNome.trim() || !editValor.trim()) {
-        showTemporaryPopup("Informe nome e valor do uniforme.", "error");
-        return;
-      }
+  const salvarEdicao = () =>
+    executarAcaoUnica("edit", async () => {
+      try {
+        if (!editando) return;
+        if (!editNome.trim() || !editValor.trim()) {
+          showTemporaryPopup("Informe nome e valor do uniforme.", "error");
+          return;
+        }
+        const nomeDuplicado = uniformes.some(
+          (uniforme) =>
+            Number(uniforme.id) !== Number(editando.id) &&
+            normalizarNomeUniforme(uniforme.itemName) ===
+              normalizarNomeUniforme(editNome)
+        );
+        if (nomeDuplicado) {
+          showTemporaryPopup("Já existe outro uniforme cadastrado com esse nome.", "error");
+          return;
+        }
 
-      const res = await api.put(`/items/uniforms/${editando.id}`, {
-        itemName: editNome.trim(),
-        itemVal: editValor.trim(),
-        active: Number(editAtivo),
-        validadePlantonistaMeses: Number(editValidadePlantonistaMeses),
-        validadeDiaristaMeses: Number(editValidadeDiaristaMeses),
-      });
-      if (res.data?.success) {
-        showTemporaryPopup("Uniforme atualizado com sucesso.", "success");
-        setEditando(null);
-        await carregarUniformes();
+        const res = await api.put(`/items/uniforms/${editando.id}`, {
+          itemName: editNome.trim(),
+          itemVal: editValor.trim(),
+          active: Number(editAtivo),
+          validadePlantonistaMeses: Number(editValidadePlantonistaMeses),
+          validadeDiaristaMeses: Number(editValidadeDiaristaMeses),
+        });
+        if (res.data?.success) {
+          showTemporaryPopup("Uniforme atualizado com sucesso.", "success");
+          setEditando(null);
+          await carregarUniformes();
+        }
+      } catch (error) {
+        showTemporaryPopup(obterMensagemErroApi(error, "Erro ao atualizar uniforme."), "error");
       }
-    } catch (error) {
-      showTemporaryPopup(obterMensagemErroApi(error, "Erro ao atualizar uniforme."), "error");
-    }
-  };
+    });
 
-  const alternarStatus = async (u) => {
-    try {
-      const res = await api.put(`/items/uniforms/${u.id}`, { active: u.active === 1 ? 0 : 1 });
-      if (res.data?.success) {
-        showTemporaryPopup("Status do uniforme atualizado.", "success");
-        await carregarUniformes();
+  const alternarStatus = (u) =>
+    executarAcaoUnica(`status-${u.id}`, async () => {
+      try {
+        const res = await api.put(`/items/uniforms/${u.id}`, { active: u.active === 1 ? 0 : 1 });
+        if (res.data?.success) {
+          showTemporaryPopup("Status do uniforme atualizado.", "success");
+          await carregarUniformes();
+        }
+      } catch (error) {
+        showTemporaryPopup(obterMensagemErroApi(error, "Erro ao atualizar status do uniforme."), "error");
       }
-    } catch (error) {
-      showTemporaryPopup(obterMensagemErroApi(error, "Erro ao atualizar status do uniforme."), "error");
-    }
-  };
+    });
 
   return (
     <div className="w-full max-w-6xl mx-auto mt-4 pb-6">
@@ -267,11 +309,20 @@ export default function CadastroUniformes() {
                         </button>
                         <button
                           onClick={() => alternarStatus(u)}
+                          disabled={Boolean(processingAction)}
                           className={`text-white px-3 py-1 rounded text-xs font-semibold ${
-                            u.active === 1 ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"
+                            processingAction
+                              ? "bg-gray-400"
+                              : u.active === 1
+                                ? "bg-red-600 hover:bg-red-700"
+                                : "bg-green-600 hover:bg-green-700"
                           }`}
                         >
-                          {u.active === 1 ? "Desabilitar" : "Habilitar"}
+                          {processingAction === `status-${u.id}`
+                            ? "Aguarde..."
+                            : u.active === 1
+                              ? "Desabilitar"
+                              : "Habilitar"}
                         </button>
                       </div>
                     </td>
@@ -379,8 +430,8 @@ export default function CadastroUniformes() {
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <button onClick={cadastrarUniforme} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded">Salvar</button>
-          <button onClick={() => setShowNovoModal(false)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded">Cancelar</button>
+          <button disabled={Boolean(processingAction)} onClick={cadastrarUniforme} className="bg-blue-600 hover:bg-blue-700 disabled:bg-blue-300 text-white font-semibold px-4 py-2 rounded">{processingAction === "create" ? "Salvando..." : "Salvar"}</button>
+          <button disabled={Boolean(processingAction)} onClick={() => setShowNovoModal(false)} className="bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-800 font-semibold px-4 py-2 rounded">Cancelar</button>
         </div>
       </Modal>
 
@@ -437,8 +488,8 @@ export default function CadastroUniformes() {
           </div>
         </div>
         <div className="mt-3 flex gap-2">
-          <button onClick={salvarEdicao} className="bg-amber-500 hover:bg-amber-600 text-white font-semibold px-4 py-2 rounded">Salvar Edição</button>
-          <button onClick={() => setEditando(null)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold px-4 py-2 rounded">Cancelar</button>
+          <button disabled={Boolean(processingAction)} onClick={salvarEdicao} className="bg-amber-500 hover:bg-amber-600 disabled:bg-amber-300 text-white font-semibold px-4 py-2 rounded">{processingAction === "edit" ? "Salvando..." : "Salvar Edição"}</button>
+          <button disabled={Boolean(processingAction)} onClick={() => setEditando(null)} className="bg-gray-200 hover:bg-gray-300 disabled:opacity-50 text-gray-800 font-semibold px-4 py-2 rounded">Cancelar</button>
         </div>
       </Modal>
 

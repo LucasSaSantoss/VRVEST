@@ -3,6 +3,10 @@
 const API_URL = import.meta.env.VITE_API_URL;
 
 export const obterMensagemErroApi = (error, fallback = "Erro no servidor") => {
+  if (error?.code === "DUPLICATE_REQUEST") {
+    return "Esta operação já está em processamento. Aguarde a conclusão.";
+  }
+
   const backendMessage = error?.response?.data?.message;
   const backendDetail = error?.response?.data?.detail;
   const status = error?.response?.status;
@@ -556,19 +560,65 @@ const api = axios.create({
   baseURL: API_URL,
 });
 
+const pendingMutationRequests = new Set();
+const MUTATION_METHODS = new Set(["post", "put", "patch", "delete"]);
+
+const buildMutationRequestKey = (config) => {
+  const method = String(config.method || "get").toLowerCase();
+  if (!MUTATION_METHODS.has(method)) return null;
+
+  let serializedData = "";
+  try {
+    serializedData =
+      typeof config.data === "string" ? config.data : JSON.stringify(config.data || {});
+  } catch {
+    serializedData = String(config.data || "");
+  }
+
+  return `${method}:${config.baseURL || ""}:${config.url || ""}:${serializedData}`;
+};
+
 // Interceptor para anexar token em cada requisição
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // [MANUTENCAO] Motivo: impedir submissões duplicadas nos módulos novos.
+  // [MANUTENCAO] Impacto: bloqueia apenas mutações idênticas enquanto a primeira ainda está pendente.
+  // [MANUTENCAO] Data: 2026-06-22
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const requestKey = buildMutationRequestKey(config);
+  if (requestKey) {
+    if (pendingMutationRequests.has(requestKey)) {
+      const duplicateError = new Error(
+        "Esta operação já está em processamento. Aguarde a conclusão."
+      );
+      duplicateError.code = "DUPLICATE_REQUEST";
+      duplicateError.isDuplicateRequest = true;
+      return Promise.reject(duplicateError);
+    }
+    pendingMutationRequests.add(requestKey);
+    config._mutationRequestKey = requestKey;
+  }
+
   return config;
 });
 
 // Interceptor para capturar erros de resposta
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config?._mutationRequestKey) {
+      pendingMutationRequests.delete(response.config._mutationRequestKey);
+    }
+    return response;
+  },
   (error) => {
+    if (!error?.isDuplicateRequest && error?.config?._mutationRequestKey) {
+      pendingMutationRequests.delete(error.config._mutationRequestKey);
+    }
+
     if (error.response?.status === 401) {
       const msg = error.response.data?.message;
 

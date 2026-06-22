@@ -1,5 +1,6 @@
 ﻿import { useState, useEffect, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useRef } from "react";
 import { jwtDecode } from "jwt-decode";
 import {
   LuLayoutGrid,
@@ -149,6 +150,7 @@ export default function Dashboard() {
   const [submenuOpen, setSubmenuOpen] = useState(false);
   const [submenuUniformesOpen, setSubmenuUniformesOpen] = useState(false);
   const [userName, setUserName] = useState("");
+  const lastUniformButtonClickRef = useRef(new WeakMap());
   const sidebarExpanded = hovered || locked;
 
   let timeoutId;
@@ -279,6 +281,25 @@ export default function Dashboard() {
   const handleLogoff = () => {
     localStorage.removeItem("token");
     navigate("/");
+  };
+
+  // [MANUTENCAO] Motivo: impedir duplo clique antes de o estado visual desabilitar botões dos módulos novos.
+  // [MANUTENCAO] Impacto: descarta apenas o segundo clique no mesmo botão em intervalo inferior a 800 ms.
+  // [MANUTENCAO] Data: 2026-06-22
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const bloquearDuploCliqueUniformes = (event) => {
+    const button = event.target.closest("button");
+    if (!button || button.disabled) return;
+
+    const now = Date.now();
+    const lastClick = lastUniformButtonClickRef.current.get(button) || 0;
+    if (now - lastClick < 800) {
+      event.preventDefault();
+      event.stopPropagation();
+      return;
+    }
+
+    lastUniformButtonClickRef.current.set(button, now);
   };
 
   return (
@@ -581,6 +602,9 @@ export default function Dashboard() {
 
         {/* Main */}
         <main
+          onClickCapture={
+            isUniformesTab(selected) ? bloquearDuploCliqueUniformes : undefined
+          }
           className={`flex-1 p-3 sm:p-5 md:p-6 lg:p-5 transition-all duration-300 overflow-y-auto mt-[110px] ml-[56px] ${
             sidebarExpanded ? "md:ml-[256px]" : "md:ml-[64px]"
           }`}

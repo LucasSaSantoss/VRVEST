@@ -8,6 +8,31 @@ const UNIFORMES_RELEASE_MODE = String(
 ).toUpperCase();
 const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
+const normalizarNomeUniforme = (value) =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleUpperCase("pt-BR");
+
+const encontrarUniformeMesmoNome = async (client, itemName, excludeId = null) => {
+  const normalizedName = normalizarNomeUniforme(itemName);
+  if (!normalizedName) return null;
+
+  const uniforms = await client.itemsCloth.findMany({
+    where: {
+      isUniform: 1,
+      ...(excludeId ? { id: { not: Number(excludeId) } } : {}),
+    },
+    select: { id: true, itemName: true },
+  });
+
+  return (
+    uniforms.find(
+      (uniform) => normalizarNomeUniforme(uniform.itemName) === normalizedName
+    ) || null
+  );
+};
+
 const normalizarMesesValidade = (value, fallback = 12) => {
   const parsed = Number(value);
   if (!Number.isInteger(parsed)) return fallback;
@@ -115,6 +140,18 @@ export const createUniformItem = async (req, res) => {
       });
     }
 
+    // [MANUTENCAO] Motivo: impedir uniformes duplicados por nome.
+    // [MANUTENCAO] Impacto: comparação ignora caixa, espaços externos e espaços repetidos.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
+    const duplicate = await encontrarUniformeMesmoNome(prisma, itemName);
+    if (duplicate) {
+      return res.status(409).json({
+        success: false,
+        message: "Já existe um uniforme cadastrado com esse nome.",
+      });
+    }
+
     const erroValidadePlantonista = validarMesesValidade(
       validadePlantonistaMeses ?? 12,
       "Validade para plantonista"
@@ -183,6 +220,16 @@ export const updateUniformItem = async (req, res) => {
         success: false,
         message: "Uniforme não encontrado.",
       });
+    }
+
+    if (itemName !== undefined) {
+      const duplicate = await encontrarUniformeMesmoNome(prisma, itemName, id);
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message: "Já existe outro uniforme cadastrado com esse nome.",
+        });
+      }
     }
 
     if (validadePlantonistaMeses !== undefined) {

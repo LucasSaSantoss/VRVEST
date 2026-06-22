@@ -116,6 +116,12 @@ export default function EmprestimoUniformes() {
         label: `${stock.item?.itemName} - Tam ${stock.size}`,
       },
     ]);
+    // [MANUTENCAO] Motivo: exigir nova seleção após cada inclusão no carrinho de empréstimos.
+    // [MANUTENCAO] Impacto: reduz inclusões repetidas acidentais sem impedir o empréstimo do mesmo item novamente.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
+    setSelectedItemId("");
+    setSelectedStockId("");
     setQuantity("1");
   };
 
