@@ -1,6 +1,7 @@
 ﻿import { useEffect, useMemo, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
 import { LuPlus } from "react-icons/lu";
+import SearchableSelect from "../Common/SearchableSelect";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
@@ -205,21 +206,19 @@ export default function EmprestimoUniformes() {
           <section className="bg-white rounded-xl shadow p-4 mb-3">
             <h3 className="font-semibold text-gray-700 mb-2">Nova Saída de Empréstimo</h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
-              <select
-                className="border rounded px-3 py-2"
+              <SearchableSelect
                 value={selectedItemId}
-                onChange={(e) => {
-                  setSelectedItemId(e.target.value);
+                onChange={(value) => {
+                  setSelectedItemId(value);
                   setSelectedStockId("");
                 }}
-              >
-                <option value="">Selecione o uniforme/produto</option>
-                {productOptions.map((p) => (
-                  <option key={p.itemId} value={p.itemId}>
-                    {p.itemName}
-                  </option>
-                ))}
-              </select>
+                options={productOptions.map((product) => ({
+                  value: product.itemId,
+                  label: product.itemName,
+                }))}
+                placeholder="Selecione o uniforme/produto"
+                searchPlaceholder="Buscar uniforme..."
+              />
 
               <select
                 className="border rounded px-3 py-2"
