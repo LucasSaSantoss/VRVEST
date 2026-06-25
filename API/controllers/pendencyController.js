@@ -4,10 +4,30 @@ import { enviarEmail } from "../emailService/emailService.js";
 const prisma = new PrismaClient();
 
 const emailCopiado = process.env.EMAIL_COPIADO;
+const PERFIL_DP = 3;
+const PERFIL_SUPERVISOR = 4;
+
+const requireDpOrSupervisor = (req, res) => {
+  // [MANUTENCAO] Motivo: liberar baixa financeira legada para DP mantendo proteção no backend.
+  // [MANUTENCAO] Impacto: apenas DP e supervisor podem consultar/baixar pendências nesta rotina legada.
+  // [MANUTENCAO] Data: 2026-06-25
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const level = Number(req.user?.level || 0);
+  if (level !== PERFIL_DP && level !== PERFIL_SUPERVISOR) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas DP ou supervisor.",
+    });
+    return false;
+  }
+  return true;
+};
 
 // Buscar todos os registros
 // controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
+  if (!requireDpOrSupervisor(req, res)) return;
+
   try {
     const { inicio, fim } = req.query;
     let filtroData = {};
@@ -60,6 +80,8 @@ export const getRegistros = async (req, res) => {
 };
 
 export const baixarPendencias = async (req, res) => {
+  if (!requireDpOrSupervisor(req, res)) return;
+
   try {
     const { id } = req.body;
     const usuarioID = req.user.id;
@@ -109,7 +131,10 @@ export const baixarPendencias = async (req, res) => {
     // const limiteVenc = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
     // limiteVenc.setHours(limiteVenc.getHours() + 36);
 
-    if (usuario.level >= 4) {
+    if (
+      Number(usuario.level) === PERFIL_DP ||
+      Number(usuario.level) === PERFIL_SUPERVISOR
+    ) {
       await enviarEmail(
         funcionario.email,
         "Baixa Financeira de Pendência",

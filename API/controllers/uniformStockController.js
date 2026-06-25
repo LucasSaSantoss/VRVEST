@@ -4,7 +4,6 @@ const prisma = new PrismaClient();
 
 const parseQty = (value) => Number(value || 0);
 const ONE_DAY_MS = 24 * 60 * 60 * 1000;
-const PERFIL_CONTROLADOR = 2;
 const PERFIL_SUPERVISOR = 4;
 const DEFAULT_SIZE_CODES = ["P", "M", "G", "GG", "XXG", "EXG", "G1"];
 const UNIFORMES_RELEASE_MODE = String(
@@ -13,9 +12,9 @@ const UNIFORMES_RELEASE_MODE = String(
 const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
 
 const requireAdmin = (req, res) => {
-  // [MANUTENCAO] Motivo: liberar estoque de uniformes para CONTROLADOR(2) e SUPERVISOR(4).
-  // [MANUTENCAO] Impacto: em BY_PROFILE aplica perfil oficial; em ADMIN_ONLY preserva liberação controlada.
-  // [MANUTENCAO] Data: 2026-06-05
+  // [MANUTENCAO] Motivo: restringir controle e consulta de estoque de uniformes ao supervisor.
+  // [MANUTENCAO] Impacto: controlador deixa de acessar rotinas de estoque no backend.
+  // [MANUTENCAO] Data: 2026-06-25
   // [MANUTENCAO] Autor: Márlon Etiene
   if (
     isUniformesAdminOnly() &&
@@ -29,13 +28,10 @@ const requireAdmin = (req, res) => {
     return false;
   }
 
-  if (
-    Number(req.user?.level) !== PERFIL_CONTROLADOR &&
-    Number(req.user?.level) !== PERFIL_SUPERVISOR
-  ) {
+  if (Number(req.user?.level) !== PERFIL_SUPERVISOR) {
     res.status(403).json({
       success: false,
-      message: "Acesso negado. Apenas controlador ou supervisor pode operar o estoque de uniformes.",
+      message: "Acesso negado. Apenas supervisor pode operar o estoque de uniformes.",
     });
     return false;
   }

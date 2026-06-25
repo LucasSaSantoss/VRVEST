@@ -108,8 +108,17 @@ const canAccessTabByLevel = (level, tab) => {
     case "cadastroUniformes":
     case "estoqueUniformes":
     case "relatorioEstoqueUniformes":
-      return isControlador || isSupervisor;
+      // [MANUTENCAO] Motivo: restringir rotinas de controle/consulta de estoque ao supervisor.
+      // [MANUTENCAO] Impacto: controlador deixa de acessar cadastro, estoque e relatório de estoque de uniformes.
+      // [MANUTENCAO] Data: 2026-06-25
+      // [MANUTENCAO] Autor: Márlon Etiene
+      return isSupervisor;
     case "baixa":
+      // [MANUTENCAO] Motivo: liberar baixa financeira legada para o perfil DP.
+      // [MANUTENCAO] Impacto: DP passa a visualizar e acessar a rotina legada de baixa financeira.
+      // [MANUTENCAO] Data: 2026-06-25
+      // [MANUTENCAO] Autor: Márlon Etiene
+      return isDp || isSupervisor;
     case "relatorios":
     case "relatorioRetiradasUniformes":
     case "relatorioEmprestimosUniformes":
@@ -496,21 +505,23 @@ export default function Dashboard() {
                 )}
               </li>
             ) : null}
+            {canAccessTabByLevel(levelUser, "baixa") && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => selectTab("baixa")}
+              >
+                <HiOutlineReceiptTax className="text-xl" />
+                <span
+                  className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
+                >
+                  Baixa Financeira
+                </span>
+              </li>
+            )}
+
             {levelUser >= 4 && (
               <>
-                <li
-                  className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
-                  ${selected === "baixa" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
-                  onClick={() => selectTab("baixa")}
-                >
-                  <HiOutlineReceiptTax className="text-xl" />
-                  <span
-                    className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}
-                  >
-                    Baixa Financeira
-                  </span>
-                </li>
-
                 {/* Submenu Relatórios */}
                 <li className="px-2.5 mt-2">
                   <div
