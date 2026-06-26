@@ -359,7 +359,7 @@ export default function Dashboard() {
           >
             {levelUser >= 4 && (
               <li
-                className={`flex items-center cursor-pointer px-3 py-2 rounded 
+                className={`flex items-center cursor-pointer px-3 py-2 rounded
                 transition-colors duration-200 ${
                   selected === "home"
                     ? "bg-white text-gray-800"
@@ -467,15 +467,9 @@ export default function Dashboard() {
                     {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
                       canAccessTabByLevel(levelUser, "estoqueUniformes")) && (
                       <li className="my-1 border-t border-white/30" />
-                    )}                    
+                    )}
                     {canAccessTabByLevel(levelUser, "estoqueUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("estoqueUniformes")}>Estoque de Uniformes</li>
-                    )}
-                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
-                      <li className="my-1 border-t border-white/30" />
-                    )}                    
-                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Retiradas Anteriores</li>
                     )}
                     {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
                       canAccessTabByLevel(levelUser, "estoqueUniformes") ||
@@ -485,9 +479,6 @@ export default function Dashboard() {
                     {canAccessTabByLevel(levelUser, "retiradaUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada de Uniformes</li>
                     )}
-                    {canAccessTabByLevel(levelUser, "retiradaRetroativaUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaRetroativaUniformes")}>Registro de Retirada Anterior</li>
-                    )}
                     {canAccessTabByLevel(levelUser, "devolucaoUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoUniformes")}>Devolução de Uniformes</li>
                     )}
@@ -496,6 +487,16 @@ export default function Dashboard() {
                       canAccessTabByLevel(levelUser, "devolucaoUniformes")) && (
                       <li className="my-1 border-t border-white/30" />
                     )}
+                    {canAccessTabByLevel(levelUser, "retiradaRetroativaUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaRetroativaUniformes")}>Registrar Retirada Anterior</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Retiradas Anteriores</li>
+                    )}
+                    {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
+                      <li className="my-1 border-t border-white/30" />
+                    )}
+
                     {canAccessTabByLevel(levelUser, "emprestimoUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("emprestimoUniformes")}>Empréstimo de Uniformes</li>
                     )}

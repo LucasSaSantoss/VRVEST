@@ -12,6 +12,7 @@ import {
   listUniformStockOptions,
   listUniformLoanStockOptions,
   listUniformWithdrawals,
+  listUniformWithdrawalYears,
   listRetroactiveUniformWithdrawals,
   listOpenUniformWithdrawalValiditySummary,
   listUniformLoans,
@@ -42,6 +43,11 @@ router.post("/withdraw", authMiddleware, createUniformWithdrawal);
 router.post("/withdraw/retroactive", authMiddleware, createRetroactiveUniformWithdrawal);
 router.post("/loan/withdraw", authMiddleware, createUniformLoan);
 router.get("/withdrawals", authMiddleware, listUniformWithdrawals);
+// [MANUTENCAO] Motivo: filtro de ano do relatório deve exibir apenas anos existentes.
+// [MANUTENCAO] Impacto: permite consultar todos os anos ou restringir por um ano real de retirada.
+// [MANUTENCAO] Data: 2026-06-26
+// [MANUTENCAO] Autor: Márlon Etiene
+router.get("/withdrawals/years", authMiddleware, listUniformWithdrawalYears);
 // [MANUTENCAO] Motivo: dashboard precisa resumir cautelas abertas reais, sem usar base de planilha.
 // [MANUTENCAO] Impacto: considera retiradas normais e anteriores com pendência ainda aberta.
 // [MANUTENCAO] Data: 2026-06-26

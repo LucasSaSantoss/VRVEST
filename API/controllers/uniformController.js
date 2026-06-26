@@ -1908,6 +1908,36 @@ export const listUniformWithdrawals = async (req, res) => {
   }
 };
 
+// [MANUTENCAO] Motivo: popular o filtro de ano do relatório apenas com anos existentes nas retiradas.
+// [MANUTENCAO] Impacto: facilita consultar todos os anos ou escolher um ano real gravado em UniformWithdrawal.
+// [MANUTENCAO] Data: 2026-06-26
+// [MANUTENCAO] Autor: Márlon Etiene
+export const listUniformWithdrawalYears = async (req, res) => {
+  if (!requireOperatorOrAdmin(req, res)) return;
+
+  try {
+    const rows = await prisma.uniformWithdrawal.findMany({
+      distinct: ["year"],
+      select: { year: true },
+      orderBy: { year: "desc" },
+    });
+
+    return res.json({
+      success: true,
+      data: rows
+        .map((row) => Number(row.year))
+        .filter((year) => Number.isInteger(year)),
+    });
+  } catch (error) {
+    console.error("Erro ao listar anos de retiradas de uniformes:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro no servidor.",
+      detail: error?.message || null,
+    });
+  }
+};
+
 // [MANUTENCAO] Motivo: substituir a consulta baseada em planilha por consulta dos registros anteriores da Fase 1.
 // [MANUTENCAO] Impacto: lista apenas retiradas com origem RETROACTIVE_WITHDRAWAL, sem depender de baseline importado.
 // [MANUTENCAO] Data: 2026-06-26

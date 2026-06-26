@@ -111,7 +111,8 @@ Mapear o fluxo de dados principal para manutenção segura.
 
 ### 1) Retiradas de uniformes
 
-1. Front chama `GET /api/uniforms/withdrawals` com filtros (`cpf`, `year`, `status`).
+1. Front chama `GET /api/uniforms/withdrawals/years` para popular o select de anos existentes.
+2. Front chama `GET /api/uniforms/withdrawals` com filtros (`cpf`, `year`, `status`); quando o ano estiver em `Todos`, o parâmetro `year` não é enviado.
 2. Exibição detalhada por item.
 3. Exportação Excel (`.xlsx`) no frontend.
 

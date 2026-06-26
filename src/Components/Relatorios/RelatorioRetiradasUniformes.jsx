@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import * as XLSX from "xlsx";
 import { api, obterMensagemErroApi } from "../../services/api";
 
@@ -31,7 +31,9 @@ const getReturnUser = (item) =>
 
 export default function RelatorioRetiradasUniformes() {
   const [cpf, setCpf] = useState("");
-  const [ano, setAno] = useState(String(new Date().getFullYear()));
+  const [ano, setAno] = useState("");
+  const [anosDisponiveis, setAnosDisponiveis] = useState([]);
+  const [loadingAnos, setLoadingAnos] = useState(false);
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
   const [rows, setRows] = useState([]);
@@ -43,6 +45,26 @@ export default function RelatorioRetiradasUniformes() {
     setPopup({ show: true, message, type });
     setTimeout(() => setPopup(INITIAL_POPUP), 3500);
   };
+
+  const carregarAnos = async () => {
+    setLoadingAnos(true);
+    try {
+      const res = await api.get("/uniforms/withdrawals/years");
+      setAnosDisponiveis(res.data?.success ? res.data.data || [] : []);
+    } catch (error) {
+      setAnosDisponiveis([]);
+      showTemporaryPopup(
+        obterMensagemErroApi(error, "Erro ao carregar anos disponíveis."),
+        "error"
+      );
+    } finally {
+      setLoadingAnos(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarAnos();
+  }, []);
 
   const buscar = async () => {
     setLoading(true);
@@ -191,13 +213,19 @@ export default function RelatorioRetiradasUniformes() {
             value={cpf}
             onChange={(e) => setCpf(String(e.target.value || "").replace(/\D/g, "").slice(0, 11))}
           />
-          <input
-            type="number"
+          <select
             className="border rounded px-3 py-2"
-            placeholder="Ano"
             value={ano}
             onChange={(e) => setAno(e.target.value)}
-          />
+            disabled={loadingAnos}
+          >
+            <option value="">Todos os anos</option>
+            {anosDisponiveis.map((year) => (
+              <option key={year} value={year}>
+                {year}
+              </option>
+            ))}
+          </select>
           <select
             className="border rounded px-3 py-2"
             value={status}
