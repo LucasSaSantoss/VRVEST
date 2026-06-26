@@ -27,6 +27,7 @@ const UNIFORM_WITHDRAWAL_SAFE_SELECT = {
   withdrawDate: true,
   totalQuantity: true,
   limitApplied: true,
+  originType: true,
   status: true,
   nonDeliveryJustification: true,
   chargeReason: true,
@@ -143,6 +144,11 @@ const WORK_TYPES = {
   DIARISTA: "DIARISTA",
 };
 
+const WITHDRAWAL_ORIGIN_TYPES = {
+  SYSTEM: "SYSTEM_WITHDRAWAL",
+  RETROACTIVE: "RETROACTIVE_WITHDRAWAL",
+};
+
 const normalizeWorkType = (value) => {
   const normalized = String(value || "").trim().toUpperCase();
   if (normalized === WORK_TYPES.PLANTONISTA) return WORK_TYPES.PLANTONISTA;
@@ -163,6 +169,38 @@ const addMonthsSafely = (date, months) => {
   const d = new Date(base.getTime());
   d.setMonth(d.getMonth() + Number(months || 0));
   return d;
+};
+
+const parseRetroactiveWithdrawalDate = (value) => {
+  const raw = String(value || "").trim();
+  if (!raw) return null;
+
+  const dateOnlyMatch = raw.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (dateOnlyMatch) {
+    const year = Number(dateOnlyMatch[1]);
+    const month = Number(dateOnlyMatch[2]);
+    const day = Number(dateOnlyMatch[3]);
+    const date = new Date(year, month - 1, day, 12, 0, 0, 0);
+    if (
+      date.getFullYear() === year &&
+      date.getMonth() === month - 1 &&
+      date.getDate() === day
+    ) {
+      return date;
+    }
+    return null;
+  }
+
+  const parsed = new Date(raw);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+const isBeforeToday = (date) => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const candidate = new Date(date);
+  candidate.setHours(0, 0, 0, 0);
+  return candidate < today;
 };
 
 const formatarDataHoraPtBr = (value) => {
@@ -723,6 +761,7 @@ export const createUniformWithdrawal = async (req, res) => {
           totalQuantity,
           limitApplied,
           workType: normalizedWorkType,
+          originType: WITHDRAWAL_ORIGIN_TYPES.SYSTEM,
           status,
           nonDeliveryJustification: nonDeliveryJustification || null,
           chargeReason,
@@ -883,6 +922,192 @@ export const createUniformWithdrawal = async (req, res) => {
   }
 };
 
+// [MANUTENCAO] Motivo: registrar retiradas anteriores sem impactar o estoque atual.
+// [MANUTENCAO] Impacto: gera cautela e pendência devolvível, mas não cria saída de estoque nem envia e-mail.
+// [MANUTENCAO] Data: 2026-06-26
+// [MANUTENCAO] Autor: Márlon Etiene
+export const createRetroactiveUniformWithdrawal = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const { cpf, items, nonDeliveryJustification, notes, workType, withdrawDate } =
+      req.body;
+    const normalizedWorkType = normalizeWorkType(workType);
+    const retroactiveDate = parseRetroactiveWithdrawalDate(withdrawDate);
+
+    if (!cpf || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "CPF e lista de itens são obrigatórios.",
+      });
+    }
+    if (!normalizedWorkType) {
+      return res.status(400).json({
+        success: false,
+        message: "Jornada inválida. Informe plantonista ou diarista.",
+      });
+    }
+    if (!retroactiveDate) {
+      return res.status(400).json({
+        success: false,
+        message: "Informe uma data válida para a retirada anterior.",
+      });
+    }
+    if (!isBeforeToday(retroactiveDate)) {
+      return res.status(400).json({
+        success: false,
+        message: "A data da retirada anterior deve ser menor que a data atual.",
+      });
+    }
+
+    const employee = await prisma.employee.findUnique({
+      where: { cpf },
+      select: EMPLOYEE_SAFE_SELECT,
+    });
+
+    if (!employee || employee.active !== 1) {
+      return res.status(400).json({
+        success: false,
+        message: "Colaborador inválido ou inativo.",
+      });
+    }
+
+    const settings = await getOrCreateUniformSetting();
+    const limitApplied = resolveAnnualLimitByWorkType(settings, normalizedWorkType);
+    const year = retroactiveDate.getFullYear();
+    const now = new Date();
+    const totalQuantity = items.length;
+
+    if (totalQuantity <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "A retirada anterior deve conter ao menos um uniforme.",
+      });
+    }
+
+    const withdrawnInYear = await prisma.uniformWithdrawal.count({
+      where: {
+        employeeId: employee.id,
+        year,
+        workType: normalizedWorkType,
+      },
+    });
+    const willExceedLimit = withdrawnInYear + 1 > limitApplied;
+
+    let status = "REGULAR";
+    let chargeReason = null;
+    if (willExceedLimit) {
+      if (nonDeliveryJustification && nonDeliveryJustification.trim()) {
+        status = "EXEMPT";
+      } else {
+        status = "CHARGEABLE";
+        chargeReason = "Retirada anterior acima do limite anual sem justificativa.";
+      }
+    }
+
+    const userId = req.user.id;
+    const stockIds = items.map((item) => Number(item.uniformStockSizeId));
+    const stockRecords = await prisma.uniformStockSize.findMany({
+      where: { id: { in: stockIds } },
+      include: { item: true },
+    });
+    const stockMap = new Map(stockRecords.map((s) => [s.id, s]));
+
+    for (const item of items) {
+      const stockId = Number(item.uniformStockSizeId);
+      const quantity = 1;
+      const stock = stockMap.get(stockId);
+      if (!stock || quantity <= 0) {
+        return res.status(400).json({
+          success: false,
+          message: "Item de estoque inválido na retirada anterior.",
+        });
+      }
+      if (!stock.item || Number(stock.item.isUniform) !== 1 || Number(stock.item.active) !== 1) {
+        return res.status(400).json({
+          success: false,
+          message: "A retirada anterior aceita apenas uniformes ativos.",
+        });
+      }
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const withdrawal = await tx.uniformWithdrawal.create({
+        data: {
+          employeeId: employee.id,
+          userId,
+          year,
+          withdrawDate: retroactiveDate,
+          totalQuantity,
+          limitApplied,
+          workType: normalizedWorkType,
+          originType: WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE,
+          status,
+          nonDeliveryJustification: nonDeliveryJustification || null,
+          chargeReason,
+          notes: notes || "Registro de retirada anterior ao lançamento no sistema.",
+        },
+      });
+
+      for (const item of items) {
+        const stockId = Number(item.uniformStockSizeId);
+        const quantity = 1;
+        const stock = stockMap.get(stockId);
+        const validadeMeses =
+          normalizedWorkType === WORK_TYPES.PLANTONISTA
+            ? Number(stock?.item?.validadePlantonistaMeses || 12)
+            : Number(stock?.item?.validadeDiaristaMeses || 12);
+        const dueDate =
+          status === "EXEMPT" ? null : addMonthsSafely(retroactiveDate, validadeMeses);
+
+        await tx.uniformWithdrawalItem.create({
+          data: {
+            uniformWithdrawalId: withdrawal.id,
+            uniformStockSizeId: stockId,
+            quantity,
+            dueDate,
+            expirationStatus: "ACTIVE",
+            isChargeableExtra: status === "EXEMPT" ? 1 : 0,
+          },
+        });
+      }
+
+      await tx.userLog.create({
+        data: {
+          userId,
+          action: "UNIFORM_RETROACTIVE_WITHDRAWAL_CREATE",
+          newData: {
+            employeeId: employee.id,
+            uniformWithdrawalId: withdrawal.id,
+            totalQuantity,
+            status,
+            limitApplied,
+            workType: normalizedWorkType,
+            withdrawDate: retroactiveDate,
+            originType: WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE,
+          },
+          createdAt: now,
+        },
+      });
+
+      return withdrawal;
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Registro de retirada anterior criado com sucesso.",
+      data: result,
+    });
+  } catch (error) {
+    console.error("Erro ao registrar retirada anterior de uniforme:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro no servidor.",
+      detail: error?.message || null,
+    });
+  }
+};
+
 export const returnUniformWithdrawalItems = async (req, res) => {
   if (!requireOperatorOrAdmin(req, res)) return;
 
@@ -1012,8 +1237,23 @@ export const returnUniformWithdrawalItems = async (req, res) => {
       details: { employee: false, system: false },
     };
 
-    try {
-      const devolucaoItems = items
+    const shouldSendReturnEmail =
+      withdrawal.originType !== WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE;
+
+    if (!shouldSendReturnEmail) {
+      // [MANUTENCAO] Motivo: retiradas anteriores são registros administrativos sem notificação por e-mail.
+      // [MANUTENCAO] Impacto: a devolução segue baixando pendência e entrando no estoque de empréstimos, sem disparar e-mail.
+      // [MANUTENCAO] Data: 2026-06-26
+      // [MANUTENCAO] Autor: Márlon Etiene
+      emailNotification = {
+        success: true,
+        message:
+          "Devolução registrada sem envio de e-mail por se tratar de retirada anterior.",
+        details: { employee: false, system: false },
+      };
+    } else {
+      try {
+        const devolucaoItems = items
         .map((entry) => {
           const withdrawalItemId = Number(entry.uniformWithdrawalItemId);
           const originalItem = itemMap.get(withdrawalItemId);
@@ -1067,29 +1307,30 @@ export const returnUniformWithdrawalItems = async (req, res) => {
           details: emailNotification.details,
         };
       }
-    } catch (emailError) {
-      emailNotification = {
-        success: false,
-        message:
-          "Devolução registrada, mas houve falha no envio das notificações de e-mail.",
-        details: emailNotification.details,
-      };
-      console.error("Erro ao enviar e-mails de devolução de uniforme:", emailError);
-      try {
-        await prisma.userLog.create({
-          data: {
-            userId,
-            action: "UNIFORM_RETURN_EMAIL_ERROR",
-            changes: { uniformWithdrawalId: withdrawal.id },
-            newData: {
-              error: emailError?.message || String(emailError),
-              employeeEmail: withdrawal.employee?.email || null,
-              copiedEmail: emailCopiado || null,
+      } catch (emailError) {
+        emailNotification = {
+          success: false,
+          message:
+            "Devolução registrada, mas houve falha no envio das notificações de e-mail.",
+          details: emailNotification.details,
+        };
+        console.error("Erro ao enviar e-mails de devolução de uniforme:", emailError);
+        try {
+          await prisma.userLog.create({
+            data: {
+              userId,
+              action: "UNIFORM_RETURN_EMAIL_ERROR",
+              changes: { uniformWithdrawalId: withdrawal.id },
+              newData: {
+                error: emailError?.message || String(emailError),
+                employeeEmail: withdrawal.employee?.email || null,
+                copiedEmail: emailCopiado || null,
+              },
             },
-          },
-        });
-      } catch (logError) {
-        console.error("Erro ao registrar falha de e-mail de devolução:", logError);
+          });
+        } catch (logError) {
+          console.error("Erro ao registrar falha de e-mail de devolução:", logError);
+        }
       }
     }
 
@@ -1664,6 +1905,214 @@ export const listUniformWithdrawals = async (req, res) => {
   } catch (error) {
     console.error("Erro ao listar retiradas de uniformes:", error);
     return res.status(500).json({ success: false, message: error?.message || "Erro no servidor.", detail: error?.message || null });
+  }
+};
+
+// [MANUTENCAO] Motivo: substituir a consulta baseada em planilha por consulta dos registros anteriores da Fase 1.
+// [MANUTENCAO] Impacto: lista apenas retiradas com origem RETROACTIVE_WITHDRAWAL, sem depender de baseline importado.
+// [MANUTENCAO] Data: 2026-06-26
+// [MANUTENCAO] Autor: Márlon Etiene
+export const listRetroactiveUniformWithdrawals = async (req, res) => {
+  try {
+    const status = String(req.query?.status || "TODOS").toUpperCase();
+    const referenceDate = new Date();
+    referenceDate.setHours(0, 0, 0, 0);
+
+    const withdrawals = await prisma.uniformWithdrawal.findMany({
+      where: { originType: WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE },
+      orderBy: { withdrawDate: "desc" },
+      include: {
+        employee: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            matricula: true,
+            sector: true,
+            position: true,
+            active: true,
+          },
+        },
+        user: { select: { id: true, name: true } },
+        items: {
+          include: {
+            uniformStockSize: {
+              include: { item: true },
+            },
+          },
+        },
+      },
+    });
+
+    const rows = withdrawals.flatMap((withdrawal) =>
+      (withdrawal.items || []).map((item) => {
+        const pendingQuantity = Math.max(getPendingQuantity(item), 0);
+        const dueDate = item.dueDate || null;
+        const vencido =
+          pendingQuantity > 0 &&
+          dueDate &&
+          new Date(dueDate).setHours(0, 0, 0, 0) <= referenceDate.getTime();
+        const devolvido =
+          pendingQuantity <= 0 ||
+          ["SETTLED_RETURN", "SETTLED_DISCOUNT"].includes(withdrawal.status);
+        const situacao = devolvido ? "DEVOLVIDO" : vencido ? "VENCIDO" : "A_VENCER";
+
+        return {
+          id: `${withdrawal.id}-${item.id}`,
+          withdrawalId: withdrawal.id,
+          withdrawalItemId: item.id,
+          employee: withdrawal.employee,
+          operator: withdrawal.user,
+          workType: withdrawal.workType,
+          withdrawDate: withdrawal.withdrawDate,
+          year: withdrawal.year,
+          withdrawalStatus: withdrawal.status,
+          originType: withdrawal.originType,
+          uniformStockSizeId: item.uniformStockSizeId,
+          uniformName: item.uniformStockSize?.item?.itemName || "-",
+          size: item.uniformStockSize?.size || "-",
+          quantity: Number(item.quantity || 0),
+          returnedQuantity: Number(item.returnedQuantity || 0),
+          discountedQuantity: Number(item.discountedQuantity || 0),
+          pendingQuantity,
+          dueDate,
+          vencido: Boolean(vencido),
+          situacao,
+          notes: withdrawal.notes,
+          createdAt: withdrawal.createdAt,
+        };
+      })
+    );
+
+    const filtered =
+      status === "TODOS"
+        ? rows
+        : status === "NO_PRAZO" || status === "A_VENCER"
+          ? rows.filter((row) => row.situacao === "A_VENCER")
+          : status === "DEVOLVIDOS"
+            ? rows.filter((row) => row.situacao === "DEVOLVIDO")
+            : rows.filter((row) => row.situacao === "VENCIDO");
+
+    return res.json({
+      success: true,
+      data: filtered,
+      meta: {
+        status,
+        referenceDate,
+        originType: WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE,
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao listar retiradas anteriores de uniformes:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro no servidor.",
+      detail: error?.message || null,
+    });
+  }
+};
+
+// [MANUTENCAO] Motivo: dashboard deve considerar cautelas abertas reais, sem depender de planilha histórica.
+// [MANUTENCAO] Impacto: consolida retiradas normais e anteriores, ignorando cautelas devolvidas/baixadas.
+// [MANUTENCAO] Data: 2026-06-26
+// [MANUTENCAO] Autor: Márlon Etiene
+export const listOpenUniformWithdrawalValiditySummary = async (req, res) => {
+  try {
+    const referenceDate = new Date();
+    referenceDate.setHours(0, 0, 0, 0);
+
+    const withdrawals = await prisma.uniformWithdrawal.findMany({
+      where: {
+        status: { in: ["REGULAR", "EXEMPT", "CHARGEABLE", "PARTIAL_RETURN"] },
+        originType: {
+          in: [
+            WITHDRAWAL_ORIGIN_TYPES.SYSTEM,
+            WITHDRAWAL_ORIGIN_TYPES.RETROACTIVE,
+          ],
+        },
+      },
+      orderBy: { withdrawDate: "desc" },
+      select: {
+        id: true,
+        employeeId: true,
+        withdrawDate: true,
+        originType: true,
+        status: true,
+        employee: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            matricula: true,
+            active: true,
+          },
+        },
+        items: {
+          select: {
+            id: true,
+            quantity: true,
+            returnedQuantity: true,
+            discountedQuantity: true,
+            dueDate: true,
+          },
+        },
+      },
+    });
+
+    const data = withdrawals
+      .map((withdrawal) => {
+        const pendingItems = (withdrawal.items || []).filter(
+          (item) => Math.max(getPendingQuantity(item), 0) > 0
+        );
+        if (!pendingItems.length) return null;
+
+        const dueDates = pendingItems
+          .map((item) => (item.dueDate ? new Date(item.dueDate) : null))
+          .filter((date) => date && !Number.isNaN(date.getTime()))
+          .sort((left, right) => left.getTime() - right.getTime());
+        const dueDate = dueDates[0] || null;
+        const diasParaVencer = dueDate
+          ? Math.ceil(
+              (dueDate.setHours(0, 0, 0, 0) - referenceDate.getTime()) /
+                (24 * 60 * 60 * 1000)
+            )
+          : 9999;
+        const vencido = dueDate ? diasParaVencer <= 0 : false;
+
+        return {
+          id: withdrawal.id,
+          employeeId: withdrawal.employeeId,
+          employee: withdrawal.employee,
+          withdrawDate: withdrawal.withdrawDate,
+          originType: withdrawal.originType,
+          status: withdrawal.status,
+          expirationDate: dueDate,
+          vencido,
+          diasParaVencer,
+          pendingItems: pendingItems.length,
+          pendingQuantity: pendingItems.reduce(
+            (acc, item) => acc + Math.max(getPendingQuantity(item), 0),
+            0
+          ),
+        };
+      })
+      .filter(Boolean);
+
+    return res.json({
+      success: true,
+      data,
+      meta: {
+        referenceDate,
+        source: "UNIFORM_WITHDRAWAL_OPEN_VALIDITY",
+      },
+    });
+  } catch (error) {
+    console.error("Erro ao listar validade de cautelas abertas:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro no servidor.",
+      detail: error?.message || null,
+    });
   }
 };
 

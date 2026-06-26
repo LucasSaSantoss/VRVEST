@@ -1,6 +1,5 @@
 ﻿import { useEffect, useState } from "react";
 import { api, obterMensagemErroApi } from "../../services/api";
-import ImportacaoCautelasLegadasUniformes from "../Uniformes/ImportacaoCautelasLegadasUniformes";
 
 const INITIAL_POPUP = { show: false, message: "", type: "info" };
 
@@ -165,7 +164,10 @@ export default function UniformSettings() {
             {saving ? "Salvando..." : "Salvar Configurações"}
           </button>
 
-          <ImportacaoCautelasLegadasUniformes />
+          {/* [MANUTENCAO] Motivo: a importação por planilha foi substituída pelo registro manual de retirada anterior. */}
+          {/* [MANUTENCAO] Impacto: evita novos envios de planilhas incompletas sem remover dados históricos já existentes. */}
+          {/* [MANUTENCAO] Data: 2026-06-26 */}
+          {/* [MANUTENCAO] Autor: Márlon Etiene */}
         </div>
       )}
 

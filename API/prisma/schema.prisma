@@ -160,6 +160,7 @@ model UniformWithdrawal {
   totalQuantity            Int
   limitApplied             Int
   workType                 String   @default("DIARISTA") @db.VarChar(20)
+  originType               String   @default("SYSTEM_WITHDRAWAL") @db.VarChar(40)
   status                   String   @db.VarChar(30)
   nonDeliveryJustification String?  @db.VarChar(500)
   chargeReason             String?  @db.VarChar(500)

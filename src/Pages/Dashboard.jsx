@@ -37,6 +37,7 @@ import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
 import EntradaEstoqueUniformes from "../Components/Uniformes/EntradaEstoqueUniformes";
 import CautelasLegadasUniformes from "../Components/Uniformes/CautelasLegadasUniformes";
 import RetiradaUniformes from "../Components/Uniformes/RetiradaUniformes";
+import RetiradaRetroativaUniformes from "../Components/Uniformes/RetiradaRetroativaUniformes";
 import CadastroUniformes from "../Components/Uniformes/CadastroUniformes";
 import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
 import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
@@ -57,6 +58,7 @@ const PERFIL_SUPERVISOR = 4;
 const isUniformesTab = (tab) =>
   [
     "retiradaUniformes",
+    "retiradaRetroativaUniformes",
     "devolucaoUniformes",
     "emprestimoUniformes",
     "devolucaoEmprestimos",
@@ -101,6 +103,12 @@ const canAccessTabByLevel = (level, tab) => {
     case "emprestimoUniformes":
     case "devolucaoEmprestimos":
       return isOperador || isSupervisor;
+    case "retiradaRetroativaUniformes":
+      // [MANUTENCAO] Motivo: registrar retirada anterior sem baixar estoque exige perfil administrativo.
+      // [MANUTENCAO] Impacto: apenas supervisor acessa a rotina retroativa de uniformes.
+      // [MANUTENCAO] Data: 2026-06-26
+      // [MANUTENCAO] Autor: Márlon Etiene
+      return isSupervisor;
     case "baixaDpUniformes":
       return isDp || isSupervisor;
     case "cautelasLegadasUniformes":
@@ -215,6 +223,7 @@ export default function Dashboard() {
       estoqueUniformes: <EntradaEstoqueUniformes />,
       cautelasLegadasUniformes: <CautelasLegadasUniformes />,
       retiradaUniformes: <RetiradaUniformes />,
+      retiradaRetroativaUniformes: <RetiradaRetroativaUniformes />,
       devolucaoUniformes: <DevolucaoUniformes />,
       emprestimoUniformes: <EmprestimoUniformes />,
       devolucaoEmprestimos: <DevolucaoEmprestimos />,
@@ -423,6 +432,7 @@ export default function Dashboard() {
             {isUniformesTab(selected) ||
             [
               "retiradaUniformes",
+              "retiradaRetroativaUniformes",
               "devolucaoUniformes",
               "emprestimoUniformes",
               "devolucaoEmprestimos",
@@ -465,7 +475,7 @@ export default function Dashboard() {
                       <li className="my-1 border-t border-white/30" />
                     )}                    
                     {canAccessTabByLevel(levelUser, "cautelasLegadasUniformes") && (
-                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Cautelas Históricas</li>
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("cautelasLegadasUniformes")}>Consulta Retiradas Anteriores</li>
                     )}
                     {(canAccessTabByLevel(levelUser, "cadastroUniformes") ||
                       canAccessTabByLevel(levelUser, "estoqueUniformes") ||
@@ -475,10 +485,14 @@ export default function Dashboard() {
                     {canAccessTabByLevel(levelUser, "retiradaUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaUniformes")}>Retirada de Uniformes</li>
                     )}
+                    {canAccessTabByLevel(levelUser, "retiradaRetroativaUniformes") && (
+                      <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("retiradaRetroativaUniformes")}>Registro de Retirada Anterior</li>
+                    )}
                     {canAccessTabByLevel(levelUser, "devolucaoUniformes") && (
                       <li className="cursor-pointer hover:text-gray-300" onClick={() => selectTab("devolucaoUniformes")}>Devolução de Uniformes</li>
                     )}
                     {(canAccessTabByLevel(levelUser, "retiradaUniformes") ||
+                      canAccessTabByLevel(levelUser, "retiradaRetroativaUniformes") ||
                       canAccessTabByLevel(levelUser, "devolucaoUniformes")) && (
                       <li className="my-1 border-t border-white/30" />
                     )}

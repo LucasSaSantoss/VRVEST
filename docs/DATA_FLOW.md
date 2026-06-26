@@ -67,15 +67,36 @@ Mapear o fluxo de dados principal para manutenção segura.
 2. Backend valida supervisor/admin.
 3. Movimentações gravadas em `UniformMovement` e `UserLog`.
 
-### 9) Cautelas legadas de uniformes
+### 9) Registro de retirada anterior de uniformes
 
-1. Na configuração de uniformes, front lê a planilha com `xlsx` e envia linhas simples em lotes para `POST /api/uniforms/legacy-baselines/import`.
-2. Backend valida supervisor/admin.
-3. Backend normaliza CPF para 11 dígitos e usa matrícula como fallback.
-4. Backend grava/atualiza `UniformLegacyWithdrawalBaseline` por `employeeId` único.
-5. Criação/alteração válida registra `UserLog`.
-6. Rejeitos retornam na resposta para exportação em Excel e não são gravados no banco principal.
-7. Consulta de alertas usa `GET /api/uniforms/legacy-baselines/alerts`, é separada da importação, cruza cautela legada com retiradas oficiais do sistema, considera vencida cautela com 6 meses ou mais e aceita filtros `TODOS`, `VENCIDOS` e `NO_PRAZO`; a tela também aplica busca local por matrícula, CPF ou nome e exibe dias para vencer, com valor negativo quando vencido.
+1. Front busca colaborador por CPF e exige data anterior a hoje.
+2. Front monta carrinho de itens com uniforme/produto e tamanho.
+3. Front chama `POST /api/uniforms/withdraw/retroactive`.
+4. Backend valida supervisor, colaborador ativo, jornada, data retroativa e itens.
+5. Backend grava `UniformWithdrawal`, `UniformWithdrawalItem` e `UserLog`.
+6. Backend não grava `UniformMovement`, não baixa `UniformStockSize.qtyMainStock` e não envia e-mail.
+7. A cautela criada fica disponível para devolução futura no fluxo normal, com entrada no estoque de empréstimos, sem envio de e-mail quando a origem for retirada anterior.
+
+### 10) Consulta de retiradas anteriores
+
+1. A tela chama `GET /api/uniforms/withdrawals/retroactive`.
+2. Backend retorna apenas registros com `UniformWithdrawal.originType = RETROACTIVE_WITHDRAWAL`.
+3. A consulta permite filtrar por todos, vencidos, a vencer ou devolvidos.
+4. A tela aplica busca local por matrícula, CPF, nome ou uniforme.
+5. A exportação Excel usa os mesmos registros filtrados na tela.
+
+### 11) Dashboard - validade de cautelas
+
+1. Front chama `GET /api/uniforms/withdrawals/open-validity-summary`.
+2. Backend considera apenas `UniformWithdrawal` com status aberto e origem `SYSTEM_WITHDRAWAL` ou `RETROACTIVE_WITHDRAWAL`.
+3. Cautelas devolvidas ou baixadas não entram no resumo.
+4. A data de vencimento considerada é a primeira data pendente da cautela.
+5. O card separa vencidas, até 30 dias, 31 a 89 dias e 90 dias ou mais.
+
+### 12) Cautelas históricas antigas
+
+1. A importação por planilha foi descontinuada como rotina operacional.
+2. O endpoint `GET /api/uniforms/legacy-baselines/alerts` permanece apenas para compatibilidade com dados antigos e usos internos existentes.
 
 ## Fluxo Legado de Colaboradores
 
@@ -100,11 +121,16 @@ Mapear o fluxo de dados principal para manutenção segura.
 2. Exibição detalhada por item, incluindo quantidade emprestada e devolvida.
 3. Exportação Excel (`.xlsx`) no frontend.
 
-### 3) Cautelas legadas de uniformes
+### 3) Retiradas anteriores de uniformes
 
-1. Front chama `GET /api/uniforms/legacy-baselines/alerts`.
-2. Exibição paginada de colaboradores com cautela vencida, no prazo ou todos os baselines, usando a data mais recente entre legado e retirada oficial.
+1. Front chama `GET /api/uniforms/withdrawals/retroactive`.
+2. Exibição paginada dos registros lançados manualmente na Fase 1.
 3. Exportação Excel (`.xlsx`) no frontend.
+
+### 4) Dashboard - validade de cautelas
+
+1. Front chama `GET /api/uniforms/withdrawals/open-validity-summary`.
+2. Exibição dos totais por faixa de vencimento, considerando apenas cautelas abertas.
 
 ## Glossário de Status e Tipos
 

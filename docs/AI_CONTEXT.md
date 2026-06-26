@@ -38,7 +38,8 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 5. `Baixa de Uniformes - DP`.
 6. `Cadastro de Uniformes`.
 7. `Estoque de Uniformes`.
-8. `Cautelas Legadas de Uniformes`.
+8. `Consulta Retiradas Anteriores`.
+9. `Registro de Retirada Anterior` (somente supervisor).
 
 ## Fluxos Principais (Uniformes)
 
@@ -48,7 +49,7 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 4. Empréstimo (`/api/uniforms/loan/*`): operador/supervisor.
 5. Devolução de empréstimos (`/api/uniforms/loan/*`): operador/supervisor.
 6. Baixa DP (`/api/uniforms/dp/*` e settlement): DP/supervisor.
-7. Cautelas legadas: consulta (`GET /api/uniforms/legacy-baselines/alerts`) liberada para usuários autenticados; importação (`POST /api/uniforms/legacy-baselines/import`) restrita a supervisor/admin.
+7. Cautelas históricas: consulta (`GET /api/uniforms/legacy-baselines/alerts`) liberada para usuários autenticados; importação por planilha descontinuada e substituída por registro manual de retirada anterior (`POST /api/uniforms/withdraw/retroactive`), restrito a supervisor.
 
 ## Notificações de E-mail (Uniformes)
 
@@ -70,17 +71,18 @@ Sistema de controle da rouparia hospitalar para cadastro de colaboradores, contr
 4. Relatório de estoque de uniformes.
 5. Consulta de cautelas legadas com exportação para Excel (`.xlsx`).
 
-## Cautelas Legadas de Uniformes
+## Cautelas Históricas e Registro de Retirada Anterior
 
 ### Confirmado no código
 
-1. A planilha legada não gera `UniformWithdrawal`, `UniformWithdrawalItem` nem `UniformMovement`.
-2. A tabela `UniformLegacyWithdrawalBaseline` guarda somente `employeeId` e `lastWithdrawalDate` como dados de negócio.
-3. A importação cruza primeiro por CPF normalizado para 11 dígitos; matrícula é fallback/validação de conflito.
-4. Importações repetidas atualizam o registro existente por `employeeId`, sem duplicar.
-5. Rejeitos retornam para exportação no frontend e não são gravados em `UserLog`.
-6. Criação/alteração de baseline válida registra `UserLog`.
-7. O alerta considera vencida a cautela com 6 meses ou mais desde a data mais recente entre `UniformLegacyWithdrawalBaseline.lastWithdrawalDate` e `UniformWithdrawal.withdrawDate`; a consulta inicia em `TODOS` e permite filtrar por `VENCIDOS` ou `NO_PRAZO` e pesquisar por matrícula, CPF ou nome; a coluna de prazo mostra dias para vencer, com valor negativo quando vencido.
+1. A importação por planilha foi descontinuada como rotina operacional.
+2. A consulta `GET /api/uniforms/legacy-baselines/alerts` permanece para dados históricos já existentes.
+3. O lan?amento manual usa `POST /api/uniforms/withdraw/retroactive`.
+4. Apenas supervisor pode registrar retirada anterior.
+5. O registro anterior grava `UniformWithdrawal`, `UniformWithdrawalItem` e `UserLog`.
+6. O registro anterior não baixa estoque principal e não envia e-mail.
+7. A validade da cautela é calculada a partir da data retroativa informada.
+8. A devolução futura segue o fluxo de devolução normal e entra no estoque de empréstimos, sem envio de e-mail quando a origem for retirada anterior.
 
 ## Glossário de Status (Uniformes)
 

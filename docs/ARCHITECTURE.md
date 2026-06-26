@@ -34,7 +34,9 @@
 - `GET /api/uniforms/withdrawals`
 - `GET /api/uniforms/loans`
 - `GET /api/uniforms/legacy-baselines/alerts`
-- `POST /api/uniforms/legacy-baselines/import`
+- `GET /api/uniforms/withdrawals/retroactive`
+- `GET /api/uniforms/withdrawals/open-validity-summary`
+- `POST /api/uniforms/withdraw/retroactive`
 
 ## Frontend
 
@@ -47,8 +49,9 @@
 
 - `src/Components/Uniformes/EntradaEstoqueUniformes.jsx`
 - `src/Components/Uniformes/CadastroUniformes.jsx`
-- `src/Components/Uniformes/CautelasLegadasUniformes.jsx`
+- `src/Components/Uniformes/CautelasLegadasUniformes.jsx` (consulta de retiradas anteriores)
 - `src/Components/Uniformes/RetiradaUniformes.jsx`
+- `src/Components/Uniformes/RetiradaRetroativaUniformes.jsx`
 - `src/Components/Uniformes/DevolucaoUniformes.jsx`
 - `src/Components/Uniformes/EmprestimoUniformes.jsx`
 - `src/Components/Uniformes/DevolucaoEmprestimos.jsx`
@@ -84,7 +87,10 @@
 ## Reforços de Segurança
 
 - Backend de estoque (`uniformStockController`) exige controlador ou supervisor.
-- Backend de cautelas legadas (`uniformLegacyBaselineController`) separa permissões: consulta exige usuário autenticado; importação exige supervisor/admin.
+- Backend de cautelas históricas (`uniformLegacyBaselineController`) mantém apenas consulta para dados já existentes; a importação por planilha foi substituída por registro manual de retirada anterior.
+- Backend de registro de retirada anterior (`POST /api/uniforms/withdraw/retroactive`) exige supervisor.
+- Backend de consulta de retirada anterior (`GET /api/uniforms/withdrawals/retroactive`) lista apenas registros `RETROACTIVE_WITHDRAWAL`.
+- Backend de validade de cautelas abertas (`GET /api/uniforms/withdrawals/open-validity-summary`) alimenta o dashboard sem usar planilha.
 - Backend de baixa DP (`uniformController`) exige DP ou supervisor.
 - Backend de fluxos operacionais exige operador ou supervisor.
 - Frontend bloqueia acesso por menu e por query `?tab=` sem permissão.
