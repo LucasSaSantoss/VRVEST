@@ -23,4 +23,15 @@ export const registerLog = async (req, res) => {
     res.status(500).json({ error: "Erro ao registrar log" });
   }
 };
-  
+
+export const getLogs = async (req, res) => {
+  try {
+    const logs =
+      await prisma.$queryRaw`select  user.name,user.id,action,changes, action,newData, createdAt, userLog.id as userLog from userLog
+inner join user on userlog.userId = user.id;`;
+    return res.json(logs);
+  } catch (error) {
+    console.error("❌ ERRO AO OBTER LOGS:", error);
+    res.status(500).json({ error: "Erro ao obter logs" });
+  }
+};

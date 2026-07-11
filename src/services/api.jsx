@@ -639,7 +639,7 @@ export { api };
 export const getLogs = async () => {
   try {
     const token = localStorage.getItem("token");
-    const response = await axios.get(`${API_URL}/logs/logs `, {
+    const response = await axios.get(`${API_URL}/log/logs `, {
       headers: { Authorization: `Bearer ${token}` },
     });
     console.log("Logs carregados:", response.data);

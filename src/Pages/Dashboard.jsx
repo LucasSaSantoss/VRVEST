@@ -43,6 +43,7 @@ import BaixaDpUniformes from "../Components/Uniformes/BaixaDpUniformes";
 import DevolucaoUniformes from "../Components/Uniformes/DevolucaoUniformes";
 import EmprestimoUniformes from "../Components/Uniformes/EmprestimoUniformes";
 import DevolucaoEmprestimos from "../Components/Uniformes/DevolucaoEmprestimos";
+import LogsList from "../Components/Logs/LogsScreen";
 
 const UNIFORMES_RELEASE_MODE = String(
   import.meta.env.VITE_UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
@@ -229,6 +230,7 @@ export default function Dashboard() {
       devolucaoEmprestimos: <DevolucaoEmprestimos />,
       cadastroUniformes: <CadastroUniformes />,
       baixaDpUniformes: <BaixaDpUniformes />,
+      logs: <LogsList />,
     }),
     []
   );
