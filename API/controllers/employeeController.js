@@ -45,6 +45,37 @@ const emailCopiado = process.env.EMAIL_COPIADO;
 
 const prisma = new PrismaClient();
 
+const getPrismaUniqueTarget = (error) => {
+  const target = error?.meta?.target;
+  if (Array.isArray(target)) return target.map((field) => String(field));
+  if (target) return [String(target)];
+  return [];
+};
+
+const getEmployeeUniqueErrorMessage = (error) => {
+  const targets = getPrismaUniqueTarget(error);
+  if (targets.includes("email")) {
+    return "E-mail já está sendo usado por outro colaborador.";
+  }
+  if (targets.includes("cpf")) {
+    return "CPF já está cadastrado para outro colaborador.";
+  }
+  return "Já existe colaborador cadastrado com os dados informados.";
+};
+
+const handleEmployeeUniqueError = (error, res) => {
+  // [MANUTENCAO] Motivo: evitar erro genérico quando o cadastro legado viola campos únicos de colaborador.
+  // [MANUTENCAO] Impacto: preserva a regra atual e apenas torna explícito se a duplicidade é de e-mail, CPF ou outro campo único.
+  // [MANUTENCAO] Data: 2026-06-09
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (error?.code !== "P2002") return false;
+  res.status(400).json({
+    success: false,
+    message: getEmployeeUniqueErrorMessage(error),
+  });
+  return true;
+};
+
 export const createEmpl = async (req, res) => {
   try {
     const { name, cpf, email, sector, position, modality, matricula } =
@@ -102,7 +133,7 @@ export const createEmpl = async (req, res) => {
         });
       } else {
         return res.status(400).json({
-          message: "Colaborador já cadastrado no sistema.",
+          message: "E-mail já está sendo usado por outro colaborador.",
           success: false,
         });
       }
@@ -153,11 +184,7 @@ export const createEmpl = async (req, res) => {
       id: newEmpl.id,
     });
   } catch (err) {
-    if (err.code === "P2002") {
-      return res
-        .status(400)
-        .json({ success: false, message: "CPF ou Email já cadastrado" });
-    }
+    if (handleEmployeeUniqueError(err, res)) return;
     console.error("Erro ao criar Funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
@@ -284,6 +311,7 @@ export const createTempEmpl = async (req, res) => {
       id: newEmplTemp.id,
     });
   } catch (err) {
+    if (handleEmployeeUniqueError(err, res)) return;
     console.error("Erro ao criar Funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }
@@ -316,6 +344,27 @@ export const getCpf = async (req, res) => {
       });
     }
 
+    // if (empl.photoRequired) {
+    //   return res.status(200).json({
+    //     success: false,
+    //     photoRequired: true,
+    //     message: "Será necessário capturar a foto do Colaborador.",
+    //   });
+    // }
+
+    if (empl.cpf === "13863000714") {
+      return res.status(200).json({
+        success: false,
+        message: "Favor entrar em contato com a supervisão da rouparia.",
+      });
+    }
+    
+    if (empl.active !== 1) {
+      return res
+        .status(200)
+        .json({ success: false, message: "Colaborador inativo." });
+    }
+
     const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(empl.email);
     if (!emailValido) {
       return res.status(200).json({
@@ -323,12 +372,6 @@ export const getCpf = async (req, res) => {
         emailRequired: true,
         message: "O email cadastrado é inválido.",
       });
-    }
-
-    if (empl.active !== 1) {
-      return res
-        .status(200)
-        .json({ success: false, message: "Colaborador inativo." });
     }
 
     const specialty = await prisma.specialties.findUnique({
@@ -389,6 +432,7 @@ export const cadastrarEmail = async (req, res) => {
       message: "Email cadastrado com sucesso.",
     });
   } catch (err) {
+    if (handleEmployeeUniqueError(err, res)) return;
     console.error(err);
     return res.status(500).json({
       success: false,
@@ -396,6 +440,53 @@ export const cadastrarEmail = async (req, res) => {
     });
   }
 };
+
+// export const cadastrarFotoColab = async (req, res) => {
+//   try {
+//     const { cpf, avatarImage } = req.body;
+
+//     if (!cpf) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "CPF inválido.",
+//       });
+//     }
+
+//     if (!avatarImage) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "A imagem é obrigatória.",
+//       });
+//     }
+
+//     const empl = await prisma.employee.findUnique({
+//       where: { cpf },
+//     });
+
+//     if (!empl) {
+//       return res.status(404).json({
+//         success: false,
+//         message: "Colaborador não encontrado.",
+//       });
+//     }
+
+//     await prisma.employee.update({
+//       where: { cpf },
+//       data: {   tempEmplImg: avatarFile ? avatarFile.filename : null
+//     }});
+
+//     return res.status(200).json({
+//       success: true,
+//       message: "Foto do colaborador registrada com sucesso.",
+//     });
+//   } catch (err) {
+//     console.error(err);
+//     return res.status(500).json({
+//       success: false,
+//       message: "Erro ao capturar foto do colaborador.",
+//     });
+//   }
+// };
 
 export const carregaCpfCampos = async (req, res) => {
   try {
@@ -751,6 +842,7 @@ export const updateEmpl = async (req, res) => {
       funcionario: updatedEmpl,
     });
   } catch (err) {
+    if (handleEmployeeUniqueError(err, res)) return;
     console.error("Erro ao atualizar funcionário:", err);
     res.status(500).json({ success: false, message: "Erro no servidor" });
   }

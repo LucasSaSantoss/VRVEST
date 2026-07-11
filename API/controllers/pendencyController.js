@@ -4,10 +4,30 @@ import { enviarEmail } from "../emailService/emailService.js";
 const prisma = new PrismaClient();
 
 const emailCopiado = process.env.EMAIL_COPIADO;
+const PERFIL_DP = 3;
+const PERFIL_SUPERVISOR = 4;
+
+const requireDpOrSupervisor = (req, res) => {
+  // [MANUTENCAO] Motivo: liberar baixa financeira legada para DP mantendo proteção no backend.
+  // [MANUTENCAO] Impacto: apenas DP e supervisor podem consultar/baixar pendências nesta rotina legada.
+  // [MANUTENCAO] Data: 2026-06-25
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const level = Number(req.user?.level || 0);
+  if (level !== PERFIL_DP && level !== PERFIL_SUPERVISOR) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas DP ou supervisor.",
+    });
+    return false;
+  }
+  return true;
+};
 
 // Buscar todos os registros
 // controllers/pendencyController.js
 export const getRegistros = async (req, res) => {
+  if (!requireDpOrSupervisor(req, res)) return;
+
   try {
     const { inicio, fim } = req.query;
     let filtroData = {};
@@ -33,10 +53,18 @@ export const getRegistros = async (req, res) => {
       orderBy: { date: "desc" },
       include: {
         employee: {
-          select: { cpf: true, name: true, sector: true, matricula: true },
+          select: {
+            cpf: true,
+            name: true,
+            sector: true,
+            matricula: true,
+            modality: true,
+            position: true,
+          },
         },
       },
     });
+    console.log(registros);
     return res.json({
       success: true,
       message: "Registros carregados com sucesso",
@@ -52,6 +80,8 @@ export const getRegistros = async (req, res) => {
 };
 
 export const baixarPendencias = async (req, res) => {
+  if (!requireDpOrSupervisor(req, res)) return;
+
   try {
     const { id } = req.body;
     const usuarioID = req.user.id;
@@ -67,7 +97,7 @@ export const baixarPendencias = async (req, res) => {
     const usuario = await prisma.user.findUnique({
       where: { id: usuarioID },
     });
-    s;
+
     // Atualiza apenas a pendência correspondente
     const pendenciaAtualizada = await prisma.pendency.update({
       where: { id: Number(id) },
@@ -75,7 +105,7 @@ export const baixarPendencias = async (req, res) => {
         status: 2, //Baixado;
         devolUserId: usuarioID,
         devolUserName: usuarioName,
-        devolDate: new Date(),
+        devolDate: new Date(new Date().getTime() - 3 * 60 * 60 * 1000),
         devolType: 3, //Devolvido por meio da tela de baixa financeira;
       },
       include: {
@@ -98,10 +128,13 @@ export const baixarPendencias = async (req, res) => {
     // --------------------------------------
 
     // Envia e-mail automaticamente
-    const limiteVenc = new Date();
-    limiteVenc.setHours(limiteVenc.getHours() + 36);
+    // const limiteVenc = new Date(new Date().getTime() - 3 * 60 * 60 * 1000);
+    // limiteVenc.setHours(limiteVenc.getHours() + 36);
 
-    if (usuario.level >= 4) {
+    if (
+      Number(usuario.level) === PERFIL_DP ||
+      Number(usuario.level) === PERFIL_SUPERVISOR
+    ) {
       await enviarEmail(
         funcionario.email,
         "Baixa Financeira de Pendência",
@@ -109,11 +142,11 @@ export const baixarPendencias = async (req, res) => {
 
         Informamos que foi realizada a baixa financeira referente a uma pendência vinculada ao seu nome. 
         O procedimento registrou o valor de R$ ${oldPend.kitPrice || "0,00"} na data ${new Date(
-          pendenciaAtualizada.devolDate
+          pendenciaAtualizada.devolDate,
         ).toLocaleString("pt-BR")}.
 
       \n\nCaso tenha alguma dúvida, estamos à disposição.`,
-        emailCopiado
+        emailCopiado,
       );
     }
 

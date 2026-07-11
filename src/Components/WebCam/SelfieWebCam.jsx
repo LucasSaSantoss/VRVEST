@@ -57,7 +57,9 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
     const canvas = canvasRef.current;
     canvas.toBlob((blob) => {
       if (!blob) return;
-      const file = new File([blob], `avatar_${Date.now()}.png`, { type: "image/png" });
+      const file = new File([blob], `avatar_${Date.now()}.png`, {
+        type: "image/png",
+      });
       onUsePhoto(file);
     }, "image/png");
   };
@@ -69,7 +71,9 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
       <div className="bg-white rounded-xl shadow-xl w-[600px] max-w-full overflow-hidden">
         {/* Header */}
         <div className="flex justify-between items-center p-4 border-b border-gray-200">
-          <h2 className="text-xl font-semibold text-gray-800">Captura de Imagem</h2>
+          <h2 className="text-xl font-semibold text-gray-800">
+            Captura de Imagem
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-gray-700 transition"
@@ -112,7 +116,9 @@ const SelfieWebcam = ({ show, onClose, onUsePhoto }) => {
           <button
             onClick={takePhoto}
             className={`px-4 py-2 font-semibold rounded-md shadow-md transition ${
-              isPhotoTaken ? "bg-red-600 hover:bg-red-700 text-white" : "bg-cyan-600 hover:bg-cyan-700 text-white"
+              isPhotoTaken
+                ? "bg-red-600 hover:bg-red-700 text-white"
+                : "bg-cyan-600 hover:bg-cyan-700 text-white"
             }`}
           >
             {isPhotoTaken ? "Descartar" : "Capturar"}

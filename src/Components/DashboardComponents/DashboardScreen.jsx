@@ -4,8 +4,9 @@ import TabelaPendencias from "./TabelaPendencias";
 import GraficoDoughnut from "./GraficoDoughnut";
 import GraficoRetiradosXDevolvidos from "./GraficoRetiradosXDevolvidos";
 import MovPorHora from "./GraficoMovPorHora";
+import GraficoCautelasLegadas from "./GraficoCautelasLegadas";
 import FiltroDatas from "./ComponenteData/DateInput";
-import { carregarPendencias } from "../../services/api";
+import { api, carregarPendencias } from "../../services/api";
 import { differenceInMinutes } from "date-fns";
 
 export default function Dashboard() {
@@ -14,7 +15,9 @@ export default function Dashboard() {
   const [inicio, setInicio] = useState("");
   const [fim, setFim] = useState("");
   const [dadosGrafico, setDadosGrafico] = useState([]);
+  const [dadosValidadeCautelas, setDadosValidadeCautelas] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingValidadeCautelas, setLoadingValidadeCautelas] = useState(false);
 
   const [popup, setPopup] = useState({
     mostrar: false,
@@ -122,6 +125,24 @@ export default function Dashboard() {
     }
   };
 
+  const listarValidadeCautelas = async () => {
+    setLoadingValidadeCautelas(true);
+    try {
+      // [MANUTENCAO] Motivo: dashboard deve considerar cautelas abertas reais, sem depender de planilha histórica.
+      // [MANUTENCAO] Impacto: usa retiradas normais e retiradas anteriores da Fase 1 que ainda possuem pendência.
+      // [MANUTENCAO] Data: 2026-06-26
+      // [MANUTENCAO] Autor: Márlon Etiene
+      const res = await api.get("/uniforms/withdrawals/open-validity-summary");
+      setDadosValidadeCautelas(res.data?.success ? res.data.data || [] : []);
+    } catch (err) {
+      console.error(err);
+      setDadosValidadeCautelas([]);
+      mostrarPopup("Erro ao carregar validade das cautelas.", "error");
+    } finally {
+      setLoadingValidadeCautelas(false);
+    }
+  };
+
   // ------------------- Inicialização -------------------
   useEffect(() => {
     const ontem = new Date(dataBR);
@@ -133,6 +154,7 @@ export default function Dashboard() {
     const seisMesesAtras = new Date();
     seisMesesAtras.setMonth(new Date().getMonth() - 5);
     listarRetiradosDevolvidos(seisMesesAtras, dataBR);
+    listarValidadeCautelas();
   }, []);
 
   useEffect(() => {
@@ -185,7 +207,7 @@ export default function Dashboard() {
         />
       </div>
 
-      {/* Tabela e gráficos */}
+      {/* Tabela e gr?ficos */}
       <div className="flex flex-col md:flex-row gap-3 w-full mt-4">
         <TabelaPendencias
           pendencias={statusPendencias}
@@ -203,8 +225,20 @@ export default function Dashboard() {
           />
         </div>
       </div>
-      <div>
-        <MovPorHora className="w-full mt-2" values={dadosGrafico} />
+      {/* [MANUTENCAO] Motivo: ajustar propor??o da ?ltima linha do dashboard ao volume de informa??o dos cards.
+          [MANUTENCAO] Impacto: retirados/devolvidos ocupa 2/3 e validade de cautelas 1/3 em desktop; em telas menores, os cards empilham.
+          [MANUTENCAO] Data: 2026-06-10
+          [MANUTENCAO] Autor: Márlon Etiene */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 w-full mt-2">
+        <div className="xl:col-span-2">
+          <MovPorHora values={dadosGrafico} />
+        </div>
+        <div className="xl:col-span-1">
+          <GraficoCautelasLegadas
+            values={dadosValidadeCautelas}
+            loading={loadingValidadeCautelas}
+          />
+        </div>
       </div>
 
       {/* Loading */}

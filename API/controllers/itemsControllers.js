@@ -1,6 +1,77 @@
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const PERFIL_SUPERVISOR = 4;
+const UNIFORMES_RELEASE_MODE = String(
+  process.env.UNIFORMES_FASE_LIBERACAO || "BY_PROFILE"
+).toUpperCase();
+const isUniformesAdminOnly = () => UNIFORMES_RELEASE_MODE === "ADMIN_ONLY";
+
+const normalizarNomeUniforme = (value) =>
+  String(value ?? "")
+    .trim()
+    .replace(/\s+/g, " ")
+    .toLocaleUpperCase("pt-BR");
+
+const encontrarUniformeMesmoNome = async (client, itemName, excludeId = null) => {
+  const normalizedName = normalizarNomeUniforme(itemName);
+  if (!normalizedName) return null;
+
+  const uniforms = await client.itemsCloth.findMany({
+    where: {
+      isUniform: 1,
+      ...(excludeId ? { id: { not: Number(excludeId) } } : {}),
+    },
+    select: { id: true, itemName: true },
+  });
+
+  return (
+    uniforms.find(
+      (uniform) => normalizarNomeUniforme(uniform.itemName) === normalizedName
+    ) || null
+  );
+};
+
+const normalizarMesesValidade = (value, fallback = 12) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed)) return fallback;
+  return parsed;
+};
+
+const requireAdmin = (req, res) => {
+  // [MANUTENCAO] Motivo: restringir cadastro e consulta de uniformes ao supervisor.
+  // [MANUTENCAO] Impacto: controlador deixa de acessar rotinas administrativas de cadastro de uniformes.
+  // [MANUTENCAO] Data: 2026-06-25
+  // [MANUTENCAO] Autor: Márlon Etiene
+  if (
+    isUniformesAdminOnly() &&
+    Number(req.user?.level) !== PERFIL_SUPERVISOR
+  ) {
+    res.status(403).json({
+      success: false,
+      message:
+        "Módulo de uniformes em liberação controlada. Acesso temporário apenas para supervisor.",
+    });
+    return false;
+  }
+
+  if (Number(req.user?.level) !== PERFIL_SUPERVISOR) {
+    res.status(403).json({
+      success: false,
+      message: "Acesso negado. Apenas supervisor.",
+    });
+    return false;
+  }
+  return true;
+};
+
+const validarMesesValidade = (value, campo) => {
+  const parsed = Number(value);
+  if (!Number.isInteger(parsed) || parsed < 1 || parsed > 12) {
+    return `${campo} deve ser um número inteiro entre 1 e 12 meses.`;
+  }
+  return null;
+};
 
 export const getItemsPrices = async (req, res) => {
   try {
@@ -9,6 +80,215 @@ export const getItemsPrices = async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Erro ao buscar Modalidades" });
+  }
+};
+
+export const listUniformItems = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const data = await prisma.itemsCloth.findMany({
+      where: { isUniform: 1 },
+      select: {
+        id: true,
+        itemName: true,
+        itemVal: true,
+        minStock: true,
+        isUniform: true,
+        active: true,
+        validadePlantonistaMeses: true,
+        validadeDiaristaMeses: true,
+      },
+      orderBy: { itemName: "asc" },
+    });
+    return res.json({ success: true, data });
+  } catch (error) {
+    console.error("Erro ao listar uniformes:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro ao listar uniformes.",
+    });
+  }
+};
+
+export const createUniformItem = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const {
+      itemName,
+      itemVal,
+      minStock,
+      active,
+      validadePlantonistaMeses,
+      validadeDiaristaMeses,
+    } = req.body;
+    if (!itemName || !String(itemName).trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Nome do uniforme é obrigatório.",
+      });
+    }
+    if (itemVal === undefined || itemVal === null || String(itemVal).trim() === "") {
+      return res.status(400).json({
+        success: false,
+        message: "Valor do uniforme é obrigatório.",
+      });
+    }
+
+    // [MANUTENCAO] Motivo: impedir uniformes duplicados por nome.
+    // [MANUTENCAO] Impacto: comparação ignora caixa, espaços externos e espaços repetidos.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
+    const duplicate = await encontrarUniformeMesmoNome(prisma, itemName);
+    if (duplicate) {
+      return res.status(409).json({
+        success: false,
+        message: "Já existe um uniforme cadastrado com esse nome.",
+      });
+    }
+
+    const erroValidadePlantonista = validarMesesValidade(
+      validadePlantonistaMeses ?? 12,
+      "Validade para plantonista"
+    );
+    if (erroValidadePlantonista) {
+      return res.status(400).json({ success: false, message: erroValidadePlantonista });
+    }
+
+    const erroValidadeDiarista = validarMesesValidade(
+      validadeDiaristaMeses ?? 12,
+      "Validade para diarista"
+    );
+    if (erroValidadeDiarista) {
+      return res.status(400).json({ success: false, message: erroValidadeDiarista });
+    }
+
+    const validadePlantonista = normalizarMesesValidade(validadePlantonistaMeses, 12);
+    const validadeDiarista = normalizarMesesValidade(validadeDiaristaMeses, 12);
+
+    const created = await prisma.itemsCloth.create({
+      data: {
+        itemName: String(itemName).trim(),
+        itemVal: String(itemVal).trim(),
+        minStock: Number(minStock || 0),
+        isUniform: 1,
+        active: active !== undefined ? Number(active) : 1,
+        validadePlantonistaMeses: validadePlantonista,
+        validadeDiaristaMeses: validadeDiarista,
+      },
+    });
+
+    await prisma.userLog.create({
+      data: {
+        userId: Number(req.user?.id) || null,
+        action: "UNIFORM_ITEM_CREATE",
+        newData: created,
+      },
+    });
+
+    return res.status(201).json({ success: true, data: created });
+  } catch (error) {
+    console.error("Erro ao cadastrar uniforme:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro ao cadastrar uniforme.",
+    });
+  }
+};
+
+export const updateUniformItem = async (req, res) => {
+  if (!requireAdmin(req, res)) return;
+
+  try {
+    const id = Number(req.params.id);
+    const {
+      itemName,
+      itemVal,
+      minStock,
+      active,
+      validadePlantonistaMeses,
+      validadeDiaristaMeses,
+    } = req.body;
+    const current = await prisma.itemsCloth.findUnique({ where: { id } });
+    if (!current || current.isUniform !== 1) {
+      return res.status(404).json({
+        success: false,
+        message: "Uniforme não encontrado.",
+      });
+    }
+
+    if (itemName !== undefined) {
+      const duplicate = await encontrarUniformeMesmoNome(prisma, itemName, id);
+      if (duplicate) {
+        return res.status(409).json({
+          success: false,
+          message: "Já existe outro uniforme cadastrado com esse nome.",
+        });
+      }
+    }
+
+    if (validadePlantonistaMeses !== undefined) {
+      const erroValidadePlantonista = validarMesesValidade(
+        validadePlantonistaMeses,
+        "Validade para plantonista"
+      );
+      if (erroValidadePlantonista) {
+        return res.status(400).json({ success: false, message: erroValidadePlantonista });
+      }
+    }
+
+    if (validadeDiaristaMeses !== undefined) {
+      const erroValidadeDiarista = validarMesesValidade(
+        validadeDiaristaMeses,
+        "Validade para diarista"
+      );
+      if (erroValidadeDiarista) {
+        return res.status(400).json({ success: false, message: erroValidadeDiarista });
+      }
+    }
+
+    const validadePlantonistaAtualizada =
+      validadePlantonistaMeses !== undefined
+        ? normalizarMesesValidade(validadePlantonistaMeses, current.validadePlantonistaMeses)
+        : current.validadePlantonistaMeses;
+    const validadeDiaristaAtualizada =
+      validadeDiaristaMeses !== undefined
+        ? normalizarMesesValidade(validadeDiaristaMeses, current.validadeDiaristaMeses)
+        : current.validadeDiaristaMeses;
+
+    const updated = await prisma.itemsCloth.update({
+      where: { id },
+      data: {
+        itemName:
+          itemName !== undefined ? String(itemName).trim() : current.itemName,
+        itemVal: itemVal !== undefined ? String(itemVal).trim() : current.itemVal,
+        minStock: minStock !== undefined ? Number(minStock) : current.minStock,
+        active: active !== undefined ? Number(active) : current.active,
+        validadePlantonistaMeses: validadePlantonistaAtualizada,
+        validadeDiaristaMeses: validadeDiaristaAtualizada,
+        isUniform: 1,
+      },
+    });
+
+    await prisma.userLog.create({
+      data: {
+        userId: Number(req.user?.id) || null,
+        action: "UNIFORM_ITEM_UPDATE",
+        changes: {
+          before: current,
+          after: updated,
+        },
+      },
+    });
+
+    return res.json({ success: true, data: updated });
+  } catch (error) {
+    console.error("Erro ao atualizar uniforme:", error);
+    return res.status(500).json({
+      success: false,
+      message: error?.message || "Erro ao atualizar uniforme.",
+    });
   }
 };
 

@@ -1,12 +1,16 @@
 import express from "express";
-import { enviarEmail } from "../emailService/emailService.js";
+import { enviarEmailComConfirmacao } from "../emailService/emailService.js";
 
 const router = express.Router();
 
 router.post("/enviar-email", async (req, res) => {
   try {
     const { para, assunto, mensagem } = req.body;
-    await enviarEmail({ para, assunto, mensagem });
+    // [MANUTENCAO] Motivo: corrigir chamada incompatível com a assinatura do serviço de e-mail.
+    // [MANUTENCAO] Impacto: a rota só responde sucesso quando o SMTP confirmar o envio.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
+    await enviarEmailComConfirmacao(para, assunto, mensagem);
     res.json({ success: true, message: "E-mail enviado com sucesso!" });
   } catch (error) {
     console.error("Erro ao enviar e-mail:", error);

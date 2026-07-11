@@ -1,6 +1,24 @@
-import axios from "axios";
+﻿import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
+
+export const obterMensagemErroApi = (error, fallback = "Erro no servidor") => {
+  if (error?.code === "DUPLICATE_REQUEST") {
+    return "Esta operação já está em processamento. Aguarde a conclusão.";
+  }
+
+  const backendMessage = error?.response?.data?.message;
+  const backendDetail = error?.response?.data?.detail;
+  const status = error?.response?.status;
+
+  if (backendMessage && backendDetail) {
+    return `${backendMessage} Detalhe: ${backendDetail}`;
+  }
+  if (backendMessage) return backendMessage;
+  if (backendDetail) return `Detalhe: ${backendDetail}`;
+  if (status) return `${fallback} (HTTP ${status})`;
+  return fallback;
+};
 
 // ------------------------------ Funções de API ----------------------------
 
@@ -43,9 +61,27 @@ export async function cadastrarEmail({ cpf, email }) {
     return res.data;
   } catch (err) {
     console.error("Erro ao cadastrar email:", err);
-    return { success: false, message: "Erro ao cadastrar email" };
+    return {
+      success: false,
+      message: err.response?.data?.message || "Erro ao cadastrar email",
+    };
   }
 }
+
+// export async function capturarFoto({ cpf, avatarImage }) {
+//   const token = localStorage.getItem("token");
+//   try {
+//     const res = await axios.post(
+//       `${API_URL}/empl/cadastrar-foto`,
+//       { cpf, avatarImage },
+//       { headers: { Authorization: `Bearer ${token}` } }
+//     );
+//     return res.data;
+//   } catch (err) {
+//     console.error("Erro ao cadastrar foto:", err);
+//     return { success: false, message: "Erro ao cadastrar foto" };
+//   }
+// }
 
 // 🔹 Cadastrar funcionário (inclui ID e nome do usuário logado)
 export async function cadastrarFuncionario({
@@ -100,7 +136,7 @@ export async function cadastrarFuncionarioTemporario({
   position,
   modality,
   obs,
-  avatarImage, // agora é File
+  avatarImage,
 }) {
   try {
     const token = localStorage.getItem("token");
@@ -154,7 +190,14 @@ export async function alterarFuncionario(id, dados) {
     return res.data; // retorna os dados atualizados
   } catch (err) {
     console.error("Erro ao alterar funcionário:", err);
-    return { success: false, message: "Registro sem alteração." };
+    // [MANUTENCAO] Motivo: preservar mensagens específicas do backend legado em erros de cadastro/alteração de colaborador.
+    // [MANUTENCAO] Impacto: evita ocultar duplicidade de e-mail/CPF atrás de mensagem genérica no frontend.
+    // [MANUTENCAO] Data: 2026-06-09
+    // [MANUTENCAO] Autor: Márlon Etiene
+    return {
+      success: false,
+      message: err.response?.data?.message || "Registro sem alteração.",
+    };
   }
 }
 
@@ -418,11 +461,122 @@ export const alterarItens = async (idUser, pijamaValue) => {
   }
 };
 
+// [MANUTENCAO] Motivo: adicionar serviços de frontend para módulo de estoque de uniformes (Fase 1).
+// [MANUTENCAO] Impacto: habilita telas novas de cadastro por tamanho, entrada, descarte e ajuste sem alterar fluxo legado.
+// [MANUTENCAO] Data: 2026-05-19
+// [MANUTENCAO] Autor: Márlon Etiene
+export const listarEstoqueUniformePorTamanho = async () => {
+  try {
+    const response = await api.get("/uniform-stock/sizes");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao listar estoque de uniformes:", error);
+    return { success: false, data: [] };
+  }
+};
+
+// [MANUTENCAO] Motivo: disponibilizar serviço dedicado para relatório de estoque completo.
+// [MANUTENCAO] Impacto: reutiliza endpoint já existente sem alterar regra de negócio do backend.
+// [MANUTENCAO] Data: 2026-06-01
+// [MANUTENCAO] Autor: Márlon Etiene
+export const carregarRelatorioEstoqueUniformes = async () => {
+  try {
+    const response = await api.get("/uniform-stock/sizes");
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao carregar relatório de estoque de uniformes:", error);
+    return { success: false, data: [], message: "Erro no servidor" };
+  }
+};
+
+export const cadastrarTamanhoUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/sizes", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao cadastrar tamanho de uniforme:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const entradaEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/entry", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar entrada de estoque:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const entradaEmprestimoUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/loan-entry", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar entrada em empréstimos:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const descartarEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/discard", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao registrar descarte:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
+export const ajustarEstoqueUniforme = async (payload) => {
+  try {
+    const response = await api.post("/uniform-stock/adjustment", payload);
+    return response.data;
+  } catch (error) {
+    console.error("Erro ao ajustar estoque de uniforme:", error);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Erro no servidor",
+    };
+  }
+};
+
 // ------------------------------ Verificação de Token ----------------------------
 
 const api = axios.create({
   baseURL: API_URL,
 });
+
+const pendingMutationRequests = new Set();
+const MUTATION_METHODS = new Set(["post", "put", "patch", "delete"]);
+
+const buildMutationRequestKey = (config) => {
+  const method = String(config.method || "get").toLowerCase();
+  if (!MUTATION_METHODS.has(method)) return null;
+
+  let serializedData = "";
+  try {
+    serializedData =
+      typeof config.data === "string" ? config.data : JSON.stringify(config.data || {});
+  } catch {
+    serializedData = String(config.data || "");
+  }
+
+  return `${method}:${config.baseURL || ""}:${config.url || ""}:${serializedData}`;
+};
 
 // Interceptor para anexar token em cada requisição
 api.interceptors.request.use((config) => {
@@ -430,13 +584,41 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
+  // [MANUTENCAO] Motivo: impedir submissões duplicadas nos módulos novos.
+  // [MANUTENCAO] Impacto: bloqueia apenas mutações idênticas enquanto a primeira ainda está pendente.
+  // [MANUTENCAO] Data: 2026-06-22
+  // [MANUTENCAO] Autor: Márlon Etiene
+  const requestKey = buildMutationRequestKey(config);
+  if (requestKey) {
+    if (pendingMutationRequests.has(requestKey)) {
+      const duplicateError = new Error(
+        "Esta operação já está em processamento. Aguarde a conclusão."
+      );
+      duplicateError.code = "DUPLICATE_REQUEST";
+      duplicateError.isDuplicateRequest = true;
+      return Promise.reject(duplicateError);
+    }
+    pendingMutationRequests.add(requestKey);
+    config._mutationRequestKey = requestKey;
+  }
+
   return config;
 });
 
 // Interceptor para capturar erros de resposta
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    if (response.config?._mutationRequestKey) {
+      pendingMutationRequests.delete(response.config._mutationRequestKey);
+    }
+    return response;
+  },
   (error) => {
+    if (!error?.isDuplicateRequest && error?.config?._mutationRequestKey) {
+      pendingMutationRequests.delete(error.config._mutationRequestKey);
+    }
+
     if (error.response?.status === 401) {
       const msg = error.response.data?.message;
 
@@ -450,6 +632,7 @@ api.interceptors.response.use(
 );
 
 export { api };
+
 
 //------------------------------- Logs ----------------------------
 

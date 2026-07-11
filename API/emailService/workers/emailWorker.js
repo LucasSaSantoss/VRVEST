@@ -1,7 +1,7 @@
 // workers/emailWorker.js
 import { Worker } from "bullmq";
 import IORedis from "ioredis";
-import { enviarEmail } from "../emailService";
+import { enviarEmailComConfirmacao } from "../emailService.js";
 
 const connection = new IORedis({
   host: "127.0.0.1",
@@ -15,7 +15,11 @@ const worker = new Worker(
 
     console.log(` Processando e-mail para ${para}...`);
 
-    await enviarEmail(para, assunto, mensagem);
+    // [MANUTENCAO] Motivo: fazer o worker falhar quando o SMTP não confirmar o envio.
+    // [MANUTENCAO] Impacto: BullMQ registra corretamente job com falha, permitindo diagnóstico/retry.
+    // [MANUTENCAO] Data: 2026-06-22
+    // [MANUTENCAO] Autor: Márlon Etiene
+    await enviarEmailComConfirmacao(para, assunto, mensagem);
 
     console.log(`✅ E-mail enviado para ${para}`);
   },

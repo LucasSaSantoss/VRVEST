@@ -154,7 +154,7 @@ export default function TabelaUsuarios() {
             <th className="py-2 px-4">Nome</th>
             <th className="py-2 px-4">Email</th>
             <th className="py-2 px-4">Setor</th>
-            <th className="py-2 px-4">Cargo</th>
+            <th className="py-2 px-4">Especialidade</th>
             <th className="py-2 px-4">Nível de Acesso</th>
             <th className="py-2 px-4">Ativo</th>
             <th className="py-2 px-4">Ações</th>

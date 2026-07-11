@@ -23,3 +23,6 @@ dist-ssr
 *.sln
 *.sw?
 .env
+API/public/images/
+/BKP/
+vrvest_data.sql

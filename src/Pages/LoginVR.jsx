@@ -13,7 +13,7 @@ export default function LoginVR() {
     setPopupTemporario(false);
 
     const res = await loginUsuario({ email, password });
-
+    
     if (res.success) {
       localStorage.setItem("token", res.token);
       window.location.href = "/dashboard";
