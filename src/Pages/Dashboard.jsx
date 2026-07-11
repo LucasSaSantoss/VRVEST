@@ -15,7 +15,7 @@ import {
 } from "react-icons/fa";
 import { HiOutlineReceiptTax } from "react-icons/hi";
 import { CgLogOff } from "react-icons/cg";
-import { FaUserGear } from "react-icons/fa6";
+import { FaUserGear,FaMagnifyingGlass } from "react-icons/fa6";
 
 import DashBoardVRVest from "../Components/DashboardComponents/DashboardScreen";
 import RelatorioFinanceiroAtrasados from "../Components/Relatorios/RelatorioFinanceiroAtrasados";
@@ -26,7 +26,7 @@ import TabelaFuncionarios from "../Components/FormFuncionarios/FormFuncionarios"
 import ListaPendencias from "../Components/BaixaFinanc/BaixaFinanceira";
 import CreateFuncTemp from "../Components/FuncionarioTemporario/FuncionarioTemp";
 import ProfileContainer from "../Components/ProfileTabs/ProfileScreen";
-
+import LogsList from "../Components/Logs/LogsScreen";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -134,6 +134,7 @@ export default function Dashboard() {
     funcionarios: <TabelaFuncionarios />,
     baixa: <ListaPendencias />,
     perfil: <ProfileContainer />,
+    logs: <LogsList/>,
   };
 
   return (
@@ -227,7 +228,7 @@ export default function Dashboard() {
                 </li>
               </>
             )}
-            
+
             {levelUser !== 2 && (
               <li
                 className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
@@ -289,6 +290,19 @@ export default function Dashboard() {
                   )}
                 </li>
               </>
+            )}
+
+            {levelUser > 3 && (
+              <li
+                className={`flex items-center cursor-pointer px-3 py-2 rounded transition-colors duration-200
+                  ${selected === "logs" ? "bg-white text-gray-800" : "hover:bg-white hover:text-gray-800"}`}
+                onClick={() => setSelected("logs")}
+              >
+                <FaMagnifyingGlass className="text-xl" />
+                <span className={`ml-3 ${hovered ? "opacity-100" : "hidden"}`}>
+                  Logs
+                </span>
+              </li>
             )}
           </ul>
 

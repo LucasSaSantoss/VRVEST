@@ -38,7 +38,7 @@ export async function cadastrarEmail({ cpf, email }) {
     const res = await axios.post(
       `${API_URL}/empl/cadastrar-email`,
       { cpf, email },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return res.data;
   } catch (err) {
@@ -72,7 +72,7 @@ export async function cadastrarFuncionario({
         matricula,
         PermissTrauma,
       },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -83,7 +83,7 @@ export async function cadastrarFuncionario({
   } catch (err) {
     console.log(
       "Erro ao criar funcionário:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     return {
       success: false,
@@ -135,7 +135,7 @@ export async function cadastrarFuncionarioTemporario({
   } catch (err) {
     console.log(
       "Erro ao criar funcionário:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     return {
       success: false,
@@ -165,7 +165,7 @@ export async function importarFuncionarios(dados) {
     const res = await axios.post(
       `${API_URL}/empl/importar-funcionarios`,
       { funcionarios: dados },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -176,7 +176,7 @@ export async function importarFuncionarios(dados) {
   } catch (err) {
     console.error(
       "Erro ao importar colaboradores:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     return {
       success: false,
@@ -210,7 +210,7 @@ export async function alterarSenha({ id, oldPassword, newPassword }) {
     const res = await axios.put(
       `${API_URL}/passchange/${id}`,
       { oldPassword, newPassword },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -248,7 +248,7 @@ export async function cadastrarUsuario({
         position,
         level,
       },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -271,7 +271,7 @@ export async function loginUsuario({ email, password }) {
     const res = await axios.post(
       `${API_URL}/login`,
       { email, password },
-      { headers: { "Content-Type": "application/json" } }
+      { headers: { "Content-Type": "application/json" } },
     );
 
     return { success: true, token: res.data.token, message: res.data.message };
@@ -291,13 +291,13 @@ export async function getOpenPendencies({ cpf }) {
       { cpf },
       {
         headers: { Authorization: `Bearer ${token}` },
-      }
+      },
     );
     return res.data;
   } catch (err) {
     console.error(
       "Erro ao buscar pendências:",
-      err.response?.data || err.message
+      err.response?.data || err.message,
     );
     return { success: false, total: 0, list: [] };
   }
@@ -310,7 +310,7 @@ export async function registrarKit({ cpf, kitSize, kitType }) {
     const res = await axios.post(
       `${API_URL}/empl/registrarKit`,
       { cpf, kitSize, kitType },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -333,7 +333,7 @@ export async function devolucaoKit({ cpf, id }) {
     const res = await axios.post(
       `${API_URL}/empl/devolver`,
       { cpf, id },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
 
     return {
@@ -409,7 +409,7 @@ export const alterarItens = async (idUser, pijamaValue) => {
     const res = await axios.post(
       `${API_URL}/items/items-change`,
       { idUser, pijamaValue },
-      { headers: { Authorization: `Bearer ${token}` } }
+      { headers: { Authorization: `Bearer ${token}` } },
     );
     return { success: true, data: res.data };
   } catch (error) {
@@ -446,7 +446,25 @@ api.interceptors.response.use(
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export { api };
+
+//------------------------------- Logs ----------------------------
+
+export const getLogs = async () => {
+  try {
+    const token = localStorage.getItem("token");
+    const response = await axios.get(`${API_URL}/logs/logs `, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    console.log("Logs carregados:", response.data);
+    return { success: true, data: response.data };
+  } catch (error) {
+    console.error("Erro ao carregar logs:", error);
+    return { success: false, data: [] };
+  }
+};
+
+// ------------------------------ Fim das Funções de API ----------------------------
